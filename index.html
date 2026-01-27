@@ -1,114 +1,194 @@
 <!DOCTYPE html>
-<html>
+<html lang="nl">
 <head>
-    <title>Fitness App Project</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Pro Coach</title>
     <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@1.3.1/dist/tf.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@teachablemachine/pose@0.8/dist/teachablemachine-pose.min.js"></script>
+    
     <style>
-        body { font-family: sans-serif; text-align: center; background: #eee; padding: 20px; }
-        .box { background: white; padding: 20px; border-radius: 20px; max-width: 400px; margin: auto; }
-        button { background: #28a745; color: white; border: none; padding: 15px; border-radius: 10px; cursor: pointer; width: 100%; font-size: 18px; }
-        #getal { font-size: 80px; color: blue; font-weight: bold; }
-        canvas { width: 100%; border-radius: 10px; }
+        :root { --primary: #00ff88; --bg: #121212; --card: #1e1e1e; --text: #ffffff; }
+        body { font-family: 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); margin: 0; display: flex; justify-content: center; align-items: center; min-height: 100vh; }
+        .app-container { width: 90%; max-width: 400px; background: var(--card); padding: 30px; border-radius: 25px; shadow: 0 10px 30px rgba(0,0,0,0.5); text-align: center; }
+        .step { display: none; transition: 0.3s; }
+        .step.active { display: block; }
+        h1 { color: var(--primary); font-size: 24px; }
+        select, input { width: 100%; padding: 12px; margin: 20px 0; border-radius: 10px; border: none; background: #333; color: white; }
+        button { background: var(--primary); color: #000; border: none; padding: 15px 30px; border-radius: 12px; font-weight: bold; cursor: pointer; width: 100%; font-size: 16px; margin-top: 10px; }
+        .progress-bar { height: 5px; background: #333; margin-bottom: 20px; border-radius: 5px; }
+        .progress-fill { height: 100%; background: var(--primary); width: 0%; transition: 0.5s; }
+        #canvas-container { position: relative; width: 100%; border-radius: 20px; overflow: hidden; display: none; }
+        canvas { width: 100%; background: #000; }
+        .stat-badge { background: rgba(0,255,136,0.1); color: var(--primary); padding: 10px; border-radius: 10px; display: inline-block; margin: 5px; font-weight: bold; }
+        #timer { font-size: 48px; color: var(--primary); display: none; }
     </style>
 </head>
 <body>
 
-<div class="box">
-    <h1>Fitness Coach AI</h1>
+<div class="app-container">
+    <div class="progress-bar"><div id="progressFill" class="progress-fill"></div></div>
 
-    <div id="vragenlijst">
-        <p>Wat gaan we doen?</p>
-        <select id="welkeOefening" style="width:100%; padding:10px; margin-bottom:10px;">
-            <option value="squat">Squats (Benen)</option>
-            <option value="pushup">Push-ups (Borst)</option>
-        </select>
-
-        <p>Hoeveel reps is je doel?</p>
-        <select id="hoeveelReps" style="width:100%; padding:10px; margin-bottom:20px;">
-            <option value="5">Beginner (5)</option>
-            <option value="10">Gemiddeld (10)</option>
-            <option value="20">Expert (20)</option>
-        </select>
-
-        <button onclick="start()">START TRAINING</button>
+    <div class="step active" id="step1">
+        <h1>Vraag 1/5</h1>
+        <p>Hoeveel dagen per week heb je tijd voor oefeningen?</p>
+        <select id="v_dagen"><option value="2">2 dagen</option><option value="4">4 dagen</option><option value="7">Elke dag</option></select>
+        <button onclick="nextStep(2)">Volgende</button>
     </div>
 
-    <div id="sportveld" style="display:none;">
-        <h2 id="titel">Bezig...</h2>
-        <div id="getal">0</div>
-        <p id="boodschap">Camera wordt geladen...</p>
-        <canvas id="canvas"></canvas>
+    <div class="step" id="step2">
+        <h1>Vraag 2/5</h1>
+        <p>Wat is je hoofddoel?</p>
+        <select id="v_doel"><option value="kracht">Spiermassa</option><option value="conditie">Uithoudingsvermogen</option></select>
+        <button onclick="nextStep(3)">Volgende</button>
+    </div>
+
+    <div class="step" id="step3">
+        <h1>Vraag 3/5</h1>
+        <p>Welke spiergroep wil je versterken?</p>
+        <select id="v_spier"><option value="benen">Benen (Squats)</option><option value="borst">Borst (Push-ups)</option><option value="beide">Beide (Combi-workout)</option></select>
+        <button onclick="nextStep(4)">Volgende</button>
+    </div>
+
+    <div class="step" id="step4">
+        <h1>Vraag 4/5</h1>
+        <p>Hoeveel minuten wil je per sessie trainen?</p>
+        <select id="v_minuten"><option value="5">5 minuten</option><option value="15">15 minuten</option><option value="30">30 minuten</option></select>
+        <button onclick="nextStep(5)">Volgende</button>
+    </div>
+
+    <div class="step" id="step5">
+        <h1>Vraag 5/5</h1>
+        <p>Hoe fit voel je je vandaag?</p>
+        <select id="v_fit"><option value="1">Licht (Ziek/Moe)</option><option value="2" selected>Normaal</option><option value="3">Super fit!</option></select>
+        <button onclick="startApp()">START WORKOUT</button>
+    </div>
+
+    <div class="step" id="workout-scherm">
+        <h2 id="oefening-naam">Klaarmaken...</h2>
+        <div class="stat-badge" id="set-info">Set 1/3</div>
+        <div class="stat-badge" id="rep-info">Reps: 0/12</div>
+        <div id="timer">30</div>
+        <div id="canvas-container">
+            <canvas id="canvas"></canvas>
+        </div>
+        <p id="coach-status">Laden...</p>
     </div>
 </div>
 
 <script>
-    // --- STAP 1: PLAK HIER JE LINKS ---
-    const SQUAT_LINK = "https://teachablemachine.withgoogle.com/models/h7p-JBDaq/"; 
+    const SQUAT_LINK = "https://teachablemachine.withgoogle.com/models/h7p-JBDaq/ "; 
     const PUSHUP_LINK = "https://teachablemachine.withgoogle.com/models/nUrbOTVH6/"; 
 
-    // --- STAP 2: DE VARIABELEN (Dingen die we moeten onthouden) ---
-    let model, webcam, ctx, teller = 0, status = "omhoog", doel = 0;
+    let currentStep = 1;
+    let model, webcam, ctx, teller = 0, status = "omhoog";
+    let huidigeSet = 1, totaalSets = 3, doelReps = 12;
+    let schema = []; // De lijst met oefeningen
 
-    // --- STAP 3: DE START FUNCTIE ---
-    async function start() {
-        // Welke oefening is gekozen?
-        const keuze = document.getElementById("welkeOefening").value;
-        doel = document.getElementById("hoeveelReps").value;
+    function nextStep(step) {
+        document.getElementById(`step${currentStep}`).classList.remove('active');
+        currentStep = step;
+        document.getElementById(`step${currentStep}`).classList.add('active');
+        document.getElementById('progressFill').style.width = (step-1) * 20 + "%";
+    }
 
-        // Kies de juiste link
-        let deLink = (keuze === "squat") ? SQUAT_LINK : PUSHUP_LINK;
-        document.getElementById("titel").innerText = keuze.toUpperCase();
+    async function startApp() {
+        // Bereken plan op basis van keuzes
+        const spier = document.getElementById('v_spier').value;
+        const fit = parseInt(document.getElementById('v_fit').value);
+        
+        doelReps = 8 * fit; // Bijv. 8, 16 of 24 reps
 
-        // Wissel scherm
-        document.getElementById("vragenlijst").style.display = "none";
-        document.getElementById("sportveld").style.display = "block";
+        if(spier === "benen") schema = ["squat"];
+        else if(spier === "borst") schema = ["pushup"];
+        else schema = ["pushup", "squat"];
 
-        // Laad AI en Camera
-        model = await tmPose.load(deLink + "model.json", deLink + "metadata.json");
-        webcam = new tmPose.Webcam(300, 300, true);
-        await webcam.setup();
-        await webcam.play();
-        window.requestAnimationFrame(loop);
+        document.getElementById(`step5`).classList.remove('active');
+        document.getElementById('workout-scherm').classList.add('active');
+        document.getElementById('canvas-container').style.display = 'block';
+        
+        runWorkout();
+    }
+
+    async function runWorkout() {
+        if(schema.length === 0) {
+            document.getElementById('workout-scherm').innerHTML = "<h1>🔥 Klaar! Je bent een beest!</h1>";
+            return;
+        }
+
+        let huidigeOefening = schema[0];
+        document.getElementById('oefening-naam').innerText = huidigeOefening.toUpperCase();
+        document.getElementById('rep-info').innerText = `Reps: 0/${doelReps}`;
+        
+        let link = (huidigeOefening === "squat") ? SQUAT_LINK : PUSHUP_LINK;
+        model = await tmPose.load(link + "model.json", link + "metadata.json");
+        
+        if(!webcam) {
+            webcam = new tmPose.Webcam(300, 300, true);
+            await webcam.setup();
+            await webcam.play();
+        }
 
         const canvas = document.getElementById("canvas");
-        canvas.width = 300; canvas.height = 300;
         ctx = canvas.getContext("2d");
-        document.getElementById("boodschap").innerText = "Succes! Ga voor de " + doel + " reps.";
+        window.requestAnimationFrame(loop);
     }
 
     async function loop() {
         webcam.update();
         await predict();
-        window.requestAnimationFrame(loop);
+        if(document.getElementById('timer').style.display === 'none') {
+            window.requestAnimationFrame(loop);
+        }
     }
 
-    // --- STAP 4: DE TELLER (HET MOEILIJKSTE DEEL) ---
     async function predict() {
         const { pose, posenetOutput } = await model.estimatePose(webcam.canvas);
-        const voorspelling = await model.predict(posenetOutput);
+        const prediction = await model.predict(posenetOutput);
 
-        // voorspelling[0] = omhoog, voorspelling[1] = omlaag
-        
-        // Ben je nu omlaag? (Meer dan 90% zeker)
-        if (voorspelling[1].probability > 0.90) {
-            status = "omlaag";
-        }
-
-        // Ben je weer omhoog EN was je hiervoor omlaag?
-        if (voorspelling[0].probability > 0.90 && status === "omlaag") {
-            status = "omhoog"; // Reset de status
-            teller++;         // Tel er 1 bij op
-            document.getElementById("getal").innerText = teller;
-
-            if (teller >= doel) {
-                alert("Gefeliciteerd! Je hebt je doel bereikt.");
-                location.reload(); // Start de app opnieuw
+        if (prediction[1].probability > 0.90) status = "omlaag";
+        if (prediction[0].probability > 0.90 && status === "omlaag") {
+            status = "omhoog";
+            teller++;
+            document.getElementById('rep-info').innerText = `Reps: ${teller}/${doelReps}`;
+            
+            if (teller >= doelReps) {
+                teller = 0;
+                handleSetComplete();
             }
         }
         ctx.drawImage(webcam.canvas, 0, 0);
     }
-</script>
 
+    function handleSetComplete() {
+        if (huidigeSet < totaalSets) {
+            huidigeSet++;
+            startRust(15, "Korte rust (set)"); // 15 sec rust tussen sets
+        } else {
+            huidigeSet = 1;
+            schema.shift(); // Verwijder de afgeronde oefening uit de lijst
+            startRust(60, "Lange rust (nieuwe oefening)"); // 60 sec rust tussen oefeningen
+        }
+    }
+
+    function startRust(seconden, type) {
+        document.getElementById('canvas-container').style.display = 'none';
+        document.getElementById('timer').style.display = 'block';
+        document.getElementById('coach-status').innerText = type;
+        
+        let timeLeft = seconden;
+        let interval = setInterval(() => {
+            document.getElementById('timer').innerText = timeLeft;
+            timeLeft--;
+            if(timeLeft < 0) {
+                clearInterval(interval);
+                document.getElementById('timer').style.display = 'none';
+                document.getElementById('canvas-container').style.display = 'block';
+                document.getElementById('set-info').innerText = `Set ${huidigeSet}/${totaalSets}`;
+                runWorkout();
+            }
+        }, 1000);
+    }
+</script>
 </body>
 </html>
