@@ -3,177 +3,183 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>⚡ Smart-Fitness AI ⚡</title>
-
+    <title> Smart-Fitness AI </title>
     <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@1.3.1/dist/tf.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@teachablemachine/pose@0.8/dist/teachablemachine-pose.min.js"></script>
-
+    
     <style>
-        :root { --neon:#00f2ff; --pink:#ff007f; --bg:#0a0a0c; --card:#16161a; }
-        body { font-family: Orbitron, sans-serif; background:var(--bg); color:white; margin:0; }
-        .app-container { min-height:100vh; display:flex; justify-content:center; align-items:center; padding:20px; }
-        .glass-card { background:var(--card); border:2px solid var(--neon); box-shadow:0 0 20px rgba(0,242,255,.3); border-radius:20px; padding:25px; width:100%; max-width:450px; text-align:center; }
-        h1 { color:var(--neon); letter-spacing:3px; text-shadow:0 0 10px var(--neon); }
+        :root { --neon: #00f2ff; --pink: #ff007f; --bg: #0a0a0c; --card: #16161a; }
+        body { font-family: 'Orbitron', sans-serif; background: var(--bg); color: white; margin: 0; overflow-x: hidden; }
+        .app-container { min-height: 100vh; display: flex; flex-direction: column; align-items: center; padding: 20px; }
+        
+        /* High-tech styling */
+        .glass-card { background: var(--card); border: 2px solid var(--neon); box-shadow: 0 0 20px rgba(0, 242, 255, 0.2); border-radius: 20px; padding: 25px; width: 100%; max-width: 450px; text-align: center; }
+        h1 { text-transform: uppercase; letter-spacing: 3px; color: var(--neon); text-shadow: 0 0 10px var(--neon); }
+        
+        /* De Cirkel Timer */
+        .timer-circle { position: relative; width: 150px; height: 150px; margin: 20px auto; display: none; }
+        .timer-circle svg { transform: rotate(-90deg); width: 150px; height: 150px; }
+        .timer-circle circle { fill: none; stroke-width: 10; stroke: var(--pink); stroke-dasharray: 440; stroke-dashoffset: 0; transition: stroke-dashoffset 1s linear; }
+        #timer-text { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); font-size: 40px; font-weight: bold; color: var(--pink); }
 
-        .stats-grid { display:grid; grid-template-columns:1fr 1fr; gap:10px; margin:20px 0; }
-        .stat-item { background:rgba(255,255,255,.05); padding:15px; border-radius:10px; border-bottom:3px solid var(--neon); }
-        .stat-value { font-size:28px; font-weight:bold; transition:.15s; }
+        /* Camera Box */
+        #video-box { position: relative; width: 100%; border-radius: 15px; border: 3px solid #333; overflow: hidden; display: none; margin-top: 20px; }
+        #video-box.active { border-color: var(--neon); box-shadow: 0 0 30px var(--neon); }
+        canvas { width: 100%; height: auto; transform: scaleX(-1); }
 
-        button {
-            width:100%; margin-top:12px; padding:14px;
-            background:linear-gradient(45deg,var(--neon),#0066ff);
-            color:white; border:none; border-radius:10px;
-            font-weight:bold; cursor:pointer;
-        }
-        button:hover { box-shadow:0 0 15px var(--neon); }
-
-        #video-box { display:none; border:3px solid var(--neon); border-radius:15px; overflow:hidden; }
-        canvas { width:100%; transform:scaleX(-1); }
-
-        .step { display:none; }
-        .step.active { display:block; }
+        /* Stats */
+        .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 20px 0; }
+        .stat-item { background: rgba(255,255,255,0.05); padding: 15px; border-radius: 10px; border-bottom: 3px solid var(--neon); }
+        .stat-value { font-size: 24px; font-weight: bold; display: block; }
+        
+        button { background: linear-gradient(45deg, var(--neon), #0066ff); color: white; border: none; padding: 15px; border-radius: 10px; font-weight: bold; cursor: pointer; text-transform: uppercase; width: 100%; margin-top: 15px; transition: 0.3s; }
+        button:hover { transform: scale(1.02); box-shadow: 0 0 15px var(--neon); }
+        
+        .step { display: none; }
+        .step.active { display: block; animation: fadeIn 0.5s ease; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
     </style>
 </head>
-
 <body>
+
 <div class="app-container">
-<div class="glass-card">
+    <div class="glass-card">
+        <div id="setup">
+            <h1>CYBER-PUMP</h1>
+            <div class="step active" id="s1">
+                <p>Hoeveel dagen per week ga je knallen?</p>
+                <button onclick="goStep(1, 2)">3 Dagen</button>
+                <button onclick="goStep(1, 2)">5 Dagen</button>
+                <button onclick="goStep(1, 2)">ELKE DAG</button>
+            </div>
+            <div class="step" id="s2">
+                <p>Kies je wapen (oefening):</p>
+                <button onclick="setEx('squat')">SQUATS (Legs)</button>
+                <button onclick="setEx('pushup')">PUSHUPS (Chest)</button>
+            </div>
+            <div class="step" id="s3">
+                <p>Niveau Selectie:</p>
+                <button onclick="startWorkout(5)">RECRUIT (5 reps)</button>
+                <button onclick="startWorkout(12)">WARRIOR (12 reps)</button>
+                <button onclick="startWorkout(25)">ELITE (25 reps)</button>
+            </div>
+        </div>
 
-<h1>CYBER-PUMP</h1>
+        <div id="workout" style="display:none;">
+            <h2 id="ex-name">INITIALIZING...</h2>
+            
+            <div class="timer-circle" id="timer-ui">
+                <svg><circle cx="75" cy="75" r="70"></circle></svg>
+                <div id="timer-text">30</div>
+            </div>
 
-<div id="setup">
-    <div class="step active" id="s1">
-        <p>Kies oefening</p>
-        <button onclick="setEx('squat')">SQUATS</button>
-        <button onclick="setEx('pushup')">PUSHUPS</button>
+            <div class="stats-grid">
+                <div class="stat-item"><span>SET</span><span id="set-val" class="stat-value">1/3</span></div>
+                <div class="stat-item"><span>REPS</span><span id="rep-val" class="stat-value">0</span></div>
+            </div>
+
+            <div id="video-box">
+                <canvas id="canvas"></canvas>
+            </div>
+            <p id="status-msg" style="color: var(--neon); margin-top: 15px;">Camera laden...</p>
+        </div>
     </div>
-    <div class="step" id="s2">
-        <p>Kies niveau</p>
-        <button onclick="startWorkout(10)">10 REPS</button>
-        <button onclick="startWorkout(20)">20 REPS</button>
-    </div>
-</div>
-
-<div id="workout" style="display:none;">
-    <h2 id="ex-name"></h2>
-
-    <div class="stats-grid">
-        <div class="stat-item">SET<br><span id="set-val" class="stat-value">1/3</span></div>
-        <div class="stat-item">REPS<br><span id="rep-val" class="stat-value">0</span></div>
-    </div>
-
-    <div id="video-box">
-        <canvas id="canvas"></canvas>
-    </div>
-
-    <p id="status-msg">Camera laden…</p>
-</div>
-
-</div>
 </div>
 
 <script>
-/* ===== MODEL LINKS ===== */
-const LINKS = {
-    squat: "JOUW_SQUAT_LINK/",
-    pushup: "JOUW_PUSHUP_LINK/"
-};
+    // --- PLAK HIER JE LINKS ---
+    const LINKS = {
+        squat: "https://teachablemachine.withgoogle.com/models/h7p-JBDaq/",
+        pushup: "https://teachablemachine.withgoogle.com/models/nUrbOTVH6/"
+    };
 
-/* ===== STATE ===== */
-let model, webcam, ctx;
-let gekozenOefening = "";
-let teller = 0, doel = 0;
-let set = 1, maxSets = 3;
-let status = "up";
+    let model, webcam, ctx, teller = 0, status = "up", doel = 0;
+    let set = 1, maxSets = 3, gekozenOefening = "";
 
-/* ===== PRO REP COUNTING ===== */
-let lastRepTime = 0;
-const REP_COOLDOWN = 700;
-let buffer = [];
-const BUFFER_SIZE = 5;
-
-/* ===== UI ===== */
-function setEx(ex) {
-    gekozenOefening = ex;
-    document.getElementById('s1').classList.remove('active');
-    document.getElementById('s2').classList.add('active');
-}
-
-function smooth(v) {
-    buffer.push(v);
-    if (buffer.length > BUFFER_SIZE) buffer.shift();
-    return buffer.reduce((a,b)=>a+b,0) / buffer.length;
-}
-
-function pulse() {
-    const el = document.getElementById('rep-val');
-    el.style.transform = "scale(1.3)";
-    setTimeout(()=>el.style.transform="scale(1)",150);
-}
-
-/* ===== START ===== */
-async function startWorkout(reps) {
-    doel = reps;
-    document.getElementById('setup').style.display="none";
-    document.getElementById('workout').style.display="block";
-    document.getElementById('ex-name').innerText = gekozenOefening.toUpperCase();
-
-    model = await tmPose.load(
-        LINKS[gekozenOefening]+"model.json",
-        LINKS[gekozenOefening]+"metadata.json"
-    );
-
-    webcam = new tmPose.Webcam(300,300,true);
-    await webcam.setup();
-    await webcam.play();
-
-    const canvas = document.getElementById("canvas");
-    canvas.width = 300; canvas.height = 300;
-    ctx = canvas.getContext("2d");
-
-    document.getElementById('video-box').style.display="block";
-    document.getElementById('status-msg').innerText="GO!";
-
-    requestAnimationFrame(loop);
-}
-
-async function loop() {
-    webcam.update();
-    await predict();
-    requestAnimationFrame(loop);
-}
-
-/* ===== AI LOGIC ===== */
-async function predict() {
-    const { posenetOutput } = await model.estimatePose(webcam.canvas);
-    const p = await model.predict(posenetOutput);
-
-    const up = smooth(p[0].probability);
-    const down = smooth(p[1].probability);
-    const now = Date.now();
-
-    if (down > 0.85 && status === "up") status = "down";
-
-    if (up > 0.85 && status === "down" && now-lastRepTime>REP_COOLDOWN) {
-        status = "up";
-        lastRepTime = now;
-        teller++;
-        pulse();
-        document.getElementById('rep-val').innerText = teller;
-
-        if (teller >= doel) {
-            teller = 0;
-            set++;
-            if (set > maxSets) {
-                alert("MISSIE VOLBRACHT 💪");
-                location.reload();
-            }
-            document.getElementById('set-val').innerText = `${set}/${maxSets}`;
-        }
+    function goStep(from, to) {
+        document.getElementById('s'+from).classList.remove('active');
+        document.getElementById('s'+to).classList.add('active');
     }
 
-    ctx.drawImage(webcam.canvas,0,0);
-}
+    function setEx(ex) {
+        gekozenOefening = ex;
+        goStep(2, 3);
+    }
+
+    async function startWorkout(reps) {
+        doel = reps;
+        document.getElementById('setup').style.display = 'none';
+        document.getElementById('workout').style.display = 'block';
+        document.getElementById('ex-name').innerText = gekozenOefening;
+
+        const link = LINKS[gekozenOefening];
+        model = await tmPose.load(link + "model.json", link + "metadata.json");
+        
+        webcam = new tmPose.Webcam(300, 300, true);
+        await webcam.setup();
+        await webcam.play();
+        
+        document.getElementById('video-box').style.display = 'block';
+        document.getElementById('video-box').classList.add('active');
+        document.getElementById('status-msg').innerText = "SYSTEMS ONLINE. GO!";
+        
+        const canvas = document.getElementById("canvas");
+        canvas.width = 300; canvas.height = 300;
+        ctx = canvas.getContext("2d");
+        window.requestAnimationFrame(loop);
+    }
+
+    async function loop() {
+        webcam.update();
+        await predict();
+        window.requestAnimationFrame(loop);
+    }
+
+    async function predict() {
+        const { pose, posenetOutput } = await model.estimatePose(webcam.canvas);
+        const prediction = await model.predict(posenetOutput);
+
+        if (prediction[1].probability > 0.90) status = "down";
+        if (prediction[0].probability > 0.90 && status === "down") {
+            status = "up";
+            teller++;
+            document.getElementById('rep-val').innerText = `${teller}/${doel}`;
+            
+            if(teller >= doel) {
+                teller = 0;
+                handleRest();
+            }
+        }
+        ctx.drawImage(webcam.canvas, 0, 0);
+    }
+
+    function handleRest() {
+        if(set >= maxSets) {
+            alert("MISSIE VOLBRACHT! JE BENT EEN LEGENDE.");
+            location.reload();
+            return;
+        }
+        
+        set++;
+        document.getElementById('video-box').style.display = 'none';
+        document.getElementById('timer-ui').style.display = 'block';
+        let timeLeft = 15;
+        const circle = document.querySelector('circle');
+
+        let countdown = setInterval(() => {
+            timeLeft--;
+            document.getElementById('timer-text').innerText = timeLeft;
+            circle.style.strokeDashoffset = 440 - (440 * (15 - timeLeft) / 15);
+
+            if(timeLeft <= 0) {
+                clearInterval(countdown);
+                document.getElementById('timer-ui').style.display = 'none';
+                document.getElementById('video-box').style.display = 'block';
+                document.getElementById('set-val').innerText = `${set}/${maxSets}`;
+                document.getElementById('rep-val').innerText = `0/${doel}`;
+            }
+        }, 1000);
+    }
 </script>
 </body>
 </html>
