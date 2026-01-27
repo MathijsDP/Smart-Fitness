@@ -1,82 +1,80 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Mijn Fitness Project</title>
+    <title>Fitness App Project</title>
     <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@1.3.1/dist/tf.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@teachablemachine/pose@0.8/dist/teachablemachine-pose.min.js"></script>
-
     <style>
-        /* Hier maken we het een beetje mooi (CSS) */
-        body { font-family: sans-serif; text-align: center; background-color: #f4f4f4; padding: 20px; }
-        .container { background: white; padding: 20px; border-radius: 15px; max-width: 500px; margin: auto; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
-        button { background-color: #28a745; color: white; border: none; padding: 15px 30px; font-size: 18px; border-radius: 10px; cursor: pointer; }
-        select { padding: 10px; width: 80%; margin: 10px 0; border-radius: 5px; }
-        canvas { border-radius: 10px; margin-top: 20px; background-color: #eee; width: 100%; height: auto; }
-        #count { font-size: 60px; color: #007bff; margin: 10px 0; }
+        body { font-family: sans-serif; text-align: center; background: #eee; padding: 20px; }
+        .box { background: white; padding: 20px; border-radius: 20px; max-width: 400px; margin: auto; }
+        button { background: #28a745; color: white; border: none; padding: 15px; border-radius: 10px; cursor: pointer; width: 100%; font-size: 18px; }
+        #getal { font-size: 80px; color: blue; font-weight: bold; }
+        canvas { width: 100%; border-radius: 10px; }
     </style>
 </head>
 <body>
 
-<div class="container">
+<div class="box">
     <h1>Fitness Coach AI</h1>
 
-    <div id="setup-scherm">
-        <h3>Stap 1: Jouw Plan</h3>
-        <p>Hoe fit ben je?</p>
-        <select id="niveauKeuze">
-            <option value="5">Beginner (5 reps)</option>
-            <option value="10">Gemiddeld (10 reps)</option>
-            <option value="20">Expert (20 reps)</option>
+    <div id="vragenlijst">
+        <p>Wat gaan we doen?</p>
+        <select id="welkeOefening" style="width:100%; padding:10px; margin-bottom:10px;">
+            <option value="squat">Squats (Benen)</option>
+            <option value="pushup">Push-ups (Borst)</option>
         </select>
 
-        <p>Welke oefening gaan we doen?</p>
-        <select id="oefeningKeuze">
-            <option value="squat">Squats</option>
+        <p>Hoeveel reps is je doel?</p>
+        <select id="hoeveelReps" style="width:100%; padding:10px; margin-bottom:20px;">
+            <option value="5">Beginner (5)</option>
+            <option value="10">Gemiddeld (10)</option>
+            <option value="20">Expert (20)</option>
         </select>
-        
-        <br><br>
-        <button onclick="startTraining()">START TRAINING</button>
+
+        <button onclick="start()">START TRAINING</button>
     </div>
 
-    <div id="training-scherm" style="display:none;">
-        <h2 id="oefening-titel">Squats</h2>
-        <div id="count">0</div>
-        <p id="status">Camera laden...</p>
+    <div id="sportveld" style="display:none;">
+        <h2 id="titel">Bezig...</h2>
+        <div id="getal">0</div>
+        <p id="boodschap">Camera wordt geladen...</p>
         <canvas id="canvas"></canvas>
     </div>
 </div>
 
 <script>
-    /* ZONE 3: De techniek (JavaScript) */
+    // --- STAP 1: PLAK HIER JE LINKS ---
+    const SQUAT_LINK = "https://teachablemachine.withgoogle.com/models/h7p-JBDaq/"; 
+    const PUSHUP_LINK = "https://teachablemachine.withgoogle.com/models/nUrbOTVH6/"; 
 
-    // VERVANG DIT DOOR JOUW EIGEN LINK!
-    const URL = "https://teachablemachine.withgoogle.com/models/h7p-JBDaq/";
+    // --- STAP 2: DE VARIABELEN (Dingen die we moeten onthouden) ---
+    let model, webcam, ctx, teller = 0, status = "omhoog", doel = 0;
 
-    let model, webcam, ctx, count = 0, status = "omhoog", doelAantal = 0;
+    // --- STAP 3: DE START FUNCTIE ---
+    async function start() {
+        // Welke oefening is gekozen?
+        const keuze = document.getElementById("welkeOefening").value;
+        doel = document.getElementById("hoeveelReps").value;
 
-    async function startTraining() {
-        // 1. Pak het aantal reps op basis van de keuze
-        doelAantal = document.getElementById("niveauKeuze").value;
-        
-        // 2. Wissel van scherm
-        document.getElementById("setup-scherm").style.display = "none";
-        document.getElementById("training-scherm").style.display = "block";
-        
-        // 3. Start de camera en AI
-        const modelURL = URL + "model.json";
-        const metadataURL = URL + "metadata.json";
-        model = await tmPose.load(modelURL, metadataURL);
-        
-        const size = 300;
-        webcam = new tmPose.Webcam(size, size, true); 
+        // Kies de juiste link
+        let deLink = (keuze === "squat") ? SQUAT_LINK : PUSHUP_LINK;
+        document.getElementById("titel").innerText = keuze.toUpperCase();
+
+        // Wissel scherm
+        document.getElementById("vragenlijst").style.display = "none";
+        document.getElementById("sportveld").style.display = "block";
+
+        // Laad AI en Camera
+        model = await tmPose.load(deLink + "model.json", deLink + "metadata.json");
+        webcam = new tmPose.Webcam(300, 300, true);
         await webcam.setup();
         await webcam.play();
         window.requestAnimationFrame(loop);
 
         const canvas = document.getElementById("canvas");
-        canvas.width = size; canvas.height = size;
+        canvas.width = 300; canvas.height = 300;
         ctx = canvas.getContext("2d");
-        document.getElementById("status").innerText = "Doel: " + doelAantal + " reps. Zet hem op!";
+        document.getElementById("boodschap").innerText = "Succes! Ga voor de " + doel + " reps.";
     }
 
     async function loop() {
@@ -85,36 +83,30 @@
         window.requestAnimationFrame(loop);
     }
 
+    // --- STAP 4: DE TELLER (HET MOEILIJKSTE DEEL) ---
     async function predict() {
         const { pose, posenetOutput } = await model.estimatePose(webcam.canvas);
-        const prediction = await model.predict(posenetOutput);
+        const voorspelling = await model.predict(posenetOutput);
 
-        // De logica voor het tellen
-        if (prediction[1].probability > 0.85) { // Omlaag
+        // voorspelling[0] = omhoog, voorspelling[1] = omlaag
+        
+        // Ben je nu omlaag? (Meer dan 90% zeker)
+        if (voorspelling[1].probability > 0.90) {
             status = "omlaag";
         }
 
-        if (prediction[0].probability > 0.85 && status === "omlaag") { // Weer omhoog
-            status = "omhoog";
-            count++;
-            document.getElementById("count").innerText = count;
+        // Ben je weer omhoog EN was je hiervoor omlaag?
+        if (voorspelling[0].probability > 0.90 && status === "omlaag") {
+            status = "omhoog"; // Reset de status
+            teller++;         // Tel er 1 bij op
+            document.getElementById("getal").innerText = teller;
 
-            // Check of we klaar zijn
-            if (count >= doelAantal) {
-                klaar();
+            if (teller >= doel) {
+                alert("Gefeliciteerd! Je hebt je doel bereikt.");
+                location.reload(); // Start de app opnieuw
             }
         }
         ctx.drawImage(webcam.canvas, 0, 0);
-    }
-
-    function klaar() {
-        webcam.stop();
-        document.getElementById("training-scherm").innerHTML = `
-            <h2 style="color: green;">🏆 Doel bereikt!</h2>
-            <p>Je hebt ${count} reps gedaan.</p>
-            <p><strong>Coach advies:</strong> Je bent goed bezig! Probeer morgen je doel met 2 reps te verhogen.</p>
-            <button onclick="location.reload()">Nieuwe Training</button>
-        `;
     }
 </script>
 
