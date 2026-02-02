@@ -1,125 +1,3 @@
-<!DOCTYPE html>
-<html lang="nl">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>SmartFitness Pro</title>
-
-<script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.6.0/dist/tf.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/@teachablemachine/pose@0.8/dist/teachablemachine-pose.min.js"></script>
-
-<style>
-body{
-    margin:0;
-    font-family:Inter, sans-serif;
-    background:#0f172a;
-    color:white;
-}
-.app{
-    max-width:500px;
-    margin:auto;
-    min-height:100vh;
-    padding-bottom:80px;
-}
-.header{
-    padding:20px;
-    font-size:22px;
-    font-weight:600;
-}
-.card{
-    background:#1e293b;
-    margin:15px;
-    padding:20px;
-    border-radius:20px;
-}
-.button{
-    width:100%;
-    padding:14px;
-    margin-top:10px;
-    border:none;
-    border-radius:12px;
-    background:linear-gradient(45deg,#00e0ff,#0077ff);
-    color:white;
-    font-weight:bold;
-    cursor:pointer;
-}
-.hidden{display:none;}
-.bottom-nav{
-    position:fixed;
-    bottom:0;
-    width:100%;
-    max-width:500px;
-    display:flex;
-    background:#0b1220;
-    border-top:1px solid #1f263d;
-}
-.nav-item{
-    flex:1;
-    padding:15px;
-    text-align:center;
-    font-size:14px;
-    cursor:pointer;
-    color:#777;
-}
-.nav-item.active{
-    color:#00e0ff;
-}
-canvas{
-    width:100%;
-    border-radius:15px;
-    transform:scaleX(-1);
-}
-</style>
-</head>
-
-<body>
-
-<div class="app">
-
-<!-- ONBOARDING -->
-<div id="onboarding">
-    <div class="header">Welkom 👋</div>
-    <div class="card" id="questionBox"></div>
-</div>
-
-<!-- HOME -->
-<div id="home" class="hidden">
-    <div class="header">Home</div>
-    <div class="card" id="todayWorkout"></div>
-</div>
-
-<!-- WORKOUTS -->
-<div id="workouts" class="hidden">
-    <div class="header">Workouts</div>
-    <div class="card">
-        <button class="button" onclick="startWorkout()">Start Vandaag's Workout</button>
-    </div>
-</div>
-
-<!-- HISTORY -->
-<div id="history" class="hidden">
-    <div class="header">History</div>
-    <div id="historyList"></div>
-</div>
-
-<!-- WORKOUT SCREEN -->
-<div id="workoutScreen" class="hidden">
-    <div class="header" id="exerciseTitle"></div>
-    <div class="card">
-        <div id="repCounter">0</div>
-        <canvas id="canvas"></canvas>
-        <button class="button" onclick="stopWorkout()">Stop</button>
-    </div>
-</div>
-
-</div>
-
-<div class="bottom-nav">
-    <div class="nav-item active" onclick="switchTab('home',0)">Home</div>
-    <div class="nav-item" onclick="switchTab('workouts',1)">Workouts</div>
-    <div class="nav-item" onclick="switchTab('history',2)">History</div>
-</div>
-
 <script>
 const LINKS={
     legs:"https://teachablemachine.withgoogle.com/models/Nv8j7aUsi/",
@@ -148,7 +26,9 @@ const questions=[
     }
 ];
 
-init();
+window.onload = function(){
+    init();
+}
 
 function init(){
     const saved=localStorage.getItem("fitnessUser");
@@ -161,6 +41,9 @@ function init(){
 }
 
 function showQuestion(){
+    document.getElementById("onboarding").classList.remove("hidden");
+    document.getElementById("home").classList.add("hidden");
+
     const q=questions[questionStep];
     let html=`<h3>${q.question}</h3>`;
     q.options.forEach(opt=>{
@@ -174,6 +57,7 @@ function answer(value){
     if(questionStep===1) userData.level=value;
 
     questionStep++;
+
     if(questionStep<questions.length){
         showQuestion();
     }else{
@@ -195,21 +79,10 @@ function showHome(){
          <button class="button" onclick="startWorkout()">Start</button>`;
 }
 
-function switchTab(tab,index){
-    document.querySelectorAll(".nav-item").forEach(n=>n.classList.remove("active"));
-    document.querySelectorAll(".app > div").forEach(d=>d.classList.add("hidden"));
-
-    document.getElementById(tab).classList.remove("hidden");
-    document.querySelectorAll(".nav-item")[index].classList.add("active");
-
-    if(tab==="history") loadHistory();
-}
-
 async function startWorkout(){
 
-    document.getElementById("workoutScreen").classList.remove("hidden");
     document.getElementById("home").classList.add("hidden");
-    document.getElementById("workouts").classList.add("hidden");
+    document.getElementById("workoutScreen").classList.remove("hidden");
 
     document.getElementById("exerciseTitle").innerText=
         userData.goal==="legs"?"Squats":"Push-ups";
@@ -263,7 +136,6 @@ async function predict(){
         document.getElementById("repCounter").innerText=`${reps}/${target}`;
 
         if(reps>=target){
-            saveWorkout();
             stopWorkout();
         }
     }
@@ -276,35 +148,4 @@ function stopWorkout(){
     document.getElementById("workoutScreen").classList.add("hidden");
     showHome();
 }
-
-function saveWorkout(){
-    let history=JSON.parse(localStorage.getItem("history")||"[]");
-    history.push({
-        date:new Date().toLocaleDateString(),
-        reps:target,
-        focus:userData.goal
-    });
-    localStorage.setItem("history",JSON.stringify(history));
-}
-
-function loadHistory(){
-    let history=JSON.parse(localStorage.getItem("history")||"[]");
-    let html="";
-    history.reverse().forEach(h=>{
-        html+=`<div class="card">
-                <b>${h.date}</b><br>
-                ${h.focus} - ${h.reps} reps
-               </div>`;
-    });
-    document.getElementById("historyList").innerHTML=html;
-}
 </script>
-
-</body>
-</html>
-
-}
-</script>
-
-</body>
-</html>
