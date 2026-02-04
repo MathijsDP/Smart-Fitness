@@ -3,25 +3,43 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>SmartFitness Pro</title>
+    <title>SmartFitness Premium</title>
 
     <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@1.3.1/dist/tf.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@teachablemachine/pose@0.8/dist/teachablemachine-pose.min.js"></script>
 
     <style>
-        body { margin: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #0f172a; color: white; overflow-x: hidden; }
-        .app { max-width: 500px; margin: auto; min-height: 100vh; padding-bottom: 80px; }
-        .header { padding: 30px 20px 10px; font-size: 26px; font-weight: bold; background: linear-gradient(to bottom, #1e293b, transparent); }
-        .card { background: #1e293b; margin: 15px; padding: 25px; border-radius: 25px; box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3); }
-        .button { width: 100%; padding: 16px; margin-top: 12px; border: none; border-radius: 15px; background: linear-gradient(45deg, #00e0ff, #0077ff); color: white; font-weight: bold; font-size: 16px; cursor: pointer; transition: transform 0.2s; }
-        .button:active { transform: scale(0.98); }
+        :root { --primary: #00e0ff; --bg: #0f172a; --card: #1e293b; --text: #f8fafc; }
+        body { margin: 0; font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); -webkit-font-smoothing: antialiased; }
+        
+        /* App Container */
+        .app { max-width: 500px; margin: auto; min-height: 100vh; display: flex; flex-direction: column; padding-bottom: 90px; }
+        
+        /* Headers & Kaarten */
+        .header { padding: 40px 20px 20px; font-size: 28px; font-weight: 800; letter-spacing: -0.5px; }
+        .card { background: var(--card); margin: 12px 16px; padding: 24px; border-radius: 28px; box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.2); }
+        
+        /* Knoppen */
+        .button { width: 100%; padding: 18px; margin-top: 12px; border: none; border-radius: 20px; background: linear-gradient(135deg, var(--primary), #0066ff); color: white; font-weight: 700; font-size: 16px; cursor: pointer; transition: 0.2s; box-shadow: 0 10px 15px -3px rgba(0, 224, 255, 0.3); }
+        .button:active { transform: scale(0.96); }
+        .secondary-btn { background: #334155; box-shadow: none; margin-top: 20px; }
+
+        /* Progress Bar */
+        .progress-container { height: 6px; background: #334155; margin: 0 20px; border-radius: 10px; overflow: hidden; }
+        .progress-bar { height: 100%; background: var(--primary); width: 0%; transition: 0.5s; }
+
+        /* Navigatie */
+        .bottom-nav { position: fixed; bottom: 0; width: 100%; max-width: 500px; display: flex; background: rgba(15, 23, 42, 0.95); backdrop-filter: blur(10px); border-top: 1px solid #1e293b; z-index: 100; padding: 10px 0 25px; }
+        .nav-item { flex: 1; text-align: center; cursor: pointer; color: #64748b; font-size: 12px; font-weight: 600; }
+        .nav-item.active { color: var(--primary); }
+        .nav-icon { font-size: 22px; display: block; margin-bottom: 4px; }
+
+        /* Workout UI */
+        #repCounter { font-size: 72px; font-weight: 900; color: var(--primary); text-align: center; margin: 10px 0; }
+        .canvas-wrapper { position: relative; width: 100%; border-radius: 24px; overflow: hidden; background: #000; line-height: 0; border: 2px solid #334155; }
+        canvas { width: 100%; height: auto; transform: scaleX(-1); }
+        
         .hidden { display: none; }
-        .bottom-nav { position: fixed; bottom: 0; width: 100%; max-width: 500px; display: flex; background: #0b1220; border-top: 1px solid #1f263d; z-index: 100; }
-        .nav-item { flex: 1; padding: 20px; text-align: center; cursor: pointer; color: #64748b; font-weight: bold; }
-        .nav-item.active { color: #00e0ff; }
-        #repCounter { font-size: 60px; margin: 10px 0; color: #00e0ff; text-align: center; }
-        canvas { width: 100%; border-radius: 20px; background: #000; transform: scaleX(-1); }
-        .status-badge { display: inline-block; padding: 5px 12px; border-radius: 20px; background: rgba(0, 224, 255, 0.1); color: #00e0ff; font-size: 12px; margin-bottom: 10px; }
     </style>
 </head>
 
@@ -29,40 +47,52 @@
 
 <div class="app">
     <div id="onboarding">
-        <div class="header">Setup ⚡</div>
+        <div class="header">Stel je doel in ⚡</div>
+        <div class="progress-container"><div class="progress-bar" id="pBar"></div></div>
         <div class="card">
             <div id="questionBox"></div>
         </div>
     </div>
 
     <div id="home" class="hidden">
-        <div class="header">Jouw Plan</div>
+        <div class="header">Dashboard</div>
         <div class="card" id="todayWorkout"></div>
+        <div class="card" style="background: linear-gradient(135deg, #1e293b, #0f172a);">
+            <h4 style="margin:0 0 10px 0; color: #94a3b8;">STREAK</h4>
+            <div style="font-size: 24px; font-weight: bold;">🔥 1 Dag</div>
+        </div>
     </div>
 
     <div id="workoutScreen" class="hidden">
         <div class="header" id="exerciseTitle">Training</div>
         <div class="card">
             <div id="repCounter">0</div>
-            <div id="status-msg" style="text-align: center; color: #64748b; margin-bottom: 10px;">Laden...</div>
-            <canvas id="canvas"></canvas>
-            <button class="button" style="background: #ef4444;" onclick="stopWorkout()">Stop Training</button>
+            <div id="status-msg" style="text-align: center; color: #94a3b8; margin-bottom: 15px; font-weight: 600;">Initialiseren...</div>
+            <div class="canvas-wrapper">
+                <canvas id="canvas"></canvas>
+            </div>
+            <button class="button" style="background: #ef4444; margin-top: 25px;" onclick="stopWorkout()">Stop Training</button>
         </div>
     </div>
 
     <div id="history" class="hidden">
         <div class="header">Geschiedenis</div>
         <div id="historyList"></div>
-        <button class="button" style="margin: 20px; width: calc(100% - 40px); background: #334155;" onclick="resetUser()">Reset Plan (Vragen opnieuw)</button>
+        <button class="button secondary-btn" onclick="resetUser()">Reset Plan & Vragen</button>
     </div>
 </div>
 
-<div class="bottom-nav">
-    <div class="nav-item active" id="nav-home" onclick="switchTab('home')">Home</div>
-    <div class="nav-item" id="nav-history" onclick="switchTab('history')">History</div>
+<div class="bottom-nav" id="mainNav" style="display:none;">
+    <div class="nav-item active" id="nav-home" onclick="switchTab('home')">
+        <span class="nav-icon">🏠</span>Home
+    </div>
+    <div class="nav-item" id="nav-history" onclick="switchTab('history')">
+        <span class="nav-icon">📊</span>History
+    </div>
 </div>
 
 <script>
+// LINKS NAAR JOUW MODELLEN
 const LINKS = {
     legs: "https://teachablemachine.withgoogle.com/models/Nv8j7aUsi/",
     chest: "https://teachablemachine.withgoogle.com/models/VyHCtMsZf/"
@@ -71,20 +101,19 @@ const LINKS = {
 let userData = {};
 let questionStep = 0;
 let model, webcam, ctx, animationId;
-let reps = 0, target = 0, status = "up";
+let reps = 0, target = 0, currentStatus = "up";
 
 const questions = [
     {
-        question: "Wat gaan we vandaag aanpakken?",
+        question: "Welke spiergroep gaan we trainen?",
         options: [{text: "Benen (Squats)", value: "legs"}, {text: "Borst (Push-ups)", value: "chest"}]
     },
     {
-        question: "Hoe zwaar moet het zijn?",
-        options: [{text: "Beginner (8 reps)", value: "beginner"}, {text: "Beest (25 reps)", value: "advanced"}]
+        question: "Wat is je ervaringsniveau?",
+        options: [{text: "Beginner", value: "beginner"}, {text: "Gevorderd", value: "advanced"}]
     }
 ];
 
-// Start de app
 init();
 
 function init() {
@@ -99,7 +128,8 @@ function init() {
 
 function showQuestion() {
     const q = questions[questionStep];
-    let html = `<h3>${q.question}</h3>`;
+    document.getElementById("pBar").style.width = ((questionStep) / questions.length * 100) + "%";
+    let html = `<h3 style="margin-top:0">${q.question}</h3>`;
     q.options.forEach(opt => {
         html += `<button class="button" onclick="answer('${opt.value}')">${opt.text}</button>`;
     });
@@ -123,24 +153,27 @@ function showHome() {
     hideAll();
     document.getElementById("home").classList.remove("hidden");
     document.getElementById("onboarding").classList.add("hidden");
+    document.getElementById("mainNav").style.display = "flex";
     
-    target = userData.level === "beginner" ? 8 : 25;
-    const goalText = userData.goal === "legs" ? "Benen" : "Borst";
+    target = userData.level === "beginner" ? 10 : 25;
+    const goalText = userData.goal === "legs" ? "Lower Body" : "Upper Body";
 
     document.getElementById("todayWorkout").innerHTML = `
-        <div class="status-badge">DAGELIJKS DOEL</div>
-        <h3>${goalText} Vernietigen</h3>
-        <p style="color: #94a3b8">Klaar om de AI te laten zien wat je kunt?</p>
-        <div style="font-size: 20px; margin: 20px 0;">🎯 Doel: <b>${target} herhalingen</b></div>
-        <button class="button" onclick="startWorkout()">START CAMERA</button>
+        <h3 style="margin:0">${goalText} Workout</h3>
+        <p style="color: #94a3b8; margin: 10px 0 20px 0;">Vandaag richten we ons op kracht en uithoudingsvermogen.</p>
+        <div style="display:flex; justify-content: space-between; align-items:center;">
+            <div>
+                <span style="display:block; font-size:12px; color:#94a3b8; font-weight:700;">DOEL</span>
+                <span style="font-size:24px; font-weight:800; color:var(--primary);">${target} Reps</span>
+            </div>
+            <button class="button" style="width:140px; margin:0;" onclick="startWorkout()">START</button>
+        </div>
     `;
 }
 
 function switchTab(tab) {
     document.querySelectorAll(".nav-item").forEach(n => n.classList.remove("active"));
-    if(tab === 'home') document.getElementById('nav-home').classList.add('active');
-    if(tab === 'history') document.getElementById('nav-history').classList.add('active');
-    
+    document.getElementById('nav-' + tab).classList.add('active');
     hideAll();
     document.getElementById(tab).classList.remove("hidden");
     if (tab === "history") loadHistory();
@@ -154,12 +187,13 @@ function hideAll() {
 
 async function startWorkout() {
     hideAll();
+    document.getElementById("mainNav").style.display = "none";
     document.getElementById("workoutScreen").classList.remove("hidden");
-    document.getElementById("exerciseTitle").innerText = userData.goal === "legs" ? "Squats" : "Push-ups";
+    document.getElementById("exerciseTitle").innerText = userData.goal === "legs" ? "Squat Session" : "Push-up Session";
     
     reps = 0;
-    document.getElementById("repCounter").innerText = `0 / ${target}`;
-    document.getElementById("status-msg").innerText = "Model laden...";
+    document.getElementById("repCounter").innerText = "0";
+    document.getElementById("status-msg").innerText = "Camera voorbereiden...";
 
     try {
         const link = LINKS[userData.goal];
@@ -173,10 +207,10 @@ async function startWorkout() {
         canvas.width = 300; canvas.height = 300;
         ctx = canvas.getContext("2d");
 
-        document.getElementById("status-msg").innerText = "Systeem Online 🟢";
+        document.getElementById("status-msg").innerText = "AI IS ACTIEF 🟢";
         animationId = window.requestAnimationFrame(loop);
     } catch (e) {
-        alert("Camera fout! Controleer of je HTTPS gebruikt.");
+        alert("Oeps! Zorg voor een veilige HTTPS verbinding.");
         showHome();
     }
 }
@@ -191,26 +225,25 @@ async function predict() {
     const { pose, posenetOutput } = await model.estimatePose(webcam.canvas);
     const prediction = await model.predict(posenetOutput);
 
-    // AI LOGICA: Zoek de waarschijnlijkheid van 'up' en 'down'
-    // Teachable machine werkt vaak met index 0 en 1
+    // AI Check: Kijkt naar de hoogste waarschijnlijkheid
     const p0 = prediction[0].probability; // Meestal 'up'
     const p1 = prediction[1].probability; // Meestal 'down'
 
     if (p1 > 0.85) {
-        status = "down";
+        currentStatus = "down";
     }
 
-    if (p0 > 0.85 && status === "down") {
-        status = "up";
+    if (p0 > 0.85 && currentStatus === "down") {
+        currentStatus = "up";
         reps++;
-        document.getElementById("repCounter").innerText = `${reps} / ${target}`;
+        document.getElementById("repCounter").innerText = reps;
 
         if (reps >= target) {
             saveWorkout();
             setTimeout(() => {
-                alert("DOEL BEREIKT! BEESTACHTIG!");
+                alert("GEWELDIG! Workout voltooid.");
                 stopWorkout();
-            }, 500);
+            }, 300);
         }
     }
     ctx.drawImage(webcam.canvas, 0, 0);
@@ -219,11 +252,11 @@ async function predict() {
 function stopWorkout() {
     if (webcam) webcam.stop();
     window.cancelAnimationFrame(animationId);
-    switchTab('home');
+    showHome();
 }
 
 function resetUser() {
-    localStorage.removeItem("fitnessUser");
+    localStorage.clear();
     location.reload();
 }
 
@@ -241,12 +274,15 @@ function loadHistory() {
     let history = JSON.parse(localStorage.getItem("history") || "[]");
     let html = "";
     history.reverse().forEach(h => {
-        html += `<div class="card">
-                    <b>📅 ${h.date}</b><br>
-                    ${h.focus} - ${h.reps} herhalingen ✅
+        html += `<div class="card" style="margin-bottom:10px; padding:18px;">
+                    <div style="font-size:12px; color:#94a3b8; margin-bottom:4px;">${h.date}</div>
+                    <div style="display:flex; justify-content:space-between; align-items:center;">
+                        <span style="font-weight:700;">${h.focus}</span>
+                        <span style="color:var(--primary); font-weight:800;">${h.reps} reps</span>
+                    </div>
                  </div>`;
     });
-    document.getElementById("historyList").innerHTML = html || "<p style='text-align:center'>Nog geen workouts voltooid.</p>";
+    document.getElementById("historyList").innerHTML = html || "<p style='text-align:center; color:#64748b'>Nog geen data beschikbaar.</p>";
 }
 </script>
 
