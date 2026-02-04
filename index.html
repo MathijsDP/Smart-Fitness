@@ -1,298 +1,253 @@
 <!DOCTYPE html>
 <html lang="nl">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>SmartFitness Pro</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>SmartFitness Pro</title>
 
-<script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.6.0/dist/tf.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/@teachablemachine/pose@0.8/dist/teachablemachine-pose.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@1.3.1/dist/tf.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@teachablemachine/pose@0.8/dist/teachablemachine-pose.min.js"></script>
 
-<style>
-body{
-    margin:0;
-    font-family:Arial, sans-serif;
-    background:#0f172a;
-    color:white;
-}
-.app{
-    max-width:500px;
-    margin:auto;
-    min-height:100vh;
-    padding-bottom:80px;
-}
-.header{
-    padding:20px;
-    font-size:22px;
-    font-weight:bold;
-}
-.card{
-    background:#1e293b;
-    margin:15px;
-    padding:20px;
-    border-radius:20px;
-}
-.button{
-    width:100%;
-    padding:14px;
-    margin-top:10px;
-    border:none;
-    border-radius:12px;
-    background:linear-gradient(45deg,#00e0ff,#0077ff);
-    color:white;
-    font-weight:bold;
-    cursor:pointer;
-}
-.hidden{display:none;}
-.bottom-nav{
-    position:fixed;
-    bottom:0;
-    width:100%;
-    max-width:500px;
-    display:flex;
-    background:#0b1220;
-    border-top:1px solid #1f263d;
-}
-.nav-item{
-    flex:1;
-    padding:15px;
-    text-align:center;
-    cursor:pointer;
-    color:#777;
-}
-.nav-item.active{
-    color:#00e0ff;
-}
-canvas{
-    width:100%;
-    border-radius:15px;
-    transform:scaleX(-1);
-}
-</style>
+    <style>
+        body { margin: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #0f172a; color: white; overflow-x: hidden; }
+        .app { max-width: 500px; margin: auto; min-height: 100vh; padding-bottom: 80px; }
+        .header { padding: 30px 20px 10px; font-size: 26px; font-weight: bold; background: linear-gradient(to bottom, #1e293b, transparent); }
+        .card { background: #1e293b; margin: 15px; padding: 25px; border-radius: 25px; box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3); }
+        .button { width: 100%; padding: 16px; margin-top: 12px; border: none; border-radius: 15px; background: linear-gradient(45deg, #00e0ff, #0077ff); color: white; font-weight: bold; font-size: 16px; cursor: pointer; transition: transform 0.2s; }
+        .button:active { transform: scale(0.98); }
+        .hidden { display: none; }
+        .bottom-nav { position: fixed; bottom: 0; width: 100%; max-width: 500px; display: flex; background: #0b1220; border-top: 1px solid #1f263d; z-index: 100; }
+        .nav-item { flex: 1; padding: 20px; text-align: center; cursor: pointer; color: #64748b; font-weight: bold; }
+        .nav-item.active { color: #00e0ff; }
+        #repCounter { font-size: 60px; margin: 10px 0; color: #00e0ff; text-align: center; }
+        canvas { width: 100%; border-radius: 20px; background: #000; transform: scaleX(-1); }
+        .status-badge { display: inline-block; padding: 5px 12px; border-radius: 20px; background: rgba(0, 224, 255, 0.1); color: #00e0ff; font-size: 12px; margin-bottom: 10px; }
+    </style>
 </head>
 
 <body>
 
 <div class="app">
+    <div id="onboarding">
+        <div class="header">Setup ⚡</div>
+        <div class="card">
+            <div id="questionBox"></div>
+        </div>
+    </div>
 
-<!-- ONBOARDING -->
-<div id="onboarding">
-    <div class="header">Welkom 👋</div>
-    <div class="card" id="questionBox"></div>
-</div>
+    <div id="home" class="hidden">
+        <div class="header">Jouw Plan</div>
+        <div class="card" id="todayWorkout"></div>
+    </div>
 
-<!-- HOME -->
-<div id="home" class="hidden">
-    <div class="header">Home</div>
-    <div class="card" id="todayWorkout"></div>
-</div>
+    <div id="workoutScreen" class="hidden">
+        <div class="header" id="exerciseTitle">Training</div>
+        <div class="card">
+            <div id="repCounter">0</div>
+            <div id="status-msg" style="text-align: center; color: #64748b; margin-bottom: 10px;">Laden...</div>
+            <canvas id="canvas"></canvas>
+            <button class="button" style="background: #ef4444;" onclick="stopWorkout()">Stop Training</button>
+        </div>
+    </div>
 
-<!-- WORKOUT SCREEN -->
-<div id="workoutScreen" class="hidden">
-    <div class="header" id="exerciseTitle"></div>
-    <div class="card">
-        <h2 id="repCounter">0</h2>
-        <canvas id="canvas"></canvas>
-        <button class="button" onclick="stopWorkout()">Stop</button>
+    <div id="history" class="hidden">
+        <div class="header">Geschiedenis</div>
+        <div id="historyList"></div>
+        <button class="button" style="margin: 20px; width: calc(100% - 40px); background: #334155;" onclick="resetUser()">Reset Plan (Vragen opnieuw)</button>
     </div>
 </div>
 
-<!-- HISTORY -->
-<div id="history" class="hidden">
-    <div class="header">History</div>
-    <div id="historyList"></div>
-</div>
-
-</div>
-
 <div class="bottom-nav">
-    <div class="nav-item active" onclick="switchTab('home',0)">Home</div>
-    <div class="nav-item" onclick="switchTab('history',1)">History</div>
+    <div class="nav-item active" id="nav-home" onclick="switchTab('home')">Home</div>
+    <div class="nav-item" id="nav-history" onclick="switchTab('history')">History</div>
 </div>
 
 <script>
-
-const LINKS={
-    legs:"https://teachablemachine.withgoogle.com/models/Nv8j7aUsi/",
-    chest:"https://teachablemachine.withgoogle.com/models/VyHCtMsZf/"
+const LINKS = {
+    legs: "https://teachablemachine.withgoogle.com/models/Nv8j7aUsi/",
+    chest: "https://teachablemachine.withgoogle.com/models/VyHCtMsZf/"
 };
 
-let userData={};
-let questionStep=0;
-let model,webcam,ctx;
-let reps=0,target=0,status="up",cooldown=false;
+let userData = {};
+let questionStep = 0;
+let model, webcam, ctx, animationId;
+let reps = 0, target = 0, status = "up";
 
-const questions=[
+const questions = [
     {
-        question:"Wat wil je trainen?",
-        options:[
-            {text:"Benen",value:"legs"},
-            {text:"Borst",value:"chest"}
-        ]
+        question: "Wat gaan we vandaag aanpakken?",
+        options: [{text: "Benen (Squats)", value: "legs"}, {text: "Borst (Push-ups)", value: "chest"}]
     },
     {
-        question:"Wat is je niveau?",
-        options:[
-            {text:"Beginner",value:"beginner"},
-            {text:"Gevorderd",value:"advanced"}
-        ]
+        question: "Hoe zwaar moet het zijn?",
+        options: [{text: "Beginner (8 reps)", value: "beginner"}, {text: "Beest (25 reps)", value: "advanced"}]
     }
 ];
 
+// Start de app
 init();
 
-function init(){
-    const saved=localStorage.getItem("fitnessUser");
-    if(saved){
-        userData=JSON.parse(saved);
+function init() {
+    const saved = localStorage.getItem("fitnessUser");
+    if (saved) {
+        userData = JSON.parse(saved);
         showHome();
-    }else{
+    } else {
         showQuestion();
     }
 }
 
-function showQuestion(){
-    const q=questions[questionStep];
-    let html=`<h3>${q.question}</h3>`;
-    q.options.forEach(opt=>{
-        html+=`<button class="button" onclick="answer('${opt.value}')">${opt.text}</button>`;
+function showQuestion() {
+    const q = questions[questionStep];
+    let html = `<h3>${q.question}</h3>`;
+    q.options.forEach(opt => {
+        html += `<button class="button" onclick="answer('${opt.value}')">${opt.text}</button>`;
     });
-    document.getElementById("questionBox").innerHTML=html;
+    document.getElementById("questionBox").innerHTML = html;
 }
 
-function answer(value){
-    if(questionStep===0) userData.goal=value;
-    if(questionStep===1) userData.level=value;
-
+function answer(value) {
+    if (questionStep === 0) userData.goal = value;
+    if (questionStep === 1) userData.level = value;
     questionStep++;
 
-    if(questionStep<questions.length){
+    if (questionStep < questions.length) {
         showQuestion();
-    }else{
-        localStorage.setItem("fitnessUser",JSON.stringify(userData));
+    } else {
+        localStorage.setItem("fitnessUser", JSON.stringify(userData));
         showHome();
     }
 }
 
-function showHome(){
+function showHome() {
     hideAll();
     document.getElementById("home").classList.remove("hidden");
+    document.getElementById("onboarding").classList.add("hidden");
+    
+    target = userData.level === "beginner" ? 8 : 25;
+    const goalText = userData.goal === "legs" ? "Benen" : "Borst";
 
-    target=userData.level==="beginner"?8:25;
-
-    document.getElementById("todayWorkout").innerHTML=
-        `<h3>Vandaag's Workout</h3>
-         <p>Focus: ${userData.goal}</p>
-         <p>Reps: ${target}</p>
-         <button class="button" onclick="startWorkout()">Start Workout</button>`;
+    document.getElementById("todayWorkout").innerHTML = `
+        <div class="status-badge">DAGELIJKS DOEL</div>
+        <h3>${goalText} Vernietigen</h3>
+        <p style="color: #94a3b8">Klaar om de AI te laten zien wat je kunt?</p>
+        <div style="font-size: 20px; margin: 20px 0;">🎯 Doel: <b>${target} herhalingen</b></div>
+        <button class="button" onclick="startWorkout()">START CAMERA</button>
+    `;
 }
 
-function switchTab(tab,index){
-    document.querySelectorAll(".nav-item").forEach(n=>n.classList.remove("active"));
-    document.querySelectorAll(".nav-item")[index].classList.add("active");
+function switchTab(tab) {
+    document.querySelectorAll(".nav-item").forEach(n => n.classList.remove("active"));
+    if(tab === 'home') document.getElementById('nav-home').classList.add('active');
+    if(tab === 'history') document.getElementById('nav-history').classList.add('active');
+    
     hideAll();
     document.getElementById(tab).classList.remove("hidden");
-    if(tab==="history") loadHistory();
+    if (tab === "history") loadHistory();
 }
 
-function hideAll(){
-    document.getElementById("onboarding").classList.add("hidden");
-    document.getElementById("home").classList.add("hidden");
-    document.getElementById("workoutScreen").classList.add("hidden");
-    document.getElementById("history").classList.add("hidden");
+function hideAll() {
+    ["onboarding", "home", "workoutScreen", "history"].forEach(id => {
+        document.getElementById(id).classList.add("hidden");
+    });
 }
 
-async function startWorkout(){
-
+async function startWorkout() {
     hideAll();
     document.getElementById("workoutScreen").classList.remove("hidden");
+    document.getElementById("exerciseTitle").innerText = userData.goal === "legs" ? "Squats" : "Push-ups";
+    
+    reps = 0;
+    document.getElementById("repCounter").innerText = `0 / ${target}`;
+    document.getElementById("status-msg").innerText = "Model laden...";
 
-    document.getElementById("exerciseTitle").innerText=
-        userData.goal==="legs"?"Squats":"Push-ups";
+    try {
+        const link = LINKS[userData.goal];
+        model = await tmPose.load(link + "model.json", link + "metadata.json");
 
-    reps=0;
-    document.getElementById("repCounter").innerText=`0/${target}`;
-
-    try{
-        const link=LINKS[userData.goal];
-        model=await tmPose.load(link+"model.json",link+"metadata.json");
-
-        webcam=new tmPose.Webcam(300,300,true);
+        webcam = new tmPose.Webcam(300, 300, true); 
         await webcam.setup();
         await webcam.play();
 
-        const canvas=document.getElementById("canvas");
-        canvas.width=300;
-        canvas.height=300;
-        ctx=canvas.getContext("2d");
+        const canvas = document.getElementById("canvas");
+        canvas.width = 300; canvas.height = 300;
+        ctx = canvas.getContext("2d");
 
-        window.requestAnimationFrame(loop);
-
-    }catch(e){
-        alert("Camera start mislukt. Gebruik localhost.");
-        console.error(e);
+        document.getElementById("status-msg").innerText = "Systeem Online 🟢";
+        animationId = window.requestAnimationFrame(loop);
+    } catch (e) {
+        alert("Camera fout! Controleer of je HTTPS gebruikt.");
+        showHome();
     }
 }
 
-async function loop(){
+async function loop() {
     webcam.update();
     await predict();
-    window.requestAnimationFrame(loop);
+    animationId = window.requestAnimationFrame(loop);
 }
 
-async function predict(){
-    const {posenetOutput}=await model.estimatePose(webcam.canvas);
-    const prediction=await model.predict(posenetOutput);
+async function predict() {
+    const { pose, posenetOutput } = await model.estimatePose(webcam.canvas);
+    const prediction = await model.predict(posenetOutput);
 
-    const up=prediction.find(p=>p.className==="up");
-    const down=prediction.find(p=>p.className==="down");
+    // AI LOGICA: Zoek de waarschijnlijkheid van 'up' en 'down'
+    // Teachable machine werkt vaak met index 0 en 1
+    const p0 = prediction[0].probability; // Meestal 'up'
+    const p1 = prediction[1].probability; // Meestal 'down'
 
-    if(down && down.probability>0.9) status="down";
-
-    if(up && up.probability>0.9 && status==="down" && !cooldown){
-        status="up";
-        cooldown=true;
-        setTimeout(()=>cooldown=false,500);
-
-        reps++;
-        document.getElementById("repCounter").innerText=`${reps}/${target}`;
-
-        if(reps>=target){
-            saveWorkout();
-            stopWorkout();
-        }
+    if (p1 > 0.85) {
+        status = "down";
     }
 
-    ctx.drawImage(webcam.canvas,0,0);
+    if (p0 > 0.85 && status === "down") {
+        status = "up";
+        reps++;
+        document.getElementById("repCounter").innerText = `${reps} / ${target}`;
+
+        if (reps >= target) {
+            saveWorkout();
+            setTimeout(() => {
+                alert("DOEL BEREIKT! BEESTACHTIG!");
+                stopWorkout();
+            }, 500);
+        }
+    }
+    ctx.drawImage(webcam.canvas, 0, 0);
 }
 
-function stopWorkout(){
-    if(webcam) webcam.stop();
-    showHome();
+function stopWorkout() {
+    if (webcam) webcam.stop();
+    window.cancelAnimationFrame(animationId);
+    switchTab('home');
 }
 
-function saveWorkout(){
-    let history=JSON.parse(localStorage.getItem("history")||"[]");
+function resetUser() {
+    localStorage.removeItem("fitnessUser");
+    location.reload();
+}
+
+function saveWorkout() {
+    let history = JSON.parse(localStorage.getItem("history") || "[]");
     history.push({
-        date:new Date().toLocaleDateString(),
-        reps:target,
-        focus:userData.goal
+        date: new Date().toLocaleDateString('nl-NL'),
+        reps: reps,
+        focus: userData.goal === "legs" ? "Squats" : "Push-ups"
     });
-    localStorage.setItem("history",JSON.stringify(history));
+    localStorage.setItem("history", JSON.stringify(history));
 }
 
-function loadHistory(){
-    let history=JSON.parse(localStorage.getItem("history")||"[]");
-    let html="";
-    history.reverse().forEach(h=>{
-        html+=`<div class="card">
-                <b>${h.date}</b><br>
-                ${h.focus} - ${h.reps} reps
-               </div>`;
+function loadHistory() {
+    let history = JSON.parse(localStorage.getItem("history") || "[]");
+    let html = "";
+    history.reverse().forEach(h => {
+        html += `<div class="card">
+                    <b>📅 ${h.date}</b><br>
+                    ${h.focus} - ${h.reps} herhalingen ✅
+                 </div>`;
     });
-    document.getElementById("historyList").innerHTML=html;
+    document.getElementById("historyList").innerHTML = html || "<p style='text-align:center'>Nog geen workouts voltooid.</p>";
 }
-
 </script>
 
 </body>
