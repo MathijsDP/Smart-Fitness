@@ -4,76 +4,240 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>SmartFitness Pro ⚡</title>
+    
     <script src="https://cdn.jsdelivr.net/npm/@mediapipe/pose"></script>
     <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils"></script>
     <script src="https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils"></script>
     <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;900&family=Inter:wght@300;400;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="css/style.css">
+
+    <style>
+        :root {
+            --bg: #0f172a;
+            --card: #1e293b;
+            --blue: #3b82f6;
+            --text: #f8fafc;
+        }
+
+        body {
+            margin: 0;
+            font-family: 'Inter', sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            overflow: hidden;
+        }
+
+        .screen {
+            height: 100vh;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            box-sizing: border-box;
+        }
+
+        .hidden { display: none !important; }
+
+        /* Blauwe Premium Kaarten */
+        .card {
+            background: var(--card);
+            border-radius: 20px;
+            padding: 30px;
+            text-align: center;
+            border: 1px solid rgba(59, 130, 246, 0.2);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+        }
+
+        .primary-btn {
+            background: var(--blue);
+            color: white;
+            border: none;
+            padding: 15px;
+            border-radius: 12px;
+            font-weight: bold;
+            font-family: 'Orbitron', sans-serif;
+            cursor: pointer;
+            width: 100%;
+        }
+
+        input {
+            width: 100%;
+            padding: 15px;
+            margin: 20px 0;
+            background: #0f172a;
+            border: 1px solid var(--blue);
+            border-radius: 10px;
+            color: white;
+            box-sizing: border-box;
+        }
+
+        /* Workout Sectie */
+        .camera-box {
+            position: relative;
+            flex: 1;
+            background: black;
+            border-radius: 20px;
+            overflow: hidden;
+        }
+
+        canvas {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transform: scaleX(-1);
+        }
+
+        .feedback-overlay {
+            position: absolute;
+            bottom: 20px;
+            left: 20px;
+            right: 20px;
+            background: rgba(0,0,0,0.7);
+            padding: 15px;
+            border-radius: 10px;
+            text-align: center;
+            border-left: 5px solid var(--blue);
+        }
+
+        .bottom-nav {
+            position: fixed;
+            bottom: 0;
+            width: 100%;
+            background: var(--card);
+            display: flex;
+            justify-content: space-around;
+            padding: 15px 0;
+            border-top: 1px solid rgba(255,255,255,0.1);
+        }
+    </style>
 </head>
 <body>
 
-<div class="app-container">
-    <div id="onboardingScreen" class="screen">
-        <div class="header-onboarding">SMARTFITNESS ⚡</div>
-        <div class="card onboarding-card">
-            <h2 id="onboardingQuestion">Hoe heet je?</h2>
-            <input type="text" id="onboardingInput" placeholder="Typ je naam...">
-            <button class="button primary-btn" id="nextBtn">VOLGENDE</button>
-        </div>
-        <div class="step-indicator"><span id="currentOnboardingStep">1</span>/4</div>
-    </div>
-
-    <div id="homeScreen" class="screen hidden">
-        <div class="top-bar">
-            <div class="profile-summary">
-                <div class="profile-avatar">👤</div>
-                <div>
-                    <span class="greeting">Welkom terug,</span>
-                    <div id="displayUserName" class="user-name-text">KAMPIOEN</div>
-                </div>
-            </div>
-        </div>
-
-        <div class="stats-overview">
-            <div class="stat-item">
-                <div class="stat-value">🔥 <span id="displayCalories">0</span></div>
-                <div class="stat-label">KCAL</div>
-            </div>
-            <div class="stat-item">
-                <div class="stat-value">⏱️ <span id="displayDuration">0</span></div>
-                <div class="stat-label">MINS</div>
-            </div>
-        </div>
-
-        <div class="section-title">START TRAINING</div>
-        <div class="workout-plan-card" onclick="startWorkout('squat')">
-            <div class="workout-details">
-                <h3>LEG DAY</h3>
-                <p>Squats | AI Tracking</p>
-            </div>
-            <div class="play-icon">▶</div>
+    <div id="onboarding" class="screen">
+        <h1 style="font-family: 'Orbitron'; color: var(--blue);">SMARTFITNESS</h1>
+        <div class="card" style="margin-top: 50px;">
+            <h2 id="questionText">Hoe heet je?</h2>
+            <input type="text" id="userInput" placeholder="Antwoord...">
+            <button class="primary-btn" onclick="nextStep()">VOLGENDE</button>
         </div>
     </div>
 
-    <div id="workoutScreen" class="screen hidden">
-        <div class="workout-header">
-            <div class="workout-mode" id="workoutModeDisplay">SQUATS</div>
-            <div class="rep-counter" id="repCountDisplay">0</div>
+    <div id="dashboard" class="screen hidden">
+        <h2 id="welcomeTitle">Welkom!</h2>
+        <div class="card">
+            <p>Kies een oefening om de AI te starten:</p>
+            <button class="primary-btn" onclick="startWorkout('squat')">🦵 START SQUATS</button>
         </div>
-        <div class="camera-feedback-area">
+        
+        <div class="card" style="margin-top: 20px; height: 100px; display: flex; align-items: flex-end; justify-content: space-around;">
+            <div style="width: 20px; height: 40%; background: var(--blue); border-radius: 5px;"></div>
+            <div style="width: 20px; height: 70%; background: var(--blue); border-radius: 5px;"></div>
+            <div style="width: 20px; height: 50%; background: var(--blue); border-radius: 5px;"></div>
+            <div style="width: 20px; height: 90%; background: var(--blue); border-radius: 5px;"></div>
+        </div>
+    </div>
+
+    <div id="workout" class="screen hidden">
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+            <h2 id="workoutType">SQUATS</h2>
+            <h1 id="repCount" style="color: var(--blue); font-size: 48px; margin: 0;">0</h1>
+        </div>
+        <div class="camera-box">
             <video id="input_video" style="display:none"></video>
             <canvas id="output_canvas"></canvas>
-            <div id="aiFeedbackMessage" class="ai-feedback">Camera laden...</div>
+            <div class="feedback-overlay" id="aiFeedback">Camera wordt geladen...</div>
         </div>
-        <button class="button stop-workout-btn" onclick="location.reload()">STOPPEN</button>
+        <button class="primary-btn" style="background: #ef4444; margin-top: 10px;" onclick="location.reload()">STOP</button>
     </div>
-</div>
 
-<nav id="bottomNavBar" class="bottom-nav hidden">
-    <div class="nav-item active" onclick="showScreen('homeScreen')">🏠<br>Home</div>
-    <div class="nav-item" onclick="localStorage.clear(); location.reload();">👤<br>Reset</div>
-</nav>
+    <script>
+        let step = 1;
+        let reps = 0;
+        let stage = "up";
+        let mode = "";
 
-<script src="js/app.js"></script>
+        // --- ONBOARDING LOGICA ---
+        function nextStep() {
+            const val = document.getElementById('userInput').value;
+            if(!val) return;
+
+            if(step === 1) {
+                localStorage.setItem('name', val);
+                document.getElementById('questionText').innerText = "Wat is je doel?";
+                document.getElementById('userInput').value = "";
+            } else {
+                showDashboard();
+            }
+            step++;
+        }
+
+        function showDashboard() {
+            document.getElementById('onboarding').classList.add('hidden');
+            document.getElementById('dashboard').classList.remove('hidden');
+            document.getElementById('welcomeTitle').innerText = "Hey " + localStorage.getItem('name') + "!";
+        }
+
+        if(localStorage.getItem('name')) showDashboard();
+
+        // --- AI LOGICA ---
+        const videoElement = document.getElementById('input_video');
+        const canvasElement = document.getElementById('output_canvas');
+        const canvasCtx = canvasElement.getContext('2d');
+
+        function calculateAngle(a, b, c) {
+            const radians = Math.atan2(c.y - b.y, c.x - b.x) - Math.atan2(a.y - b.y, a.x - b.x);
+            let angle = Math.abs((radians * 180.0) / Math.PI);
+            if (angle > 180.0) angle = 360 - angle;
+            return angle;
+        }
+
+        function onResults(results) {
+            if (!results.poseLandmarks) return;
+            canvasCtx.save();
+            canvasCtx.clearRect(0, 0, canvasElement.width, canvasElement.height);
+            canvasCtx.drawImage(results.image, 0, 0, canvasElement.width, canvasElement.height);
+
+            // Teken skelet (Heel belangrijk voor je presentatie!)
+            drawConnectors(canvasCtx, results.poseLandmarks, POSE_CONNECTIONS, {color: '#3b82f6', lineWidth: 4});
+            drawLandmarks(canvasCtx, results.poseLandmarks, {color: '#ffffff', lineWidth: 2, radius: 3});
+
+            const marks = results.poseLandmarks;
+            const feedback = document.getElementById('aiFeedback');
+
+            // Squat Logica
+            let angle = calculateAngle(marks[24], marks[26], marks[28]);
+            if (angle < 100) {
+                stage = "down";
+                feedback.innerText = "GOED! NU OMHOOG";
+            }
+            if (angle > 160 && stage === "down") {
+                stage = "up";
+                reps++;
+                document.getElementById('repCount').innerText = reps;
+                feedback.innerText = "TOP! GA ZO DOOR";
+            }
+            canvasCtx.restore();
+        }
+
+        const pose = new Pose({
+            locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/pose/${file}`
+        });
+        pose.setOptions({ modelComplexity: 1, minDetectionConfidence: 0.5, minTrackingConfidence: 0.5 });
+        pose.onResults(onResults);
+
+        function startWorkout(workoutMode) {
+            mode = workoutMode;
+            document.getElementById('dashboard').classList.add('hidden');
+            document.getElementById('workout').classList.remove('hidden');
+            
+            const camera = new Camera(videoElement, {
+                onFrame: async () => {
+                    canvasElement.width = videoElement.videoWidth;
+                    canvasElement.height = videoElement.videoHeight;
+                    await pose.send({image: videoElement});
+                },
+                width: 640, height: 480
+            });
+            camera.start();
+        }
+    </script>
 </body>
 </html>
