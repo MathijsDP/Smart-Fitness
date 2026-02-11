@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Elite AI Coach v6</title>
+    <title>Elite AI Coach v6.1</title>
     
     <script src="https://cdn.jsdelivr.net/npm/@mediapipe/pose"></script>
     <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils"></script>
@@ -25,27 +25,28 @@
         
         /* Buttons */
         .btn { background: var(--accent); color: #000; border: none; padding: 18px; border-radius: 14px; width: 100%; max-width: 320px; font-weight: 800; text-transform: uppercase; cursor: pointer; }
-        .btn-small { padding: 10px 15px; font-size: 12px; margin: 5px; width: auto; background: #222; color: #fff; }
-        .card { background: var(--surface); border-radius: 20px; padding: 20px; margin-bottom: 15px; border: 1px solid #222; }
+        .btn-small { padding: 10px 15px; font-size: 12px; margin: 5px; width: auto; background: #222; color: #fff; border: 1px solid #444; border-radius: 8px; cursor: pointer; }
+        .card { background: var(--surface); border-radius: 20px; padding: 20px; margin-bottom: 15px; border: 1px solid #222; cursor: pointer; }
 
         /* Streak & HUD */
         .streak-badge { background: rgba(255,149,0,0.1); color: var(--orange); padding: 8px 15px; border-radius: 20px; font-weight: 800; font-size: 14px; display: inline-flex; align-items: center; gap: 8px; margin-bottom: 20px; }
-        .hud { position: absolute; top: 0; width: 100%; padding: 20px; display: flex; justify-content: space-between; background: linear-gradient(to bottom, rgba(0,0,0,0.7), transparent); z-index: 2001; }
+        .hud { position: absolute; top: 0; width: 100%; padding: 20px; display: flex; justify-content: space-between; background: linear-gradient(to bottom, rgba(0,0,0,0.7), transparent); z-index: 2001; pointer-events: none; }
         .hud-val { text-align: center; }
         .hud-val span { display: block; font-size: 9px; color: var(--sub); font-weight: 700; }
-        .hud-val strong { font-size: 20px; font-family: 'Montserrat'; }
+        .hud-val strong { font-size: 20px; font-family: 'Montserrat'; text-shadow: 0 2px 4px rgba(0,0,0,0.5); }
 
         /* Timer Overlays */
         #rest-overlay { position: absolute; inset: 0; background: rgba(0,0,0,0.95); z-index: 3000; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; }
-        .timer-txt { font-size: 80px; font-weight: 900; color: var(--blue); font-family: 'Montserrat'; }
+        .timer-txt { font-size: 80px; font-weight: 900; color: var(--blue); font-family: 'Montserrat'; margin: 10px 0; }
 
         /* Nav */
-        .navbar { position: fixed; bottom: 0; width: 100%; background: #0a0a0a; border-top: 1px solid #222; display: flex; justify-content: space-around; padding: 15px 0 30px; z-index: 1000; }
-        .nav-item { color: var(--sub); font-size: 10px; font-weight: 700; cursor: pointer; text-align: center; }
+        .navbar { position: fixed; bottom: 0; width: 100%; background: #0a0a0a; border-top: 1px solid #222; display: flex; justify-content: space-around; padding: 15px 0 35px; z-index: 1000; }
+        .nav-item { color: var(--sub); font-size: 10px; font-weight: 700; cursor: pointer; text-align: center; transition: 0.2s; }
         .nav-item.active { color: #fff; }
 
         /* Camera Fix */
         #output_canvas { width: 100%; height: 100%; object-fit: contain; transform: scaleX(-1); background: #000; }
+        .bar-bg { background: #222; height: 10px; border-radius: 5px; overflow: hidden; margin-top: 10px; }
     </style>
 </head>
 <body>
@@ -77,12 +78,8 @@
             <input type="text" id="edit-name" onchange="updateUser('name', this.value)">
             <label style="font-size:10px; color:var(--sub)">GEWICHT (KG)</label>
             <input type="number" id="edit-weight" onchange="updateUser('weight', this.value)">
-            <label style="font-size:10px; color:var(--sub)">TRAININGSNIVEAU</label>
-            <select id="edit-level" onchange="updateUser('reps', this.value)">
-                <option value="8">Beginner (8)</option>
-                <option value="12">Gemiddeld (12)</option>
-                <option value="18">Pro (18)</option>
-            </select>
+            <label style="font-size:10px; color:var(--sub)">NIVEAU (REPS)</label>
+            <input type="number" id="edit-reps" onchange="updateUser('reps', this.value)">
         </div>
         <button class="btn" style="background:#ff3b30; color:#fff" onclick="localStorage.clear(); location.reload();">RESET ALLES</button>
     </div>
@@ -96,8 +93,8 @@
             <div id="rest-exe" style="font-size:20px; font-weight:800;">OEFENING</div>
             <div class="timer-txt" id="timer-val">30</div>
             <div style="display:flex; gap:10px; z-index: 3001;">
-                <button class="btn btn-small" onclick="adjustTime(5)">+5 SEC</button>
-                <button class="btn btn-small" style="background:var(--blue)" onclick="skipRest()">SLA OVER</button>
+                <button class="btn-small" onclick="adjustTime(5)">+5 SEC</button>
+                <button class="btn-small" style="background:var(--blue)" onclick="skipRest()">SLA OVER</button>
             </div>
             <div id="rest-instr" style="color:var(--sub); font-size:13px; max-width:280px; margin-top:20px;"></div>
         </div>
@@ -107,7 +104,7 @@
             <div class="hud-val"><span>SET</span><strong id="hud-set">1/3</strong></div>
             <div class="hud-val"><span>REPS</span><strong id="hud-reps">0/12</strong></div>
         </div>
-        <button class="btn" style="position:absolute; bottom:20px; left:50%; transform:translateX(-50%); width:80%; z-index:2001; background:rgba(255,59,48,0.8); color:#fff;" onclick="location.reload()">STOP TRAINING</button>
+        <button class="btn" style="position:absolute; bottom:20px; left:50%; transform:translateX(-50%); width:80%; z-index:2001; background:rgba(255,59,48,0.9); color:#fff;" onclick="location.reload()">STOP TRAINING</button>
     </div>
 
     <nav class="navbar hidden" id="nav">
@@ -117,19 +114,23 @@
     </nav>
 
     <script>
+        // DATA & STATE
         const exercises = {
-            Upper: [{n:"Push-up", i:"Borst & Armen"}, {n:"Dips", i:"Triceps"}, {n:"Pike Push-up", i:"Schouders"}, {n:"Superman", i:"Lage rug"}, {n:"Plank Taps", i:"Core & Stabiliteit"}, {n:"Diamond Push-up", i:"Binnenkant borst"}],
-            Lower: [{n:"Squat", i:"Bovenbenen"}, {n:"Lunge", i:"Bilspieren"}, {n:"Bridge", i:"Billen & Hamstrings"}, {n:"Donkey Kick", i:"Grote bilspier"}, {n:"Side Lunges", i:"Binnenkant been"}, {n:"Calf Raise", i:"Kuiten"}],
-            Conditie: [{n:"Jumping Jacks", i:"Full body cardio"}, {n:"High Knees", i:"Hartslag omhoog"}, {n:"Burpees", i:"Kracht & Conditie"}, {n:"Mountain Climber", i:"Buikspieren & Cardio"}, {n:"Skater Jumps", i:"Explosiviteit"}, {n:"Bear Crawl", i:"Coördinatie"}]
+            Upper: [{n:"Push-up", i:"Borst & Armen"}, {n:"Dips", i:"Triceps"}, {n:"Pike Push-up", i:"Schouders"}, {n:"Superman", i:"Lage rug"}, {n:"Plank Taps", i:"Core"}, {n:"Diamond Push-up", i:"Binnenkant borst"}],
+            Lower: [{n:"Squat", i:"Bovenbenen"}, {n:"Lunge", i:"Bilspieren"}, {n:"Bridge", i:"Billen"}, {n:"Donkey Kick", i:"Grote bilspier"}, {n:"Side Lunges", i:"Binnenkant been"}, {n:"Calf Raise", i:"Kuiten"}],
+            Conditie: [{n:"Jumping Jacks", i:"Cardio"}, {n:"High Knees", i:"Hartslag"}, {n:"Burpees", i:"Kracht/Conditie"}, {n:"Mountain Climber", i:"Buik"}, {n:"Skater Jumps", i:"Explosiviteit"}, {n:"Bear Crawl", i:"Coördinatie"}]
         };
 
-        let user = JSON.parse(localStorage.getItem('elite_v6')) || {
+        let user = JSON.parse(localStorage.getItem('elite_v7')) || {
             name: '', age: '', gender: '', height: '', weight: '', goal: '', reps: 12, availability: '',
             xp: {Upper:0, Lower:0, Conditie:0}, lvls: {Upper:1, Lower:1, Conditie:1}, streak: 0, lastDate: null
         };
 
+        // FIX: stage moet globaal gedefinieerd zijn voor de AI
         let currentStep = 1;
         let circuit = [], cIdx = 0, reps = 0, sets = 1, isRest = false, restTimer = null, tLeft = 30;
+        let stage = 'up'; // Cruciale fix voor de ReferenceError!
+        let currentCat = '';
 
         const questions = [
             { k: 'name', q: 'WAT IS JE VOORNAAM?', t: 'text' },
@@ -139,9 +140,10 @@
             { k: 'weight', q: 'WAT IS JE GEWICHT? (KG)', t: 'number' },
             { k: 'goal', q: 'WAT IS JE DOEL?', t: 'select', o: ['Afvallen', 'Spiermassa', 'Conditie'] },
             { k: 'reps', q: 'TRAININGSNIVEAU', t: 'select', o: [{n:'Beginner', v:8}, {n:'Gemiddeld', v:12}, {n:'Pro', v:18}] },
-            { k: 'availability', q: 'BESCHIKBAARHEID PER WEEK', t: 'select', o: ['1-2 dagen', '3-4 dagen', '5+ dagen'] }
+            { k: 'availability', q: 'HOEVEEL DAGEN PER WEEK?', t: 'select', o: ['1-2 dagen', '3-4 dagen', '5+ dagen'] }
         ];
 
+        // UI FUNCTIES
         function renderQ() {
             const q = questions[currentStep-1];
             let html = `<h1>${q.q}</h1><div class="subtitle">Stap ${currentStep} van 8</div>`;
@@ -161,16 +163,16 @@
             else { save(); checkStreak(); tab('dash'); document.getElementById('nav').classList.remove('hidden'); }
         }
 
-        function save() { localStorage.setItem('elite_v6', JSON.stringify(user)); }
+        function save() { localStorage.setItem('elite_v7', JSON.stringify(user)); }
         function updateUser(k, v) { user[k] = v; save(); }
 
         function tab(t, el) {
             document.querySelectorAll('.screen').forEach(s => s.classList.add('hidden'));
             document.getElementById('scr-'+t).classList.remove('hidden');
             if(el) { document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active')); el.classList.add('active'); }
-            if(t === 'dash') { document.getElementById('dash-greet').innerText = "HEY " + user.name.toUpperCase(); document.getElementById('streak-val').innerText = user.streak; }
+            if(t === 'dash') { document.getElementById('dash-greet').innerText = "HEY " + (user.name || "CHAMP"); document.getElementById('streak-val').innerText = user.streak; }
             if(t === 'progress') renderProgress();
-            if(t === 'profile') { document.getElementById('edit-name').value = user.name; document.getElementById('edit-weight').value = user.weight; document.getElementById('edit-level').value = user.reps; }
+            if(t === 'profile') { document.getElementById('edit-name').value = user.name; document.getElementById('edit-weight').value = user.weight; document.getElementById('edit-reps').value = user.reps; }
         }
 
         function checkStreak() {
@@ -186,15 +188,19 @@
             const area = document.getElementById('stats-render'); area.innerHTML = '';
             ['Upper', 'Lower', 'Conditie'].forEach(c => {
                 const target = user.lvls[c] * 200;
-                area.innerHTML += `<div class="card"><strong>${c} LVL ${user.lvls[c]}</strong><div class="bar-bg"><div style="width:${(user.xp[c]/target)*100}%; background:var(--blue); height:100%"></div></div></div>`;
+                area.innerHTML += `<div class="card" style="cursor:default"><strong>${c.toUpperCase()} LVL ${user.lvls[c]}</strong><div class="bar-bg"><div style="width:${(user.xp[c]/target)*100}%; background:var(--blue); height:100%; transition:1s"></div></div></div>`;
             });
         }
 
+        // WORKOUT LOGIC
         function startCircuit(cat) {
             currentCat = cat;
             circuit = [...exercises[cat]].sort(() => 0.5 - Math.random());
             cIdx = 0; sets = 1; reps = 0;
-            tab('workout'); startAI(); startRest(30, "START TRAINING");
+            tab('workout'); 
+            updateHUD();
+            startAI(); 
+            startRest(30, "MAAK JE KLAAR");
         }
 
         function startRest(time, title) {
@@ -208,6 +214,7 @@
 
         function runTimer() {
             document.getElementById('timer-val').innerText = tLeft;
+            if(restTimer) clearInterval(restTimer);
             restTimer = setInterval(() => {
                 tLeft--; document.getElementById('timer-val').innerText = tLeft;
                 if(tLeft <= 0) skipRest();
@@ -223,19 +230,26 @@
             document.getElementById('hud-reps').innerText = `${reps}/${user.reps}`;
         }
 
+        // AI ENGINE
         const videoElement = document.getElementById('input_video');
         const canvasElement = document.getElementById('output_canvas');
         const canvasCtx = canvasElement.getContext('2d');
 
         function onResults(results) {
             if(!results.poseLandmarks || isRest) return;
+            
+            canvasElement.width = videoElement.videoWidth;
+            canvasElement.height = videoElement.videoHeight;
+            
             canvasCtx.save();
             canvasCtx.clearRect(0, 0, canvasElement.width, canvasElement.height);
             canvasCtx.drawImage(results.image, 0, 0, canvasElement.width, canvasElement.height);
+            
             const m = results.poseLandmarks;
             const exe = circuit[cIdx].n.toLowerCase();
             let isGood = false;
 
+            // Logica per oefening
             if(exe.includes("squat") || exe.includes("lunge")) {
                 const a = calcAngle(m[24], m[26], m[28]);
                 if(a < 110) { isGood = true; stage = 'down'; }
@@ -249,18 +263,25 @@
                 if(isGood) stage = 'up';
                 if(!isGood && stage === 'up') { registerRep(); stage = 'down'; }
             }
-            drawConnectors(canvasCtx, m, POSE_CONNECTIONS, {color: isGood?'#34c759':'#ff3b30', lineWidth:5});
+            
+            drawConnectors(canvasCtx, m, POSE_CONNECTIONS, {color: isGood?'#34c759':'#ff3b30', lineWidth:4});
             canvasCtx.restore();
         }
 
         function registerRep() {
             reps++; updateHUD(); speak(reps);
             user.xp[currentCat] += 10;
-            if(user.xp[currentCat] >= user.lvls[currentCat]*200) { user.xp[currentCat]=0; user.lvls[currentCat]++; speak("Level up!"); }
+            const target = user.lvls[currentCat] * 200;
+            if(user.xp[currentCat] >= target) { user.xp[currentCat]=0; user.lvls[currentCat]++; speak("Level up!"); }
             save();
+
             if(reps >= user.reps) {
                 if(sets < 3) { sets++; reps=0; startRest(15, "VOLGENDE SET"); }
-                else { cIdx++; if(cIdx < 6) { sets=1; reps=0; startRest(30, "VOLGENDE OEFENING"); } else { checkStreak(); speak("Gedaan!"); tab('dash'); } }
+                else { 
+                    cIdx++; 
+                    if(cIdx < 6) { sets=1; reps=0; startRest(30, "VOLGENDE OEFENING"); } 
+                    else { checkStreak(); speak("Gedaan!"); tab('dash'); } 
+                }
             }
         }
 
@@ -270,17 +291,16 @@
             const pose = new Pose({locateFile: (f) => `https://cdn.jsdelivr.net/npm/@mediapipe/pose/${f}`});
             pose.setOptions({modelComplexity:1, minDetectionConfidence:0.5, minTrackingConfidence:0.5});
             pose.onResults(onResults);
-            new Camera(videoElement, {
-                onFrame: async() => {
-                    canvasElement.width = videoElement.videoWidth;
-                    canvasElement.height = videoElement.videoHeight;
-                    await pose.send({image:videoElement});
-                }
-            }).start();
+            
+            const camera = new Camera(videoElement, {
+                onFrame: async() => { await pose.send({image:videoElement}); }
+            });
+            camera.start();
         }
         
         function speak(t) { const m = new SpeechSynthesisUtterance(t); m.lang='nl-NL'; window.speechSynthesis.speak(m); }
 
+        // STARTUP
         if(!user.name) renderQ(); else { tab('dash'); document.getElementById('nav').classList.remove('hidden'); }
     </script>
 </body>
