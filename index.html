@@ -3,121 +3,182 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>SmartFitness Ultra ⚡</title>
+    <title>SmartFitness Elite v2 ⚡</title>
     
     <script src="https://cdn.jsdelivr.net/npm/@mediapipe/pose"></script>
     <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils"></script>
     <script src="https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;900&family=Inter:wght@300;600&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;900&family=Inter:wght@300;600;700&display=swap" rel="stylesheet">
 
     <style>
-        :root { --bg: #050a18; --card: #111a2e; --blue: #3b82f6; --text: #ffffff; }
-        body { margin: 0; font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); overflow: hidden; }
-        .screen { height: 100vh; display: flex; flex-direction: column; padding: 20px; box-sizing: border-box; transition: 0.5s; }
+        :root { --bg: #050a18; --card: #111a2e; --blue: #3b82f6; --accent: #d1ff33; --text: #ffffff; }
+        body { margin: 0; font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); overflow: hidden; height: 100vh; }
+        .screen { height: 100vh; display: flex; flex-direction: column; padding: 20px; box-sizing: border-box; overflow-y: auto; padding-bottom: 100px; }
         .hidden { display: none !important; }
 
-        /* Design Elements */
-        .header { font-family: 'Orbitron'; color: var(--blue); font-size: 24px; text-align: center; margin-bottom: 20px; }
-        .card { background: var(--card); border-radius: 25px; padding: 20px; border: 1px solid rgba(59, 130, 246, 0.2); }
-        .btn { background: var(--blue); color: white; border: none; padding: 15px; border-radius: 15px; width: 100%; font-weight: bold; cursor: pointer; margin: 10px 0; font-family: 'Orbitron'; }
-        .choice-btn { background: rgba(59, 130, 246, 0.1); border: 2px solid var(--blue); color: white; padding: 20px; border-radius: 20px; width: 100%; margin: 10px 0; cursor: pointer; font-weight: bold; font-size: 16px; }
+        h1, h2 { font-family: 'Orbitron'; text-transform: uppercase; color: var(--blue); }
+        .card { background: var(--card); border-radius: 20px; padding: 20px; border: 1px solid rgba(59, 130, 246, 0.2); margin-bottom: 15px; }
+        
+        .btn { background: var(--blue); color: white; border: none; padding: 15px; border-radius: 12px; width: 100%; font-weight: bold; cursor: pointer; font-family: 'Orbitron'; margin-top: 10px; }
+        input, select { width: 100%; padding: 12px; margin: 8px 0; border-radius: 10px; border: 1px solid var(--blue); background: #050a18; color: white; box-sizing: border-box; }
 
-        /* Camera & Workout */
-        .video-container { position: relative; flex: 1; background: #000; border-radius: 25px; overflow: hidden; }
+        /* Stat Chart */
+        .chart-container { display: flex; align-items: flex-end; justify-content: space-between; height: 150px; padding-top: 30px; }
+        .bar-wrapper { display: flex; flex-direction: column; align-items: center; flex: 1; }
+        .bar { width: 25px; background: var(--blue); border-radius: 5px 5px 0 0; position: relative; }
+        .bar-val { font-size: 10px; margin-bottom: 5px; font-weight: bold; color: var(--accent); }
+        .bar-day { font-size: 10px; margin-top: 5px; color: #94a3b8; }
+
+        /* Workout UI */
+        .workout-box { position: relative; flex: 1; background: #000; border-radius: 20px; overflow: hidden; min-height: 300px; }
         canvas { width: 100%; height: 100%; object-fit: cover; transform: scaleX(-1); }
-        .rep-box { position: absolute; top: 20px; right: 20px; background: var(--blue); padding: 15px 25px; border-radius: 50px; font-size: 32px; font-weight: 900; }
-        .coach-msg { position: absolute; bottom: 20px; left: 20px; right: 20px; background: rgba(0,0,0,0.8); padding: 15px; border-radius: 15px; text-align: center; border-bottom: 4px solid var(--blue); font-size: 18px; }
+        .rep-info { position: absolute; top: 15px; right: 15px; background: var(--blue); padding: 10px; border-radius: 12px; text-align: center; min-width: 60px; }
+        .coach-bar { position: absolute; bottom: 0; width: 100%; background: rgba(0,0,0,0.8); padding: 15px; text-align: center; border-top: 3px solid var(--blue); }
 
-        /* Navigatie */
-        .bottom-nav { position: fixed; bottom: 0; left: 0; width: 100%; background: var(--card); display: flex; justify-content: space-around; padding: 15px 0; border-top: 1px solid rgba(255,255,255,0.1); }
-        .nav-item { text-align: center; font-size: 10px; opacity: 0.5; cursor: pointer; }
-        .nav-item.active { opacity: 1; color: var(--blue); }
+        .nav { position: fixed; bottom: 0; width: 100%; background: var(--card); display: flex; justify-content: space-around; padding: 15px 0; border-top: 1px solid rgba(255,255,255,0.1); }
+        .nav-item { text-align: center; font-size: 10px; color: #94a3b8; cursor: pointer; }
+        .nav-item.active { color: var(--blue); }
     </style>
 </head>
 <body>
 
     <div id="screen-onboarding" class="screen">
-        <div class="header">SMARTFITNESS</div>
-        <div class="card" id="step-1">
-            <h2>Welkom! Hoe heet je?</h2>
-            <input type="text" id="nameInput" style="width:100%; padding:15px; border-radius:10px; border:none; margin-bottom:15px;" placeholder="Typ je naam...">
-            <button class="btn" onclick="goToStep2()">VOLGENDE</button>
-        </div>
-        <div class="card hidden" id="step-2">
-            <h2>Kies je doel:</h2>
-            <button class="choice-btn" onclick="finishSetup('Spieropbouw')">💪 SPIEROPBOUW</button>
-            <button class="choice-btn" onclick="finishSetup('Gewichtsverlies')">🏃 GEWICHTSVERLIES</button>
+        <h1>Setup</h1>
+        <div class="card">
+            <label>Naam</label><input type="text" id="in-name">
+            <label>Lengte (cm)</label><input type="number" id="in-height">
+            <label>Gewicht (kg)</label><input type="number" id="in-weight">
+            <label>Niveau</label>
+            <select id="in-level">
+                <option value="beginner">Beginner (8 reps)</option>
+                <option value="matig">Matig (12 reps)</option>
+                <option value="gevorderd">Gevorderd (18 reps)</option>
+            </select>
+            <label>Doel</label>
+            <select id="in-goal">
+                <option value="Spieropbouw">Spieropbouw</option>
+                <option value="Gewichtsverlies">Gewichtsverlies</option>
+            </select>
+            <button class="btn" onclick="saveProfile(true)">STARTEN</button>
         </div>
     </div>
 
     <div id="screen-home" class="screen hidden">
-        <div class="header">HOME</div>
+        <h2 id="home-welcome">Hey!</h2>
         <div class="card">
-            <h3 id="welcomeMsg">Welkom!</h3>
-            <p>Jouw doel: <span id="goalLabel" style="color:var(--blue)">-</span></p>
-            <button class="btn" onclick="startWorkout()">START SQUAT TRAINING</button>
+            <p>Jouw Plan: <strong id="plan-desc" style="color:var(--blue)">Laden...</strong></p>
+            <button class="btn" onclick="startWorkout()">START TRAINING</button>
         </div>
     </div>
 
     <div id="screen-stats" class="screen hidden">
-        <div class="header">STATISTIEKEN</div>
+        <h2>Voortgang</h2>
         <div class="card">
-            <div style="display:flex; justify-content:space-between;">
-                <div><span>REPS</span><h2 id="totalReps">0</h2></div>
-                <div><span>KCAL</span><h2>245</h2></div>
+            <div class="chart-container">
+                <div class="bar-wrapper"><span class="bar-val">12</span><div class="bar" style="height: 40%;"></div><span class="bar-day">MA</span></div>
+                <div class="bar-wrapper"><span class="bar-val">18</span><div class="bar" style="height: 60%;"></div><span class="bar-day">DI</span></div>
+                <div class="bar-wrapper"><span class="bar-val" id="today-val">0</span><div class="bar" id="today-bar" style="height: 5%;"></div><span class="bar-day">WO</span></div>
+                <div class="bar-wrapper"><span class="bar-val">0</span><div class="bar" style="height: 5%;"></div><span class="bar-day">DO</span></div>
+                <div class="bar-wrapper"><span class="bar-val">0</span><div class="bar" style="height: 5%;"></div><span class="bar-day">VR</span></div>
             </div>
-            <div style="height:150px; display:flex; align-items:flex-end; justify-content:space-around; margin-top:20px;">
-                <div style="width:20px; height:40%; background:var(--blue); border-radius:5px;"></div>
-                <div style="width:20px; height:80%; background:var(--blue); border-radius:5px;"></div>
-                <div style="width:20px; height:60%; background:var(--blue); border-radius:5px;"></div>
-            </div>
+        </div>
+    </div>
+
+    <div id="screen-profile" class="screen hidden">
+        <h2>Profiel</h2>
+        <div class="card">
+            <label>Naam</label><input type="text" id="p-name">
+            <label>Lengte</label><input type="number" id="p-height">
+            <label>Gewicht</label><input type="number" id="p-weight">
+            <label>Niveau</label>
+            <select id="p-level">
+                <option value="beginner">Beginner</option>
+                <option value="matig">Matig</option>
+                <option value="gevorderd">Gevorderd</option>
+            </select>
+            <button class="btn" onclick="saveProfile(false)">OPSLAAN</button>
+            <button class="btn" style="background:transparent; border:1px solid red; color:red; margin-top:20px;" onclick="localStorage.clear(); location.reload();">RESET APP</button>
         </div>
     </div>
 
     <div id="screen-workout" class="screen hidden" style="padding:10px;">
-        <div class="video-container">
+        <div class="workout-box">
             <video id="input_video" style="display:none"></video>
             <canvas id="output_canvas"></canvas>
-            <div class="rep-box" id="repDisplay">0</div>
-            <div class="coach-msg" id="coachDisplay">Zoek een plekje...</div>
+            <div class="rep-info">
+                <small>REPS</small><br><strong id="rep-count" style="font-size:24px;">0</strong>
+                <hr style="border:0; border-top:1px solid rgba(255,255,255,0.2)">
+                <small id="target-reps">/ 18</small>
+            </div>
+            <div class="coach-bar" id="coach-text">Zoek de camera...</div>
         </div>
-        <button class="btn" style="background:#ef4444;" onclick="location.reload()">STOPPEN</button>
+        <button class="btn" style="background:#ef4444;" onclick="location.reload()">STOP</button>
     </div>
 
-    <nav class="bottom-nav hidden" id="mainNav">
-        <div class="nav-item active" onclick="switchTab('home')">🏠<br>Home</div>
-        <div class="nav-item" onclick="switchTab('stats')">📊<br>Stats</div>
-        <div class="nav-item" onclick="location.reload()">👤<br>Profiel</div>
+    <nav class="nav hidden" id="navbar">
+        <div class="nav-item active" onclick="navTo('home')">🏠<br>Home</div>
+        <div class="nav-item" onclick="navTo('stats')">📊<br>Stats</div>
+        <div class="nav-item" onclick="navTo('profile')">👤<br>Profiel</div>
     </nav>
 
     <script>
-        let userData = { name: "", goal: "" };
+        let user = JSON.parse(localStorage.getItem('user')) || null;
         let reps = 0;
         let stage = "up";
+        let target = 18;
 
-        // --- NAVIGATION ---
-        function goToStep2() {
-            userData.name = document.getElementById('nameInput').value;
-            if(!userData.name) return;
-            document.getElementById('step-1').classList.add('hidden');
-            document.getElementById('step-2').classList.remove('hidden');
+        function speak(t) {
+            const m = new SpeechSynthesisUtterance(t);
+            m.lang = 'nl-NL';
+            window.speechSynthesis.speak(m);
         }
 
-        function finishSetup(goal) {
-            userData.goal = goal;
-            document.getElementById('screen-onboarding').classList.add('hidden');
-            document.getElementById('screen-home').classList.remove('hidden');
-            document.getElementById('mainNav').classList.remove('hidden');
-            document.getElementById('welcomeMsg').innerText = "Hey " + userData.name + "!";
-            document.getElementById('goalLabel').innerText = goal;
+        function saveProfile(isFirst) {
+            const prefix = isFirst ? 'in-' : 'p-';
+            user = {
+                name: document.getElementById(prefix+'name').value,
+                height: document.getElementById(prefix+'height').value,
+                weight: document.getElementById(prefix+'weight').value,
+                level: document.getElementById(prefix+'level').value,
+                goal: isFirst ? document.getElementById('in-goal').value : user.goal
+            };
+            localStorage.setItem('user', JSON.stringify(user));
+            updateUI();
+            navTo('home');
+            if(isFirst) speak("Welkom " + user.name);
         }
 
-        function switchTab(tab) {
-            document.querySelectorAll('.screen').forEach(s => s.classList.add('hidden'));
-            document.getElementById('screen-' + tab).classList.remove('hidden');
+        function updateUI() {
+            if(!user) return;
+            document.getElementById('navbar').classList.remove('hidden');
+            document.getElementById('home-welcome').innerText = "Hey " + user.name + "!";
+            
+            // Stel target reps in
+            if(user.level === 'beginner') target = 8;
+            else if(user.level === 'matig') target = 12;
+            else target = 18;
+
+            document.getElementById('plan-desc').innerText = `${user.level.toUpperCase()} | 3x${target} Reps`;
+            document.getElementById('target-reps').innerText = "/ " + target;
+
+            // Vul profiel velden
+            document.getElementById('p-name').value = user.name;
+            document.getElementById('p-height').value = user.height;
+            document.getElementById('p-weight').value = user.weight;
+            document.getElementById('p-level').value = user.level;
         }
 
-        // --- AI & CAMERA ---
+        function navTo(s) {
+            document.querySelectorAll('.screen').forEach(scr => scr.classList.add('hidden'));
+            document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
+            document.getElementById('screen-'+s).classList.remove('hidden');
+            // Update active icon
+            const items = document.querySelectorAll('.nav-item');
+            if(s === 'home') items[0].classList.add('active');
+            if(s === 'stats') items[1].classList.add('active');
+            if(s === 'profile') items[2].classList.add('active');
+        }
+
         const videoElement = document.getElementById('input_video');
         const canvasElement = document.getElementById('output_canvas');
         const canvasCtx = canvasElement.getContext('2d');
@@ -127,46 +188,48 @@
             canvasCtx.save();
             canvasCtx.clearRect(0, 0, canvasElement.width, canvasElement.height);
             canvasCtx.drawImage(results.image, 0, 0, canvasElement.width, canvasElement.height);
-
             drawConnectors(canvasCtx, results.poseLandmarks, POSE_CONNECTIONS, {color: '#3b82f6', lineWidth: 4});
             drawLandmarks(canvasCtx, results.poseLandmarks, {color: '#fff', lineWidth: 1, radius: 3});
 
             const marks = results.poseLandmarks;
-            const coach = document.getElementById('coachDisplay');
-            
-            // Squat logica: Heup (24), Knie (26), Enkel (28)
             const angle = calculateAngle(marks[24], marks[26], marks[28]);
+            const coach = document.getElementById('coach-text');
 
-            if (angle > 160) {
-                if(stage === "down") {
-                    reps++;
-                    document.getElementById('repDisplay').innerText = reps;
-                    document.getElementById('totalReps').innerText = reps;
-                    coach.innerText = "TOP! EN WEER ZAKKEN";
-                }
+            if (angle > 160 && stage === "down") {
+                reps++;
                 stage = "up";
+                document.getElementById('rep-count').innerText = reps;
+                document.getElementById('today-val').innerText = reps;
+                document.getElementById('today-bar').style.height = (reps * 5) + "%";
+                
+                if(reps >= target) {
+                    coach.innerText = "TRAINING VOLTOOID!";
+                    speak("Goed gedaan! Je hebt je doel van " + target + " herhalingen bereikt.");
+                } else {
+                    speak(reps + "! Ga door.");
+                    coach.innerText = "TOP! NOG " + (target - reps);
+                }
             } else if (angle < 100) {
                 stage = "down";
-                coach.innerText = "GOED ZO! NU OMHOOG";
-            } else if (angle < 140 && stage === "up") {
-                coach.innerText = "IETS LAGER NOG!";
+                coach.innerText = "OMHOOG!";
             }
-
             canvasCtx.restore();
         }
 
         function calculateAngle(a, b, c) {
             const radians = Math.atan2(c.y - b.y, c.x - b.x) - Math.atan2(a.y - b.y, a.x - b.x);
             let angle = Math.abs(radians * 180.0 / Math.PI);
-            return angle > 180.0 ? 360 - angle : angle;
+            return angle > 180 ? 360 - angle : angle;
         }
 
-        const pose = new Pose({locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/pose/${file}`});
+        const pose = new Pose({locateFile: (f) => `https://cdn.jsdelivr.net/npm/@mediapipe/pose/${f}`});
         pose.setOptions({ modelComplexity: 1, minDetectionConfidence: 0.5, minTrackingConfidence: 0.5 });
         pose.onResults(onResults);
 
         function startWorkout() {
-            switchTab('workout');
+            reps = 0;
+            document.getElementById('rep-count').innerText = "0";
+            navTo('workout');
             const camera = new Camera(videoElement, {
                 onFrame: async () => {
                     canvasElement.width = videoElement.videoWidth;
@@ -175,7 +238,10 @@
                 }, width: 640, height: 480
             });
             camera.start();
+            speak("Begin je training. Je moet " + target + " squats doen.");
         }
+
+        if(user) { updateUI(); navTo('home'); }
     </script>
 </body>
 </html>
