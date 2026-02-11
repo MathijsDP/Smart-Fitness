@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>SmartFitness AI: Ultimate Edition ⚡</title>
+    <title>SmartFitness: Body Analyzer ⚡</title>
     
     <script src="https://cdn.jsdelivr.net/npm/@mediapipe/pose"></script>
     <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils"></script>
@@ -11,89 +11,100 @@
     <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;900&family=Inter:wght@300;600;700&display=swap" rel="stylesheet">
 
     <style>
-        :root { --bg: #050a18; --card: #111a2e; --blue: #3b82f6; --accent: #d1ff33; --text: #ffffff; --danger: #ef4444; --success: #10b981; }
+        :root { --bg: #050a18; --card: #111a2e; --blue: #3b82f6; --text: #ffffff; --accent: #3b82f6; }
         body { margin: 0; font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); overflow: hidden; height: 100vh; }
         .screen { height: 100vh; display: flex; flex-direction: column; padding: 20px; box-sizing: border-box; overflow-y: auto; padding-bottom: 100px; }
         .hidden { display: none !important; }
 
-        h1, h2, h3 { font-family: 'Orbitron'; text-transform: uppercase; color: var(--blue); margin: 10px 0; }
-        .card { background: var(--card); border-radius: 20px; padding: 20px; border: 1px solid rgba(59, 130, 246, 0.2); margin-bottom: 15px; position: relative; overflow: hidden; }
+        h1, h2 { font-family: 'Orbitron'; color: var(--blue); text-transform: uppercase; }
+        .card { background: var(--card); border-radius: 20px; padding: 20px; border: 1px solid rgba(59, 130, 246, 0.2); margin-bottom: 15px; }
         
-        .btn { background: var(--blue); color: white; border: none; padding: 15px; border-radius: 12px; width: 100%; font-weight: bold; cursor: pointer; font-family: 'Orbitron'; margin-top: 10px; transition: 0.3s; }
-        .btn-outline { background: transparent; border: 1px solid var(--blue); color: white; padding: 12px; border-radius: 12px; margin: 5px 0; cursor: pointer; width: 100%; text-align: left; }
-        .btn-outline.selected { background: var(--blue); box-shadow: 0 0 15px var(--blue); }
+        .btn { background: var(--blue); color: white; border: none; padding: 15px; border-radius: 12px; width: 100%; font-weight: bold; font-family: 'Orbitron'; margin-top: 10px; cursor: pointer; }
+        .btn-outline { background: transparent; border: 1px solid var(--blue); color: white; padding: 12px; border-radius: 12px; margin: 5px 0; width: 100%; text-align: left; cursor: pointer; }
+        .btn-outline.selected { background: rgba(59, 130, 246, 0.3); border-color: white; }
 
-        input { width: 100%; padding: 14px; margin: 10px 0; border-radius: 12px; border: 1px solid var(--blue); background: #050a18; color: white; font-size: 16px; }
+        input { width: 100%; padding: 14px; margin: 10px 0; border-radius: 12px; border: 1px solid var(--blue); background: #050a18; color: white; box-sizing: border-box; }
 
-        /* Gamification Styles */
-        .xp-bar-bg { width: 100%; height: 12px; background: #1e293b; border-radius: 6px; margin-top: 10px; }
-        .xp-bar-fill { height: 100%; background: var(--accent); border-radius: 6px; width: 0%; transition: width 0.5s ease; box-shadow: 0 0 10px var(--accent); }
-        .level-badge { background: var(--accent); color: #000; padding: 4px 12px; border-radius: 20px; font-weight: 900; font-size: 12px; font-family: 'Orbitron'; }
+        /* Body Stats Visualization */
+        .body-container { position: relative; width: 200px; height: 300px; margin: 0 auto; background: rgba(255,255,255,0.05); border-radius: 20px; display: flex; justify-content: center; align-items: center; }
+        .body-img { height: 90%; opacity: 0.8; filter: hue-rotate(180deg); } /* Blauwe gloed over karakter */
+        
+        .muscle-label { position: absolute; background: var(--blue); color: white; padding: 2px 8px; border-radius: 10px; font-size: 10px; font-family: 'Orbitron'; }
+        #label-chest { top: 30%; left: -20px; }
+        #label-legs { bottom: 30%; right: -20px; }
+        #label-core { top: 50%; right: -30px; }
 
-        /* Live AI UI */
-        .workout-box { position: relative; flex: 1; background: #000; border-radius: 24px; overflow: hidden; border: 2px solid var(--card); }
+        /* Navigation */
+        .nav { position: fixed; bottom: 0; width: 100%; background: var(--card); display: flex; justify-content: space-around; padding: 15px 0 25px; border-top: 1px solid rgba(255,255,255,0.1); z-index: 100; }
+        .nav-item { text-align: center; font-size: 10px; color: #94a3b8; cursor: pointer; }
+        .nav-item.active { color: var(--blue); font-weight: bold; }
+        
+        /* Workout UI */
+        .workout-box { position: relative; flex: 1; background: #000; border-radius: 24px; overflow: hidden; }
         canvas { width: 100%; height: 100%; object-fit: cover; transform: scaleX(-1); }
-        
-        .live-stats { position: absolute; top: 15px; left: 15px; right: 15px; display: flex; gap: 10px; }
-        .glass-pill { background: rgba(17, 26, 46, 0.8); backdrop-filter: blur(10px); padding: 10px 15px; border-radius: 15px; border: 1px solid rgba(255,255,255,0.1); flex: 1; text-align: center; }
-        
-        #rest-overlay { position: absolute; inset: 0; background: rgba(5, 10, 24, 0.95); display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 100; }
-        
-        .nav { position: fixed; bottom: 0; width: 100%; background: var(--card); display: flex; justify-content: space-around; padding: 15px 0 25px; border-top: 1px solid rgba(255,255,255,0.1); }
-        .nav-item { text-align: center; font-size: 10px; color: #94a3b8; cursor: pointer; transition: 0.3s; }
-        .nav-item.active { color: var(--blue); transform: translateY(-5px); }
     </style>
 </head>
 <body>
 
     <div id="screen-onboarding" class="screen">
-        <h1 id="on-title">Stap 1/4</h1>
-        <div class="card" id="q1">
-            <h2>Wie ben jij?</h2>
-            <input type="text" id="in-name" placeholder="Je naam...">
-            <button class="btn" onclick="nextQ(2)">VOLGENDE</button>
-        </div>
-        <div class="card hidden" id="q2">
-            <h2>Bio Data</h2>
-            <input type="number" id="in-height" placeholder="Lengte (cm)">
-            <input type="number" id="in-weight" placeholder="Gewicht (kg)">
-            <button class="btn" onclick="nextQ(3)">VOLGENDE</button>
-        </div>
-        <div class="card hidden" id="q3">
-            <h2>Jouw Niveau</h2>
-            <button class="btn-outline" onclick="setVal('level', 'beginner', this)">Beginner (8 reps)</button>
-            <button class="btn-outline" onclick="setVal('level', 'matig', this)">Matig (12 reps)</button>
-            <button class="btn-outline" onclick="setVal('level', 'gevorderd', this)">Elite (18 reps)</button>
-            <button class="btn" onclick="nextQ(4)" style="margin-top:20px">BIJNA KLAAR</button>
-        </div>
-        <div class="card hidden" id="q4">
-            <h2>Doelstelling</h2>
-            <button class="btn-outline" onclick="setVal('goal', 'Spieropbouw', this)">Spieropbouw</button>
-            <button class="btn-outline" onclick="setVal('goal', 'Gewichtsverlies', this)">Gewichtsverlies</button>
-            <button class="btn" onclick="finishOnboarding()">START MIJN TRAJECT</button>
+        <h1>Setup</h1>
+        <div id="q-steps">
+            <div class="card" id="step1">
+                <h2>Wie ben jij?</h2>
+                <input type="text" id="in-name" placeholder="Naam...">
+                <div style="display:flex; gap:10px; margin-top:10px;">
+                    <button class="btn-outline" onclick="setGender('M', this)">JONGEN</button>
+                    <button class="btn-outline" onclick="setGender('V', this)">MEISJE</button>
+                </div>
+                <button class="btn" onclick="showStep(2)">VOLGENDE</button>
+            </div>
+            <div class="card hidden" id="step2">
+                <h2>Lichaam</h2>
+                <input type="number" id="in-height" placeholder="Lengte (cm)">
+                <input type="number" id="in-weight" placeholder="Gewicht (kg)">
+                <button class="btn" onclick="showStep(3)">VOLGENDE</button>
+            </div>
+            <div class="card hidden" id="step3">
+                <h2>Niveau</h2>
+                <button class="btn-outline" onclick="setLevel('beginner', this)">Beginner</button>
+                <button class="btn-outline" onclick="setLevel('matig', this)">Matig</button>
+                <button class="btn-outline" onclick="setLevel('gevorderd', this)">Elite</button>
+                <button class="btn" onclick="finishOnboarding()" style="margin-top:20px;">START</button>
+            </div>
         </div>
     </div>
 
     <div id="screen-home" class="screen hidden">
-        <div style="display:flex; justify-content:space-between; align-items:center;">
-            <h2 id="home-name">Hey!</h2>
-            <span class="level-badge" id="level-text">LEVEL 1</span>
-        </div>
-        
+        <h2 id="home-name">Hey!</h2>
         <div class="card">
-            <div style="display:flex; justify-content:space-between; font-size:12px;">
-                <span>XP PROGRESSIE</span>
-                <span id="xp-val">0 / 100 XP</span>
-            </div>
-            <div class="xp-bar-bg"><div id="xp-fill" class="xp-bar-fill"></div></div>
-            <p style="font-size:12px; color:var(--accent); margin-top:10px;" id="bmi-info">BMI: --</p>
+            <h3>Kies Training</h3>
+            <button class="btn-outline" onclick="startWorkout('squats')">🦵 Squats (Benen & Billen)</button>
+            <button class="btn-outline" onclick="startWorkout('pushups')">💪 Push-ups (Borst & Armen)</button>
+            <button class="btn-outline" onclick="startWorkout('jumpingjacks')">✨ Jumping Jacks (Conditie)</button>
         </div>
+    </div>
 
-        <div class="card" style="border-color: var(--accent);">
-            <h3>Snel Starten</h3>
-            <button class="btn-outline" onclick="startWorkout('squats')">🦵 Squats (Kleur-Check)</button>
-            <button class="btn-outline" onclick="startWorkout('pushups')">💪 Push-ups (AI-Check)</button>
-            <button class="btn-outline" onclick="startWorkout('jumpingjacks')">✨ Jumping Jacks (XP Farm)</button>
+    <div id="screen-stats" class="screen hidden">
+        <h2>Body Progress</h2>
+        <div class="card" style="text-align:center;">
+            <div class="body-container">
+                <img id="char-img" src="" class="body-img" alt="Karakter">
+                
+                <div class="muscle-label" id="label-chest">Borst: Lvl 1</div>
+                <div class="muscle-label" id="label-core">Core: Lvl 1</div>
+                <div class="muscle-label" id="label-legs">Benen: Lvl 1</div>
+            </div>
+            <p style="margin-top:20px; font-size:12px; color:#94a3b8;">Train specifieke lichaamsdelen om hun level te verhogen.</p>
+        </div>
+    </div>
+
+    <div id="screen-profile" class="screen hidden">
+        <h2>Profiel</h2>
+        <div class="card" id="profile-edit">
+            <label>Naam</label><input type="text" id="p-name">
+            <label>Lengte</label><input type="number" id="p-height">
+            <label>Gewicht</label><input type="number" id="p-weight">
+            <button class="btn" onclick="saveProfile()">OPSLAAN</button>
         </div>
     </div>
 
@@ -101,84 +112,123 @@
         <div class="workout-box">
             <video id="input_video" style="display:none"></video>
             <canvas id="output_canvas"></canvas>
-            
-            <div class="live-stats">
-                <div class="glass-pill"><small>REPS</small><br><strong id="live-reps" style="font-size:20px">0</strong></div>
-                <div class="glass-pill"><small>SET</small><br><strong id="live-sets">1/3</strong></div>
-                <div class="glass-pill"><small>KCAL</small><br><strong id="live-kcal" style="color:var(--accent)">0.0</strong></div>
+            <div style="position:absolute; top:20px; right:20px; background:var(--blue); padding:10px; border-radius:15px; text-align:center;">
+                <small>REPS</small><br><strong id="rep-num" style="font-size:24px;">0</strong>
             </div>
-
-            <div id="rest-overlay" class="hidden">
-                <h1 id="timer-val">15</h1>
-                <p>Rust... Adem in, adem uit.</p>
-            </div>
-            
-            <div id="coach-hint" style="position:absolute; bottom:20px; width:100%; text-align:center; font-weight:bold; text-transform:uppercase;">Breng je lichaam in beeld</div>
+            <div id="coach-msg" style="position:absolute; bottom:20px; width:100%; text-align:center;">Positioneer jezelf...</div>
         </div>
-        <button class="btn" style="background:var(--danger); margin-top:10px;" onclick="location.reload()">STOP TRAINING</button>
+        <button class="btn" style="background:#ef4444; margin-top:10px;" onclick="location.reload()">STOP</button>
     </div>
 
     <nav class="nav hidden" id="navbar">
-        <div class="nav-item active" onclick="show('home')">🏠<br>Home</div>
-        <div class="nav-item" onclick="show('home')">📊<br>Stats</div>
-        <div class="nav-item" onclick="resetApp()">👤<br>Reset</div>
+        <div class="nav-item active" onclick="navTo('home', this)">🏠<br>Home</div>
+        <div class="nav-item" onclick="navTo('stats', this)">📊<br>Body</div>
+        <div class="nav-item" onclick="navTo('profile', this)">👤<br>Profiel</div>
     </nav>
 
     <script>
-        let data = JSON.parse(localStorage.getItem('smartFit')) || { 
-            name: '', height: 0, weight: 0, level: 'beginner', goal: '', xp: 0, lvl: 1, totalReps: 0 
+        let db = JSON.parse(localStorage.getItem('fitnessDB')) || {
+            name: '', gender: 'M', height: '', weight: '', level: 'beginner',
+            xp: { chest: 0, legs: 0, core: 0 }
         };
-        let reps = 0, sets = 1, isResting = false, currentExe = '', stage = 'up', liveKcal = 0;
 
         function speak(t) { const m = new SpeechSynthesisUtterance(t); m.lang='nl-NL'; window.speechSynthesis.speak(m); }
 
-        function nextQ(n) {
-            document.querySelectorAll('#screen-onboarding .card').forEach(c => c.classList.add('hidden'));
-            document.getElementById('q'+n).classList.remove('hidden');
-            document.getElementById('on-title').innerText = `Stap ${n}/4`;
+        function showStep(n) {
+            document.querySelectorAll('#q-steps .card').forEach(c => c.classList.add('hidden'));
+            document.getElementById('step'+n).classList.remove('hidden');
         }
 
-        function setVal(key, val, el) {
-            data[key] = val;
+        function setGender(g, el) {
+            db.gender = g;
+            el.parentElement.querySelectorAll('button').forEach(b => b.classList.remove('selected'));
+            el.classList.add('selected');
+        }
+
+        function setLevel(l, el) {
+            db.level = l;
             el.parentElement.querySelectorAll('button').forEach(b => b.classList.remove('selected'));
             el.classList.add('selected');
         }
 
         function finishOnboarding() {
-            data.name = document.getElementById('in-name').value;
-            data.height = parseFloat(document.getElementById('in-height').value);
-            data.weight = parseFloat(document.getElementById('in-weight').value);
+            db.name = document.getElementById('in-name').value;
+            db.height = document.getElementById('in-height').value;
+            db.weight = document.getElementById('in-weight').value;
             save();
-            show('home');
-            speak("Laten we beginnen, " + data.name);
+            navTo('home');
         }
 
-        function save() { localStorage.setItem('smartFit', JSON.stringify(data)); }
+        function save() { localStorage.setItem('fitnessDB', JSON.stringify(db)); }
 
-        function show(s) {
+        function navTo(s, el) {
             document.querySelectorAll('.screen').forEach(scr => scr.classList.add('hidden'));
             document.getElementById('screen-'+s).classList.remove('hidden');
             document.getElementById('navbar').classList.remove('hidden');
-            if(s === 'home') updateHome();
+            if(el) {
+                document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
+                el.classList.add('active');
+            }
+            if(s === 'stats') updateBodyMap();
+            if(s === 'home') document.getElementById('home-name').innerText = "Hey " + db.name;
+            if(s === 'profile') {
+                document.getElementById('p-name').value = db.name;
+                document.getElementById('p-height').value = db.height;
+                document.getElementById('p-weight').value = db.weight;
+            }
         }
 
-        function updateHome() {
-            document.getElementById('home-name').innerText = "Hey " + data.name;
-            const bmi = (data.weight / ((data.height/100) * (data.height/100))).toFixed(1);
-            document.getElementById('bmi-info').innerText = `JOUW BMI: ${bmi} (${getBMICat(bmi)})`;
-            
-            const xpNeeded = data.lvl * 100;
-            document.getElementById('xp-val').innerText = `${data.xp} / ${xpNeeded} XP`;
-            document.getElementById('xp-fill').style.width = (data.xp / xpNeeded * 100) + "%";
-            document.getElementById('level-text').innerText = "LEVEL " + data.lvl;
+        function saveProfile() {
+            db.name = document.getElementById('p-name').value;
+            db.height = document.getElementById('p-height').value;
+            db.weight = document.getElementById('p-weight').value;
+            save();
+            alert("Opgeslagen!");
         }
 
-        function getBMICat(b) { if(b<18.5) return 'Ondergewicht'; if(b<25) return 'Gezond'; return 'Overgewicht'; }
+        function updateBodyMap() {
+            const img = document.getElementById('char-img');
+            // We gebruiken een placeholder afbeelding die verandert per geslacht
+            img.src = db.gender === 'M' 
+                ? "https://cdn-icons-png.flaticon.com/512/2633/2633215.png" 
+                : "https://cdn-icons-png.flaticon.com/512/2633/2633214.png";
 
-        // AI MOTOR
+            document.getElementById('label-chest').innerText = "Borst: Lvl " + (Math.floor(db.xp.chest / 50) + 1);
+            document.getElementById('label-legs').innerText = "Benen: Lvl " + (Math.floor(db.xp.legs / 50) + 1);
+            document.getElementById('label-core').innerText = "Core: Lvl " + (Math.floor(db.xp.core / 50) + 1);
+        }
+
+        // AI LOGICA
         const videoElement = document.getElementById('input_video');
         const canvasElement = document.getElementById('output_canvas');
         const canvasCtx = canvasElement.getContext('2d');
+        let reps = 0, stage = 'up', currentExe = '';
+
+        function onResults(results) {
+            if (!results.poseLandmarks) return;
+            canvasCtx.save();
+            canvasCtx.clearRect(0, 0, canvasElement.width, canvasElement.height);
+            canvasCtx.drawImage(results.image, 0, 0, canvasElement.width, canvasElement.height);
+            drawConnectors(canvasCtx, results.poseLandmarks, POSE_CONNECTIONS, {color: '#3b82f6', lineWidth: 4});
+            
+            const marks = results.poseLandmarks;
+            const coach = document.getElementById('coach-msg');
+
+            // Heup(24), Knie(26), Enkel(28) voor benen | Schouder(11), Elleboog(13), Pols(15) voor borst
+            if(currentExe === 'squats') {
+                const angle = calculateAngle(marks[24], marks[26], marks[28]);
+                if(angle < 100) stage = 'down';
+                if(angle > 160 && stage === 'down') { countRep('legs'); stage = 'up'; }
+            } else if(currentExe === 'pushups') {
+                const angle = calculateAngle(marks[11], marks[13], marks[15]);
+                if(angle < 90) stage = 'down';
+                if(angle > 150 && stage === 'down') { countRep('chest'); stage = 'up'; }
+            } else if(currentExe === 'jumpingjacks') {
+                if(marks[15].y < marks[11].y) stage = 'up';
+                if(marks[15].y > marks[11].y && stage === 'up') { countRep('core'); stage = 'down'; }
+            }
+            canvasCtx.restore();
+        }
 
         function calculateAngle(a, b, c) {
             const radians = Math.atan2(c.y - b.y, c.x - b.x) - Math.atan2(a.y - b.y, a.x - b.x);
@@ -186,78 +236,12 @@
             return angle > 180 ? 360 - angle : angle;
         }
 
-        function onResults(results) {
-            if (!results.poseLandmarks || isResting) return;
-            canvasCtx.save();
-            canvasCtx.clearRect(0, 0, canvasElement.width, canvasElement.height);
-            canvasCtx.drawImage(results.image, 0, 0, canvasElement.width, canvasElement.height);
-            
-            const marks = results.poseLandmarks;
-            const hint = document.getElementById('coach-hint');
-            let angle = 0;
-            let isGoodForm = false;
-
-            // OEFENING LOGICA + FORM CHECK
-            if(currentExe === 'squats') {
-                angle = calculateAngle(marks[24], marks[26], marks[28]);
-                if(angle < 105) { isGoodForm = true; stage = 'down'; hint.innerText = "GOED DIEP!"; }
-                else if (angle < 140) { hint.innerText = "NOG IETS LAGER!"; }
-                if(angle > 160 && stage === 'down') { triggerRep(); stage = 'up'; }
-            } else if(currentExe === 'pushups') {
-                angle = calculateAngle(marks[11], marks[13], marks[15]);
-                if(angle < 95) { isGoodForm = true; stage = 'down'; }
-                if(angle > 155 && stage === 'down') { triggerRep(); stage = 'up'; }
-            } else if(currentExe === 'jumpingjacks') {
-                isGoodForm = marks[15].y < marks[11].y;
-                if(isGoodForm) stage = 'up';
-                if(!isGoodForm && stage === 'up') { triggerRep(); stage = 'down'; }
-            }
-
-            // Teken skelet met kleur-feedback
-            const lineColor = isGoodForm ? '#10b981' : '#3b82f6'; // Groen bij goede vorm, anders blauw
-            drawConnectors(canvasCtx, marks, POSE_CONNECTIONS, {color: lineColor, lineWidth: 5});
-            drawLandmarks(canvasCtx, marks, {color: '#ffffff', lineWidth: 1, radius: 3});
-
-            canvasCtx.restore();
-        }
-
-        function triggerRep() {
+        function countRep(part) {
             reps++;
-            document.getElementById('live-reps').innerText = reps;
+            document.getElementById('rep-num').innerText = reps;
             speak(reps);
-
-            // Calorieën berekenen (Punt 2)
-            // Gemiddeld 0.5 kcal per squat voor 75kg
-            const kcalPerRep = (data.weight / 75) * 0.45;
-            liveKcal += kcalPerRep;
-            document.getElementById('live-kcal').innerText = liveKcal.toFixed(1);
-
-            // XP Systeem (Punt 3)
-            data.xp += 10;
-            if(data.xp >= data.lvl * 100) {
-                data.xp = 0;
-                data.lvl++;
-                speak("Level up! Je bent nu level " + data.lvl);
-            }
+            db.xp[part] += 10;
             save();
-
-            const target = data.level === 'beginner' ? 8 : (data.level === 'matig' ? 12 : 18);
-            if(reps >= target) {
-                sets++;
-                if(sets > 3) { speak("Training voltooid!"); location.reload(); }
-                else startRest();
-            }
-        }
-
-        function startRest() {
-            isResting = true;
-            document.getElementById('rest-overlay').classList.remove('hidden');
-            let t = 15;
-            let timer = setInterval(() => {
-                t--;
-                document.getElementById('timer-val').innerText = t;
-                if(t <= 0) { clearInterval(timer); isResting = false; reps = 0; document.getElementById('live-reps').innerText = "0"; document.getElementById('live-sets').innerText = sets+"/3"; document.getElementById('rest-overlay').classList.add('hidden'); }
-            }, 1000);
         }
 
         const pose = new Pose({locateFile: (f) => `https://cdn.jsdelivr.net/npm/@mediapipe/pose/${f}`});
@@ -266,18 +250,17 @@
 
         function startWorkout(type) {
             currentExe = type;
-            show('workout');
+            reps = 0;
+            document.getElementById('rep-num').innerText = "0";
+            navTo('workout');
             const camera = new Camera(videoElement, { onFrame: async () => {
                 canvasElement.width = videoElement.videoWidth; canvasElement.height = videoElement.videoHeight;
                 await pose.send({image: videoElement});
             }, width: 640, height: 480 });
             camera.start();
-            speak("Begin met " + type);
         }
 
-        function resetApp() { if(confirm("Alles wissen?")) { localStorage.clear(); location.reload(); } }
-
-        if(data.name) show('home');
+        if(db.name) navTo('home');
     </script>
 </body>
 </html>
