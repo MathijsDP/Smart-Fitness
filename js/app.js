@@ -34,6 +34,7 @@ function onResults(results) {
     canvasCtx.clearRect(0, 0, canvasElement.width, canvasElement.height);
     canvasCtx.drawImage(results.image, 0, 0, canvasElement.width, canvasElement.height);
 
+    // Teken AI lijnen
     drawConnectors(canvasCtx, results.poseLandmarks, POSE_CONNECTIONS, {color: '#3b82f6', lineWidth: 4});
     drawLandmarks(canvasCtx, results.poseLandmarks, {color: '#ffffff', lineWidth: 2});
 
@@ -41,7 +42,7 @@ function onResults(results) {
     const feedback = document.getElementById('ai-feedback');
 
     if (currentMode === "squat") {
-        let angle = calculateAngle(marks[24], marks[26], marks[28]);
+        let angle = calculateAngle(marks[24], marks[26], marks[28]); // Heup-Knie-Enkel
         if (angle < 100) { stage = "down"; feedback.innerText = "Lager..."; }
         if (angle > 150 && stage === "down") {
             stage = "up"; reps++;
@@ -50,7 +51,7 @@ function onResults(results) {
             feedback.innerText = "TOP!";
         }
     } else if (currentMode === "pushup") {
-        let angle = calculateAngle(marks[12], marks[14], marks[16]);
+        let angle = calculateAngle(marks[12], marks[14], marks[16]); // Schouder-Elleboog-Pols
         if (angle < 90) stage = "down";
         if (angle > 150 && stage === "down") {
             stage = "up"; reps++;
