@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>SmartFitness Pro Elite v3 ⚡</title>
+    <title>SmartFitness Multisport AI ⚡</title>
     
     <script src="https://cdn.jsdelivr.net/npm/@mediapipe/pose"></script>
     <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils"></script>
@@ -16,239 +16,168 @@
         .screen { height: 100vh; display: flex; flex-direction: column; padding: 20px; box-sizing: border-box; overflow-y: auto; padding-bottom: 100px; }
         .hidden { display: none !important; }
 
-        h1, h2 { font-family: 'Orbitron'; text-transform: uppercase; color: var(--blue); }
+        h1, h2 { font-family: 'Orbitron'; text-transform: uppercase; color: var(--blue); margin: 10px 0; }
         .card { background: var(--card); border-radius: 20px; padding: 20px; border: 1px solid rgba(59, 130, 246, 0.2); margin-bottom: 15px; }
         
         .btn { background: var(--blue); color: white; border: none; padding: 15px; border-radius: 12px; width: 100%; font-weight: bold; cursor: pointer; font-family: 'Orbitron'; margin-top: 10px; }
-        input, select { width: 100%; padding: 12px; margin: 8px 0; border-radius: 10px; border: 1px solid var(--blue); background: #050a18; color: white; box-sizing: border-box; }
+        .btn-outline { background: transparent; border: 1px solid var(--blue); color: white; padding: 12px; border-radius: 12px; margin: 5px 0; cursor: pointer; width: 100%; text-align: left; }
+        .btn-outline.selected { background: var(--blue); }
 
-        /* Stat Chart */
+        input, select { width: 100%; padding: 14px; margin: 10px 0; border-radius: 12px; border: 1px solid var(--blue); background: #050a18; color: white; font-size: 16px; }
+
+        /* Stats Display */
         .chart-container { display: flex; align-items: flex-end; justify-content: space-between; height: 150px; padding-top: 30px; }
         .bar-wrapper { display: flex; flex-direction: column; align-items: center; flex: 1; }
-        .bar { width: 20px; background: var(--blue); border-radius: 5px 5px 0 0; transition: height 0.5s ease; min-height: 5px; }
-        .bar-val { font-size: 10px; margin-bottom: 5px; font-weight: bold; color: var(--accent); }
-        .bar-day { font-size: 10px; margin-top: 5px; color: #94a3b8; }
+        .bar { width: 15px; background: var(--blue); border-radius: 5px; min-height: 5px; transition: height 0.3s; }
+        .bar-val { font-size: 10px; color: var(--accent); margin-bottom: 4px; }
 
-        /* Workout UI */
-        .workout-box { position: relative; flex: 1; background: #000; border-radius: 20px; overflow: hidden; min-height: 300px; }
+        /* Live UI */
+        .workout-box { position: relative; flex: 1; background: #000; border-radius: 20px; overflow: hidden; }
         canvas { width: 100%; height: 100%; object-fit: cover; transform: scaleX(-1); }
-        .workout-overlay { position: absolute; top: 15px; left: 15px; right: 15px; display: flex; justify-content: space-between; }
-        .stat-pill { background: rgba(59, 130, 246, 0.9); padding: 8px 15px; border-radius: 12px; text-align: center; }
-        
-        /* Rest Timer Overlay */
-        #rest-overlay { position: absolute; inset: 0; background: rgba(5, 10, 24, 0.9); display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 10; }
-        .timer-circle { width: 120px; height: 120px; border: 5px solid var(--blue); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 40px; font-family: 'Orbitron'; color: var(--accent); box-shadow: 0 0 20px var(--blue); }
-
-        .nav { position: fixed; bottom: 0; width: 100%; background: var(--card); display: flex; justify-content: space-around; padding: 15px 0; border-top: 1px solid rgba(255,255,255,0.1); }
-        .nav-item { text-align: center; font-size: 10px; color: #94a3b8; cursor: pointer; }
-        .nav-item.active { color: var(--blue); }
+        #rest-overlay { position: absolute; inset: 0; background: rgba(5, 10, 24, 0.95); display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 100; }
+        .workout-nav { display: flex; justify-content: space-around; background: var(--card); padding: 15px 0; border-top: 1px solid rgba(255,255,255,0.1); position: fixed; bottom: 0; width: 100%; }
     </style>
 </head>
 <body>
 
     <div id="screen-onboarding" class="screen">
-        <h1>Setup</h1>
-        <div class="card">
-            <label>Naam</label><input type="text" id="in-name" placeholder="Naam...">
-            <label>Lengte (cm)</label><input type="number" id="in-height" placeholder="180">
-            <label>Gewicht (kg)</label><input type="number" id="in-weight" placeholder="75">
-            <label>Niveau</label>
-            <select id="in-level">
-                <option value="beginner">Beginner (8 reps)</option>
-                <option value="matig">Matig (12 reps)</option>
-                <option value="gevorderd">Gevorderd (18 reps)</option>
-            </select>
-            <button class="btn" onclick="saveProfile(true)">START JE TRAINING</button>
+        <h1 id="onboarding-title">Stap 1/4</h1>
+        <div class="card" id="q1">
+            <h2>Hoe heet je?</h2>
+            <input type="text" id="in-name" placeholder="Je naam...">
+            <button class="btn" onclick="nextQ(2)">VOLGENDE</button>
+        </div>
+        <div class="card hidden" id="q2">
+            <h2>Lichaamsbouw</h2>
+            <input type="number" id="in-height" placeholder="Lengte in cm">
+            <input type="number" id="in-weight" placeholder="Gewicht in kg">
+            <button class="btn" onclick="nextQ(3)">VOLGENDE</button>
+        </div>
+        <div class="card hidden" id="q3">
+            <h2>Jouw Niveau</h2>
+            <button class="btn-outline" onclick="setVal('level', 'beginner', this)">Beginner (8 reps)</button>
+            <button class="btn-outline" onclick="setVal('level', 'matig', this)">Matig (12 reps)</button>
+            <button class="btn-outline" onclick="setVal('level', 'gevorderd', this)">Gevorderd (18 reps)</button>
+            <button class="btn" onclick="nextQ(4)" style="margin-top:20px">VOLGENDE</button>
+        </div>
+        <div class="card hidden" id="q4">
+            <h2>Hoofddoel</h2>
+            <button class="btn-outline" onclick="setVal('goal', 'Spieropbouw', this)">Spieropbouw</button>
+            <button class="btn-outline" onclick="setVal('goal', 'Conditie', this)">Conditie verbeteren</button>
+            <button class="btn" onclick="finishOnboarding()">START MIJN PLAN</button>
         </div>
     </div>
 
     <div id="screen-home" class="screen hidden">
         <h2 id="home-welcome">Hey!</h2>
         <div class="card">
-            <p>Vandaag: <strong id="plan-desc" style="color:var(--blue)">-</strong></p>
-            <p style="font-size: 12px; color: #94a3b8;">Focus op vorm voor maximaal resultaat.</p>
-            <button class="btn" onclick="startWorkout()">START TRAINING</button>
+            <h3>Kies je workout:</h3>
+            <button class="btn-outline" onclick="startWorkout('squats')">🦵 Squats (Benen)</button>
+            <button class="btn-outline" onclick="startWorkout('pushups')">💪 Push-ups (Borst)</button>
+            <button class="btn-outline" onclick="startWorkout('jumpingjacks')">✨ Jumping Jacks (Cardio)</button>
+            <button class="btn-outline" onclick="startWorkout('lunges')">🏃 Lunges (Stabiliteit)</button>
         </div>
     </div>
 
     <div id="screen-stats" class="screen hidden">
-        <h2>Voortgang</h2>
+        <h2>Jouw Statistieken</h2>
         <div class="card">
-            <div class="chart-container">
-                <div class="bar-wrapper"><span class="bar-val">0</span><div class="bar" style="height: 5%;"></div><span class="bar-day">MA</span></div>
-                <div class="bar-wrapper"><span class="bar-val">0</span><div class="bar" style="height: 5%;"></div><span class="bar-day">DI</span></div>
-                <div class="bar-wrapper"><span class="bar-val" id="today-val">0</span><div class="bar" id="today-bar" style="height: 5%; background:var(--accent);"></div><span class="bar-day">WO</span></div>
-                <div class="bar-wrapper"><span class="bar-val">0</span><div class="bar" style="height: 5%;"></div><span class="bar-day">DO</span></div>
-                <div class="bar-wrapper"><span class="bar-val">0</span><div class="bar" style="height: 5%;"></div><span class="bar-day">VR</span></div>
-            </div>
+            <div class="chart-container" id="chart">
+                </div>
         </div>
     </div>
 
     <div id="screen-profile" class="screen hidden">
-        <h2>Jouw Profiel</h2>
-        <div class="card">
-            <label>Naam</label><input type="text" id="p-name">
-            <label>Lengte</label><input type="number" id="p-height">
-            <label>Gewicht</label><input type="number" id="p-weight">
-            <label>Niveau</label>
-            <select id="p-level">
-                <option value="beginner">Beginner</option>
-                <option value="matig">Matig</option>
-                <option value="gevorderd">Gevorderd</option>
-            </select>
-            <button class="btn" onclick="saveProfile(false)">WIJZIGINGEN OPSLAAN</button>
-            <button class="btn" style="background:transparent; border:1px solid #ef4444; color:#ef4444; margin-top:20px;" onclick="localStorage.clear(); location.reload();">ACCOUNT RESETTEN</button>
-        </div>
+        <h2>Mijn Gegevens</h2>
+        <div class="card" id="profile-fields">
+            </div>
+        <button class="btn" onclick="updateProfile()">WIJZIGINGEN OPSLAAN</button>
     </div>
 
-    <div id="screen-workout" class="screen hidden" style="padding:10px;">
+    <div id="screen-workout" class="screen hidden">
         <div class="workout-box">
             <video id="input_video" style="display:none"></video>
             <canvas id="output_canvas"></canvas>
-            
             <div id="rest-overlay" class="hidden">
-                <h2 style="color:white">RUST</h2>
-                <div class="timer-circle" id="timer-display">15</div>
-                <p style="margin-top:20px;">Maak je klaar voor de volgende set!</p>
+                <h1 id="timer-val">15</h1>
+                <p>Neem even rust...</p>
             </div>
-
-            <div class="workout-overlay">
-                <div class="stat-pill"><small>SET</small><br><strong id="set-display">1/3</strong></div>
-                <div class="stat-pill"><small>REPS</small><br><strong><span id="rep-count">0</span><span id="target-reps">/18</span></strong></div>
+            <div style="position:absolute; top:20px; left:20px; right:20px; display:flex; justify-content:space-between">
+                <div class="card" style="padding:10px; margin:0"><small>SET</small><br><strong id="set-num">1/3</strong></div>
+                <div class="card" style="padding:10px; margin:0"><small id="exe-name">SQUATS</small><br><strong id="rep-num">0</strong>/<span id="rep-target">18</span></div>
             </div>
-            
-            <div style="position:absolute; bottom:0; width:100%; background:rgba(0,0,0,0.7); padding:15px; text-align:center; border-top:2px solid var(--blue);" id="coach-text">Zoek de camera...</div>
+            <div id="coach-hint" style="position:absolute; bottom:20px; width:100%; text-align:center; text-shadow:2px 2px #000">Breng je lichaam in beeld</div>
         </div>
-        <button class="btn" style="background:#ef4444;" onclick="location.reload()">STOP TRAINING</button>
+        <button class="btn" style="background:#ef4444" onclick="location.reload()">STOP</button>
     </div>
 
-    <nav class="nav hidden" id="navbar">
-        <div class="nav-item active" onclick="navTo('home')">🏠<br>Home</div>
-        <div class="nav-item" onclick="navTo('stats')">📊<br>Stats</div>
-        <div class="nav-item" onclick="navTo('profile')">👤<br>Profiel</div>
+    <nav class="workout-nav hidden" id="navbar">
+        <div onclick="show('home')">🏠<br>Home</div>
+        <div onclick="show('stats')">📊<br>Stats</div>
+        <div onclick="show('profile')">👤<br>Profiel</div>
     </nav>
 
     <script>
-        let user = JSON.parse(localStorage.getItem('user')) || null;
-        let reps = 0;
-        let sets = 1;
-        let stage = "up";
-        let target = 18;
-        let isResting = false;
+        let userData = JSON.parse(localStorage.getItem('fitData')) || { name: '', height: '', weight: '', level: 'beginner', goal: '', history: [0,0,0,0,0,0,0] };
+        let reps = 0, sets = 1, isResting = false, currentExe = '', stage = 'up';
 
-        function speak(t) {
-            const m = new SpeechSynthesisUtterance(t);
-            m.lang = 'nl-NL';
-            window.speechSynthesis.speak(m);
+        function speak(t) { const m = new SpeechSynthesisUtterance(t); m.lang='nl-NL'; window.speechSynthesis.speak(m); }
+
+        function nextQ(n) {
+            document.querySelectorAll('#screen-onboarding .card').forEach(c => c.classList.add('hidden'));
+            document.getElementById('q'+n).classList.remove('hidden');
+            document.getElementById('onboarding-title').innerText = `Stap ${n}/4`;
         }
 
-        function saveProfile(isFirst) {
-            const prefix = isFirst ? 'in-' : 'p-';
-            user = {
-                name: document.getElementById(prefix+'name').value,
-                height: document.getElementById(prefix+'height').value,
-                weight: document.getElementById(prefix+'weight').value,
-                level: document.getElementById(prefix+'level').value
-            };
-            localStorage.setItem('user', JSON.stringify(user));
-            updateUI();
-            navTo('home');
-            if(isFirst) speak("Welkom bij je nieuwe plan " + user.name);
+        function setVal(key, val, el) {
+            userData[key] = val;
+            el.parentElement.querySelectorAll('button').forEach(b => b.classList.remove('selected'));
+            el.classList.add('selected');
         }
 
-        function updateUI() {
-            if(!user) return;
-            document.getElementById('navbar').classList.remove('hidden');
-            document.getElementById('home-welcome').innerText = "Hey " + user.name + "!";
-            
-            if(user.level === 'beginner') target = 8;
-            else if(user.level === 'matig') target = 12;
-            else target = 18;
-
-            document.getElementById('plan-desc').innerText = `3 SETS VAN ${target} REPS (${user.level.toUpperCase()})`;
-            document.getElementById('target-reps').innerText = "/" + target;
-
-            document.getElementById('p-name').value = user.name;
-            document.getElementById('p-height').value = user.height;
-            document.getElementById('p-weight').value = user.weight;
-            document.getElementById('p-level').value = user.level;
+        function finishOnboarding() {
+            userData.name = document.getElementById('in-name').value;
+            userData.height = document.getElementById('in-height').value;
+            userData.weight = document.getElementById('in-weight').value;
+            localStorage.setItem('fitData', JSON.stringify(userData));
+            show('home');
+            speak("Welkom " + userData.name);
         }
 
-        function navTo(s) {
+        function show(s) {
             document.querySelectorAll('.screen').forEach(scr => scr.classList.add('hidden'));
-            document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
             document.getElementById('screen-'+s).classList.remove('hidden');
-            const items = document.querySelectorAll('.nav-item');
-            if(s === 'home') items[0].classList.add('active');
-            if(s === 'stats') items[1].classList.add('active');
-            if(s === 'profile') items[2].classList.add('active');
+            document.getElementById('navbar').classList.remove('hidden');
+            if(s === 'stats') renderStats();
+            if(s === 'profile') renderProfile();
+            if(s === 'home') document.getElementById('home-welcome').innerText = "Hey " + userData.name + "!";
         }
 
-        function startRest() {
-            isResting = true;
-            document.getElementById('rest-overlay').classList.remove('hidden');
-            let timeLeft = 15;
-            speak("Rust voor 15 seconden.");
+        function renderProfile() {
+            document.getElementById('profile-fields').innerHTML = `
+                <label>Naam</label><input type="text" id="p-name" value="${userData.name}">
+                <label>Lengte</label><input type="number" id="p-height" value="${userData.height}">
+                <label>Gewicht</label><input type="number" id="p-weight" value="${userData.weight}">
+            `;
+        }
+
+        function renderStats() {
+            const days = ['MA', 'DI', 'WO', 'DO', 'VR', 'ZA', 'ZO'];
+            const today = new Date().getDay(); // 0 is zondag, 1 is maandag
+            const index = today === 0 ? 6 : today - 1;
             
-            let timer = setInterval(() => {
-                timeLeft--;
-                document.getElementById('timer-display').innerText = timeLeft;
-                if(timeLeft <= 3 && timeLeft > 0) speak(timeLeft);
-                if(timeLeft <= 0) {
-                    clearInterval(timer);
-                    isResting = false;
-                    document.getElementById('rest-overlay').classList.add('hidden');
-                    reps = 0;
-                    document.getElementById('rep-count').innerText = "0";
-                    document.getElementById('set-display').innerText = sets + "/3";
-                    speak("Set " + sets + ". Begin maar!");
-                }
-            }, 1000);
+            document.getElementById('chart').innerHTML = userData.history.map((val, i) => `
+                <div class="bar-wrapper">
+                    <span class="bar-val">${val}</span>
+                    <div class="bar" style="height: ${Math.min(val * 2, 100)}px; ${i === index ? 'background:var(--accent)' : ''}"></div>
+                    <span class="bar-day">${days[i]}</span>
+                </div>
+            `).join('');
         }
 
         const videoElement = document.getElementById('input_video');
         const canvasElement = document.getElementById('output_canvas');
         const canvasCtx = canvasElement.getContext('2d');
-
-        function onResults(results) {
-            if (!results.poseLandmarks || isResting) return;
-            
-            canvasCtx.save();
-            canvasCtx.clearRect(0, 0, canvasElement.width, canvasElement.height);
-            canvasCtx.drawImage(results.image, 0, 0, canvasElement.width, canvasElement.height);
-            drawConnectors(canvasCtx, results.poseLandmarks, POSE_CONNECTIONS, {color: '#3b82f6', lineWidth: 4});
-            drawLandmarks(canvasCtx, results.poseLandmarks, {color: '#fff', lineWidth: 1, radius: 3});
-
-            const marks = results.poseLandmarks;
-            const angle = calculateAngle(marks[24], marks[26], marks[28]);
-            const coach = document.getElementById('coach-text');
-
-            if (angle > 160 && stage === "down") {
-                reps++;
-                stage = "up";
-                document.getElementById('rep-count').innerText = reps;
-                document.getElementById('today-val').innerText = (sets - 1) * target + reps;
-                document.getElementById('today-bar').style.height = Math.min((( (sets-1)*target + reps) * 2), 100) + "%";
-                
-                if(reps >= target) {
-                    sets++;
-                    if(sets > 3) {
-                        speak("Training voltooid! Geweldig gedaan.");
-                        coach.innerText = "TRAINING VOLTOOID!";
-                        setTimeout(() => location.reload(), 3000);
-                    } else {
-                        startRest();
-                    }
-                } else {
-                    speak(reps);
-                    coach.innerText = "NOG " + (target - reps) + " TE GAAN";
-                }
-            } else if (angle < 100) {
-                stage = "down";
-                coach.innerText = "KOM OMHOOG!";
-            }
-            canvasCtx.restore();
-        }
 
         function calculateAngle(a, b, c) {
             const radians = Math.atan2(c.y - b.y, c.x - b.x) - Math.atan2(a.y - b.y, a.x - b.x);
@@ -256,27 +185,85 @@
             return angle > 180 ? 360 - angle : angle;
         }
 
+        function onResults(results) {
+            if (!results.poseLandmarks || isResting) return;
+            canvasCtx.save();
+            canvasCtx.clearRect(0, 0, canvasElement.width, canvasElement.height);
+            canvasCtx.drawImage(results.image, 0, 0, canvasElement.width, canvasElement.height);
+            drawConnectors(canvasCtx, results.poseLandmarks, POSE_CONNECTIONS, {color: '#3b82f6', lineWidth: 4});
+
+            const marks = results.poseLandmarks;
+            let angle = 0;
+            const target = userData.level === 'beginner' ? 8 : (userData.level === 'matig' ? 12 : 18);
+            document.getElementById('rep-target').innerText = target;
+
+            // AI LOGICA PER OEFENING
+            if(currentExe === 'squats') {
+                angle = calculateAngle(marks[24], marks[26], marks[28]); // Heup-Knie-Enkel
+                if(angle < 100) stage = 'down';
+                if(angle > 160 && stage === 'down') { countRep(target); stage = 'up'; }
+            } else if(currentExe === 'pushups') {
+                angle = calculateAngle(marks[11], marks[13], marks[15]); // Schouder-Elleboog-Pols
+                if(angle < 90) stage = 'down';
+                if(angle > 150 && stage === 'down') { countRep(target); stage = 'up'; }
+            } else if(currentExe === 'jumpingjacks') {
+                let dist = Math.abs(marks[15].y - marks[11].y); // Handen t.o.v. schouders
+                if(marks[15].y < marks[11].y) stage = 'up';
+                if(marks[15].y > marks[11].y && stage === 'up') { countRep(target); stage = 'down'; }
+            } else if(currentExe === 'lunges') {
+                angle = calculateAngle(marks[24], marks[26], marks[28]);
+                if(angle < 110) stage = 'down';
+                if(angle > 150 && stage === 'down') { countRep(target); stage = 'up'; }
+            }
+            canvasCtx.restore();
+        }
+
+        function countRep(target) {
+            reps++;
+            document.getElementById('rep-num').innerText = reps;
+            speak(reps);
+            
+            // Update stats in history
+            const today = new Date().getDay();
+            const index = today === 0 ? 6 : today - 1;
+            userData.history[index]++;
+            localStorage.setItem('fitData', JSON.stringify(userData));
+
+            if(reps >= target) {
+                sets++;
+                if(sets > 3) { speak("Heel goed gedaan! Training voltooid."); location.reload(); }
+                else startRest();
+            }
+        }
+
+        function startRest() {
+            isResting = true;
+            document.getElementById('rest-overlay').classList.remove('hidden');
+            let t = 15;
+            let timer = setInterval(() => {
+                t--;
+                document.getElementById('timer-val').innerText = t;
+                if(t <= 0) { clearInterval(timer); isResting = false; reps = 0; document.getElementById('rep-num').innerText = "0"; document.getElementById('set-num').innerText = sets+"/3"; document.getElementById('rest-overlay').classList.add('hidden'); }
+            }, 1000);
+        }
+
         const pose = new Pose({locateFile: (f) => `https://cdn.jsdelivr.net/npm/@mediapipe/pose/${f}`});
         pose.setOptions({ modelComplexity: 1, minDetectionConfidence: 0.5, minTrackingConfidence: 0.5 });
         pose.onResults(onResults);
 
-        function startWorkout() {
-            reps = 0; sets = 1;
-            document.getElementById('rep-count').innerText = "0";
-            document.getElementById('set-display').innerText = "1/3";
-            navTo('workout');
-            const camera = new Camera(videoElement, {
-                onFrame: async () => {
-                    canvasElement.width = videoElement.videoWidth;
-                    canvasElement.height = videoElement.videoHeight;
-                    await pose.send({image: videoElement});
-                }, width: 640, height: 480
-            });
+        function startWorkout(type) {
+            currentExe = type;
+            document.getElementById('exe-name').innerText = type.toUpperCase();
+            show('workout');
+            const camera = new Camera(videoElement, { onFrame: async () => {
+                canvasElement.width = videoElement.videoWidth; canvasElement.height = videoElement.videoHeight;
+                await pose.send({image: videoElement});
+            }, width: 640, height: 480 });
             camera.start();
-            speak("Klaar voor set 1. Succes!");
+            speak("Begin met " + type);
         }
 
-        if(user) { updateUI(); navTo('home'); }
+        if(userData.name) show('home');
     </script>
 </body>
 </html>
