@@ -2,34 +2,32 @@
 let reps = 0;
 let stage = "initial";
 let currentMode = "";
-let onboardingStep = 1;
-let userProfile = { name: "", age: "", goal: "", weight: "" };
+let currentStep = 1;
+let userData = { name: "", age: "", goal: "", weight: "" };
 
 const videoElement = document.getElementById('input_video');
 const canvasElement = document.getElementById('output_canvas');
 const canvasCtx = canvasElement.getContext('2d');
 
-// --- APP INITIALISATIE ---
+// --- INITIALISATIE ---
 window.onload = () => {
-    console.log("App geladen...");
-    const savedName = localStorage.getItem('userName');
+    console.log("App-motor gestart...");
     
+    // Check of gebruiker al bestaat in lokaal geheugen
+    const savedName = localStorage.getItem('smart_name');
     if (savedName) {
-        userProfile.name = savedName;
-        showScreen('homeScreen');
-        document.getElementById('bottomNavBar').classList.remove('hidden');
-        document.getElementById('displayUserName').innerText = savedName.toUpperCase();
+        setupHome(savedName);
     } else {
         showScreen('onboardingScreen');
     }
 
-    // Luister naar de knop
+    // De "Volgende" Knop Fix
     const nextBtn = document.getElementById('nextBtn');
     if(nextBtn) {
         nextBtn.addEventListener('click', () => handleOnboarding());
     }
 
-    // Luister naar de Enter-toets
+    // Ondersteuning voor de Enter-toets voor gebruiksgemak
     document.addEventListener('keypress', (e) => {
         if (e.key === 'Enter') handleOnboarding();
     });
@@ -37,51 +35,54 @@ window.onload = () => {
 
 // --- ONBOARDING LOGICA ---
 function handleOnboarding() {
-    const input = document.getElementById('onboardingInput');
-    const question = document.getElementById('onboardingQuestion');
-    const stepLabel = document.getElementById('currentOnboardingStep');
+    const input = document.getElementById('mainInput');
+    const question = document.getElementById('qText');
+    const stepLabel = document.getElementById('stepNum');
     const val = input.value.trim();
 
-    if (!val && onboardingStep <= 4) return;
+    // Blokkeer als er geen input is
+    if (!val && currentStep <= 4) return;
 
-    console.log("Stap:", onboardingStep, "Waarde:", val);
-
-    if (onboardingStep === 1) {
-        userProfile.name = val;
-        localStorage.setItem('userName', val);
-        question.innerText = "Hoe oud ben je?";
+    if (currentStep === 1) {
+        userData.name = val;
+        localStorage.setItem('smart_name', val);
+        question.innerText = "Wat is je leeftijd?";
         input.type = "number";
         input.placeholder = "Leeftijd...";
-    } else if (onboardingStep === 2) {
-        userProfile.age = val;
-        question.innerText = "Wat is je doel?";
+    } else if (currentStep === 2) {
+        userData.age = val;
+        question.innerText = "Wat is je hoofddoel?";
         input.type = "text";
         input.placeholder = "Bijv. Spieropbouw...";
-    } else if (onboardingStep === 3) {
-        userProfile.goal = val;
+    } else if (currentStep === 3) {
+        userData.goal = val;
         question.innerText = "Wat is je gewicht (kg)?";
         input.type = "number";
         input.placeholder = "Gewicht...";
-    } else if (onboardingStep === 4) {
-        userProfile.weight = val;
-        showScreen('homeScreen');
-        document.getElementById('bottomNavBar').classList.remove('hidden');
-        document.getElementById('displayUserName').innerText = userProfile.name.toUpperCase();
+    } else if (currentStep === 4) {
+        userData.weight = val;
+        setupHome(userData.name);
         return;
     }
 
-    input.value = "";
-    onboardingStep++;
-    stepLabel.innerText = onboardingStep;
+    input.value = ""; // Maak veld leeg voor volgende vraag
+    currentStep++;
+    stepLabel.innerText = currentStep;
 }
 
-// --- UI LOGICA ---
+function setupHome(name) {
+    showScreen('homeScreen');
+    document.getElementById('mainNav').classList.remove('hidden');
+    document.getElementById('userNameHeader').innerText = name.toUpperCase();
+}
+
 function showScreen(id) {
     document.querySelectorAll('.screen').forEach(s => s.classList.add('hidden'));
-    document.getElementById(id).classList.remove('hidden');
+    const target = document.getElementById(id);
+    if(target) target.classList.remove('hidden');
 }
 
-// --- MEDIA PIPE AI ---
+// --- AI & CAMERA MOTOR ---
 function calculateAngle(a, b, c) {
     const radians = Math.atan2(c.y - b.y, c.x - b.x) - Math.atan2(a.y - b.y, a.x - b.x);
     let angle = Math.abs((radians * 180.0) / Math.PI);
@@ -96,19 +97,28 @@ function onResults(results) {
     canvasCtx.clearRect(0, 0, canvasElement.width, canvasElement.height);
     canvasCtx.drawImage(results.image, 0, 0, canvasElement.width, canvasElement.height);
 
-    drawConnectors(canvasCtx, results.poseLandmarks, POSE_CONNECTIONS, {color: '#d1ff33', lineWidth: 4});
+    // AI Lijnen en punten tekenen voor technische presentatie
+    drawConnectors(canvasCtx, results.poseLandmarks, POSE_CONNECTIONS, {color: '#3b82f6', lineWidth: 4});
+    drawLandmarks(canvasCtx, results.poseLandmarks, {color: '#ffffff', lineWidth: 1, radius: 2});
     
     const marks = results.poseLandmarks;
-    const feedback = document.getElementById('aiFeedbackMessage');
+    const feedback = document.getElementById('aiFeedback');
 
     if (currentMode === "squat") {
+        // Punten voor squats: Heup (24), Knie (26), Enkel (28)
         let angle = calculateAngle(marks[24], marks[26], marks[28]);
-        if (angle < 100) { stage = "down"; feedback.innerText = "DIEPER!"; }
-        if (angle > 150 && stage === "down") {
+        
+        if (angle < 100) { 
+            stage = "down"; 
+            feedback.innerText = "GOED! NU OMHOOG!"; 
+            feedback.style.background = "#3b82f6";
+        }
+        if (angle > 155 && stage === "down") {
             stage = "up";
             reps++;
-            document.getElementById('repCountDisplay').innerText = reps;
-            feedback.innerText = "GOED!";
+            document.getElementById('repCounter').innerText = reps;
+            feedback.innerText = "TOP! VOLGENDE...";
+            feedback.style.background = "rgba(0,0,0,0.6)";
         }
     }
     canvasCtx.restore();
@@ -122,7 +132,12 @@ pose.onResults(onResults);
 
 function startWorkout(mode) {
     currentMode = mode;
+    reps = 0;
+    document.getElementById('repCounter').innerText = "0";
+    document.getElementById('modeTitle').innerText = mode.toUpperCase();
     showScreen('workoutScreen');
+    document.getElementById('mainNav').classList.add('hidden');
+
     const camera = new Camera(videoElement, {
         onFrame: async () => {
             canvasElement.width = videoElement.videoWidth;
