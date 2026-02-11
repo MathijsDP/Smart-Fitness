@@ -30,26 +30,28 @@
 
         /* Streak & HUD */
         .streak-badge { background: rgba(255,149,0,0.1); color: var(--orange); padding: 8px 15px; border-radius: 20px; font-weight: 800; font-size: 14px; display: inline-flex; align-items: center; gap: 8px; margin-bottom: 20px; }
-        .hud { position: absolute; top: 0; width: 100%; padding: 20px; display: flex; justify-content: space-between; background: linear-gradient(to bottom, rgba(0,0,0,0.7), transparent); }
+        .hud { position: absolute; top: 0; width: 100%; padding: 20px; display: flex; justify-content: space-between; background: linear-gradient(to bottom, rgba(0,0,0,0.7), transparent); z-index: 2001; }
         .hud-val { text-align: center; }
         .hud-val span { display: block; font-size: 9px; color: var(--sub); font-weight: 700; }
         .hud-val strong { font-size: 20px; font-family: 'Montserrat'; }
 
         /* Timer Overlays */
-        #rest-overlay { position: absolute; inset: 0; background: rgba(0,0,0,0.95); z-index: 1000; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; }
+        #rest-overlay { position: absolute; inset: 0; background: rgba(0,0,0,0.95); z-index: 3000; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; }
         .timer-txt { font-size: 80px; font-weight: 900; color: var(--blue); font-family: 'Montserrat'; }
 
         /* Nav */
-        .navbar { position: fixed; bottom: 0; width: 100%; background: #0a0a0a; border-top: 1px solid #222; display: flex; justify-content: space-around; padding: 15px 0 30px; }
+        .navbar { position: fixed; bottom: 0; width: 100%; background: #0a0a0a; border-top: 1px solid #222; display: flex; justify-content: space-around; padding: 15px 0 30px; z-index: 1000; }
         .nav-item { color: var(--sub); font-size: 10px; font-weight: 700; cursor: pointer; text-align: center; }
         .nav-item.active { color: #fff; }
+
+        /* Camera Fix */
+        #output_canvas { width: 100%; height: 100%; object-fit: contain; transform: scaleX(-1); background: #000; }
     </style>
 </head>
 <body>
 
     <div id="scr-onboarding" class="screen">
-        <div class="q-box" id="q-container">
-            </div>
+        <div class="q-box" id="q-container"></div>
     </div>
 
     <div id="scr-dash" class="screen hidden">
@@ -85,15 +87,15 @@
         <button class="btn" style="background:#ff3b30; color:#fff" onclick="localStorage.clear(); location.reload();">RESET ALLES</button>
     </div>
 
-    <div id="scr-workout" class="screen hidden" style="padding:0">
+    <div id="scr-workout" class="screen hidden" style="padding:0; z-index: 2000;">
         <video id="input_video" style="display:none"></video>
-        <canvas id="output_canvas" style="width:100%; height:100%; object-fit:cover; transform: scaleX(-1);"></canvas>
+        <canvas id="output_canvas"></canvas>
         
         <div id="rest-overlay" class="hidden">
             <div id="rest-title" class="subtitle">RUST</div>
             <div id="rest-exe" style="font-size:20px; font-weight:800;">OEFENING</div>
             <div class="timer-txt" id="timer-val">30</div>
-            <div style="display:flex; gap:10px;">
+            <div style="display:flex; gap:10px; z-index: 3001;">
                 <button class="btn btn-small" onclick="adjustTime(5)">+5 SEC</button>
                 <button class="btn btn-small" style="background:var(--blue)" onclick="skipRest()">SLA OVER</button>
             </div>
@@ -105,6 +107,7 @@
             <div class="hud-val"><span>SET</span><strong id="hud-set">1/3</strong></div>
             <div class="hud-val"><span>REPS</span><strong id="hud-reps">0/12</strong></div>
         </div>
+        <button class="btn" style="position:absolute; bottom:20px; left:50%; transform:translateX(-50%); width:80%; z-index:2001; background:rgba(255,59,48,0.8); color:#fff;" onclick="location.reload()">STOP TRAINING</button>
     </div>
 
     <nav class="navbar hidden" id="nav">
@@ -128,7 +131,6 @@
         let currentStep = 1;
         let circuit = [], cIdx = 0, reps = 0, sets = 1, isRest = false, restTimer = null, tLeft = 30;
 
-        // ONBOARDING ENGINE
         const questions = [
             { k: 'name', q: 'WAT IS JE VOORNAAM?', t: 'text' },
             { k: 'age', q: 'WAT IS JE LEEFTIJD?', t: 'number' },
@@ -159,7 +161,6 @@
             else { save(); checkStreak(); tab('dash'); document.getElementById('nav').classList.remove('hidden'); }
         }
 
-        // UTILS
         function save() { localStorage.setItem('elite_v6', JSON.stringify(user)); }
         function updateUser(k, v) { user[k] = v; save(); }
 
@@ -189,10 +190,9 @@
             });
         }
 
-        // WORKOUT LOGIC
         function startCircuit(cat) {
             currentCat = cat;
-            circuit = [...exercises[cat]].sort(() => 0.5 - Math.random()); // Altijd 6 oefeningen
+            circuit = [...exercises[cat]].sort(() => 0.5 - Math.random());
             cIdx = 0; sets = 1; reps = 0;
             tab('workout'); startAI(); startRest(30, "START TRAINING");
         }
@@ -223,15 +223,15 @@
             document.getElementById('hud-reps').innerText = `${reps}/${user.reps}`;
         }
 
-        // AI ENGINE
         const videoElement = document.getElementById('input_video');
         const canvasElement = document.getElementById('output_canvas');
         const canvasCtx = canvasElement.getContext('2d');
 
         function onResults(results) {
             if(!results.poseLandmarks || isRest) return;
-            canvasCtx.save(); canvasCtx.clearRect(0,0, 640, 480);
-            canvasCtx.drawImage(results.image, 0,0, 640, 480);
+            canvasCtx.save();
+            canvasCtx.clearRect(0, 0, canvasElement.width, canvasElement.height);
+            canvasCtx.drawImage(results.image, 0, 0, canvasElement.width, canvasElement.height);
             const m = results.poseLandmarks;
             const exe = circuit[cIdx].n.toLowerCase();
             let isGood = false;
@@ -265,7 +265,20 @@
         }
 
         function calcAngle(a,b,c) { const r = Math.atan2(c.y-b.y,c.x-b.x)-Math.atan2(a.y-b.y,a.x-b.x); let ang = Math.abs(r*180/Math.PI); return ang>180?360-ang:ang; }
-        function startAI() { const pose = new Pose({locateFile: (f) => `https://cdn.jsdelivr.net/npm/@mediapipe/pose/${f}`}); pose.setOptions({modelComplexity:1, minDetectionConfidence:0.5, minTrackingConfidence:0.5}); pose.onResults(onResults); new Camera(videoElement, {onFrame: async() => { await pose.send({image:videoElement}); }, width:640, height:480}).start(); }
+        
+        function startAI() {
+            const pose = new Pose({locateFile: (f) => `https://cdn.jsdelivr.net/npm/@mediapipe/pose/${f}`});
+            pose.setOptions({modelComplexity:1, minDetectionConfidence:0.5, minTrackingConfidence:0.5});
+            pose.onResults(onResults);
+            new Camera(videoElement, {
+                onFrame: async() => {
+                    canvasElement.width = videoElement.videoWidth;
+                    canvasElement.height = videoElement.videoHeight;
+                    await pose.send({image:videoElement});
+                }
+            }).start();
+        }
+        
         function speak(t) { const m = new SpeechSynthesisUtterance(t); m.lang='nl-NL'; window.speechSynthesis.speak(m); }
 
         if(!user.name) renderQ(); else { tab('dash'); document.getElementById('nav').classList.remove('hidden'); }
