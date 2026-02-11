@@ -1,102 +1,188 @@
-/* SMARTFITNESS PRO - MODERN THEME */
-:root { 
-    --primary: #00e0ff; 
-    --bg: #0b1120; 
-    --card: #1e293b; 
-    --text: #f8fafc; 
-    --accent: #3b82f6; 
-    --success: #10b981;
+const LINKS = { 
+    legs: "https://teachablemachine.withgoogle.com/models/Nv8j7aUsi/", 
+    chest: "https://teachablemachine.withgoogle.com/models/VyHCtMsZf/" 
+};
+
+let userData = {};
+let currentStep = 1;
+let model, webcam, ctx, animationId;
+let reps = 0, currentSet = 1, maxSets = 3, repsPerSet = 12, status = "up", isResting = false;
+
+// --- STEM ASSISTENT ---
+function speak(text) {
+    const msg = new SpeechSynthesisUtterance();
+    msg.text = text;
+    msg.lang = 'nl-NL';
+    msg.rate = 1.2;
+    window.speechSynthesis.speak(msg);
 }
 
-body { 
-    margin: 0; 
-    font-family: 'Inter', -apple-system, sans-serif; 
-    background-color: var(--bg); 
-    color: var(--text); 
-    -webkit-font-smoothing: antialiased; 
-    overflow-x: hidden;
+// --- INITIALISATIE ---
+init();
+
+function init() {
+    const saved = localStorage.getItem("fitnessProFinal");
+    if (saved) {
+        userData = JSON.parse(saved);
+        showHome();
+    } else { renderStep(); }
 }
 
-.app { max-width: 500px; margin: auto; min-height: 100vh; display: flex; flex-direction: column; padding-bottom: 100px; }
-
-/* Header & Cards */
-.header { padding: 40px 20px 10px; font-size: 32px; font-weight: 800; letter-spacing: -1px; }
-.card { 
-    background: var(--card); 
-    margin: 12px 16px; 
-    padding: 24px; 
-    border-radius: 24px; 
-    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
-    border: 1px solid rgba(255,255,255,0.05);
+function renderStep() {
+    const container = document.getElementById("questionCard");
+    if (currentStep === 1) {
+        container.innerHTML = `<h3>Wat is je leeftijd?</h3><input type="number" id="ageInput"><button class="button" onclick="userData.age=document.getElementById('ageInput').value; currentStep=2; renderStep();">Volgende</button>`;
+    } else if (currentStep === 2) {
+        container.innerHTML = `<p style="color:var(--primary)">Perfecte leeftijd!</p><h3>Lengte (cm)?</h3><input type="number" id="heightInput"><button class="button" onclick="userData.height=document.getElementById('heightInput').value; currentStep=3; renderStep();">Volgende</button>`;
+    } else if (currentStep === 3) {
+        container.innerHTML = `<h3>Jouw niveau?</h3><button class="button" onclick="userData.level='beginner'; currentStep=4; renderStep();">Beginner</button><button class="button" style="margin-top:10px" onclick="userData.level='advanced'; currentStep=4; renderStep();">Gevorderd</button>`;
+    } else if (currentStep === 4) {
+        container.innerHTML = `<h3>Focus gebied?</h3><button class="button" onclick="userData.goal='legs'; finalize();">Benen</button><button class="button" style="margin-top:10px" onclick="userData.goal='chest'; finalize();">Borst</button>`;
+    }
 }
 
-/* Grafiek Animaties */
-.chart-container { display: flex; justify-content: space-between; align-items: flex-end; height: 120px; margin-top: 20px; padding: 10px; background: rgba(0,0,0,0.2); border-radius: 16px; }
-.bar-wrapper { display: flex; flex-direction: column; align-items: center; flex: 1; }
-.bar { 
-    width: 12px; 
-    background: linear-gradient(to top, var(--accent), var(--primary)); 
-    border-radius: 20px; 
-    transition: height 1s cubic-bezier(0.175, 0.885, 0.32, 1.275); 
-    min-height: 6px; 
+function finalize() { 
+    localStorage.setItem("fitnessProFinal", JSON.stringify(userData)); 
+    speak("Profiel opgeslagen. Laten we trainen!");
+    showHome(); 
 }
-.bar-label { font-size: 10px; color: #64748b; margin-top: 8px; font-weight: 600; }
 
-/* Knoppen */
-.button { 
-    width: 100%; 
-    padding: 18px; 
-    border: none; 
-    border-radius: 16px; 
-    background: linear-gradient(135deg, var(--primary), var(--accent)); 
-    color: white; 
-    font-weight: 700; 
-    font-size: 16px;
-    cursor: pointer; 
-    transition: transform 0.2s;
+function showHome() {
+    hideAll();
+    document.getElementById("home").classList.remove("hidden");
+    document.getElementById("mainNav").style.display = "flex";
+    repsPerSet = userData.level === 'beginner' ? 8 : 12;
+    const goalTitle = userData.goal === 'legs' ? "Squats" : "Push-ups";
+    document.getElementById("startActionCard").innerHTML = `
+        <h3 style="margin:0">Klaar voor actie?</h3>
+        <p style="font-size:20px; color:var(--primary)"><b>${maxSets} x ${repsPerSet} ${goalTitle}</b></p>
+        <button class="button" onclick="startWorkout()">START TRAINING</button>
+        <button class="button outline-btn" onclick="toggleGoal()">Wissel naar ${userData.goal==='legs'?'Borst':'Benen'}</button>
+    `;
+    setTimeout(updateChart, 100); // Kleine vertraging voor de animatie
 }
-.button:active { transform: scale(0.98); }
-.outline-btn { background: transparent; border: 2px solid var(--accent); color: var(--accent); margin-top: 10px; }
 
-/* Badge Notificatie */
-#badge-notification {
-    position: fixed;
-    top: 20px;
-    left: 50%;
-    transform: translateX(-50%) translateY(-100px);
-    background: var(--success);
-    padding: 15px 25px;
-    border-radius: 50px;
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    transition: transform 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55);
-    z-index: 1000;
-    box-shadow: 0 10px 20px rgba(0,0,0,0.3);
+// --- WORKOUT LOGICA ---
+async function startWorkout() {
+    hideAll(); 
+    document.getElementById("workoutScreen").classList.remove("hidden");
+    reps = 0; currentSet = 1;
+    speak("Camera start op. Maak je klaar.");
+
+    document.getElementById("set-display").innerText = `1/${maxSets}`;
+    document.getElementById("rep-display").innerText = `0/${repsPerSet}`;
+    
+    model = await tmPose.load(LINKS[userData.goal] + "model.json", LINKS[userData.goal] + "metadata.json");
+    webcam = new tmPose.Webcam(300, 300, true); 
+    await webcam.setup(); 
+    await webcam.play();
+    
+    ctx = document.getElementById("canvas").getContext("2d");
+    loop();
 }
-#badge-notification.show { transform: translateX(-50%) translateY(0); }
 
-/* Workout UI */
-.stat-value { font-size: 42px; font-weight: 900; color: var(--primary); font-variant-numeric: tabular-nums; }
-.canvas-wrapper { position: relative; width: 100%; border-radius: 20px; overflow: hidden; border: 4px solid var(--card); }
-canvas { width: 100%; transform: scaleX(-1); display: block; }
+async function loop() {
+    webcam.update();
+    if (!isResting) {
+        const { pose, posenetOutput } = await model.estimatePose(webcam.canvas);
+        const prediction = await model.predict(posenetOutput);
+        
+        if (prediction[1].probability > 0.85) status = "down";
+        
+        if (prediction[0].probability > 0.85 && status === "down") {
+            status = "up"; 
+            reps++;
+            document.getElementById("rep-display").innerText = `${reps}/${repsPerSet}`;
+            speak(reps.toString()); 
 
-/* Navigatie */
-.bottom-nav { 
-    position: fixed; 
-    bottom: 20px; 
-    left: 50%; 
-    transform: translateX(-50%);
-    width: calc(100% - 40px);
-    max-width: 460px; 
-    display: flex; 
-    background: rgba(30, 41, 59, 0.8); 
-    backdrop-filter: blur(12px); 
-    border-radius: 24px;
-    padding: 12px; 
-    border: 1px solid rgba(255,255,255,0.1);
+            if (reps >= repsPerSet) handleSetCompletion();
+        }
+    }
+    ctx.drawImage(webcam.canvas, 0, 0);
+    animationId = window.requestAnimationFrame(loop);
 }
-.nav-item { flex: 1; text-align: center; color: #64748b; font-size: 12px; font-weight: 600; cursor: pointer; transition: 0.3s; }
-.nav-item.active { color: var(--primary); }
 
-.hidden { display: none !important; }
+function handleSetCompletion() {
+    saveToHistory(reps);
+    if (currentSet >= maxSets) {
+        speak("Top gedaan! Workout voltooid."); 
+        setTimeout(stopWorkout, 2000);
+    } else {
+        isResting = true;
+        speak("Rust tijd. Goed gewerkt.");
+        document.getElementById("rest-overlay").style.display = "flex";
+        let t = 30;
+        let timer = setInterval(() => {
+            t--; 
+            document.getElementById("rest-timer").innerText = t;
+            if(t <= 0){ 
+                clearInterval(timer); 
+                isResting = false; 
+                document.getElementById("rest-overlay").style.display = "none"; 
+                reps = 0;
+                currentSet++;
+                speak("Volgende set, gaan!");
+                document.getElementById("set-display").innerText = `${currentSet}/${maxSets}`; 
+                document.getElementById("rep-display").innerText = `0/${repsPerSet}`;
+            }
+        }, 1000);
+    }
+}
+
+// --- DATA & BADGES ---
+function saveToHistory(amount) {
+    const history = JSON.parse(localStorage.getItem("repHistory") || "{}");
+    const todayStr = new Date().toISOString().split('T')[0];
+    history[todayStr] = (history[todayStr] || 0) + amount;
+    localStorage.setItem("repHistory", JSON.stringify(history));
+    checkBadges(totalReps(history));
+}
+
+function totalReps(history) {
+    return Object.values(history).reduce((a, b) => a + b, 0);
+}
+
+function checkBadges(total) {
+    if (total >= 100 && !localStorage.getItem("badge100")) {
+        localStorage.setItem("badge100", "true");
+        showBadgeNotification("🏆 Brons: 100 Herhalingen!");
+    }
+}
+
+function showBadgeNotification(text) {
+    const el = document.getElementById("badge-notification");
+    el.innerHTML = `<span>${text}</span>`;
+    el.classList.add("show");
+    speak("Gefeliciteerd! Je hebt een nieuwe badge verdiend!");
+    setTimeout(() => el.classList.remove("show"), 5000);
+}
+
+function updateChart() {
+    const history = JSON.parse(localStorage.getItem("repHistory") || "{}");
+    const days = ['Ma', 'Di', 'Wo', 'Do', 'Vr', 'Za', 'Zo'];
+    const today = new Date();
+    let html = "";
+    days.forEach((day, index) => {
+        const d = new Date(today);
+        const dayOfWeek = d.getDay();
+        const diff = d.getDate() - dayOfWeek + (dayOfWeek === 0 ? -6 : 1) + index;
+        d.setDate(diff);
+        const dateStr = d.toISOString().split('T')[0];
+        const count = history[dateStr] || 0;
+        const h = Math.min(count, 100); 
+        html += `<div class="bar-wrapper"><div class="bar" style="height: ${h}%"></div><span class="bar-label">${day}</span></div>`;
+    });
+    document.getElementById("weekChart").innerHTML = html;
+}
+
+function hideAll() {
+    ["onboarding", "home", "workoutScreen", "profile"].forEach(id => {
+        document.getElementById(id).classList.add("hidden");
+    });
+}
+
+function stopWorkout() { 
+    if(webcam) webcam.stop(); 
+    cancelAnimationFrame(animationId);
+    showHome(); 
+}
