@@ -1,106 +1,260 @@
-<!DOCTYPE html>
-<html lang="nl">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>SmartFitness Pro ⚡</title>
+// Globale variabelen
+let reps = 0;
+let stage = "initial"; // up, down, initial
+let currentWorkoutMode = ""; // 'squat' of 'pushup'
+let onboardingStep = 1;
+let userProfile = { name: "", age: "", goal: "", weight: "" };
+
+// DOM Elementen
+const videoElement = document.getElementById('input_video');
+const canvasElement = document.getElementById('output_canvas');
+const canvasCtx = canvasElement.getContext('2d');
+
+// --- HULP FUNCTIES ---
+function speak(text) {
+    const msg = new SpeechSynthesisUtterance(text);
+    msg.lang = 'nl-NL'; // Nederlandse stem
+    window.speechSynthesis.speak(msg);
+}
+
+// Wisselen tussen schermen
+function showScreen(screenId) {
+    document.querySelectorAll('.screen').forEach(screen => {
+        screen.classList.add('hidden');
+        screen.classList.remove('active'); // Verwijder actieve klasse
+    });
+    document.getElementById(screenId).classList.remove('hidden');
+    document.getElementById(screenId).classList.add('active'); // Voeg actieve klasse toe
+
+    // Update navigatiebalk actieve status
+    document.querySelectorAll('.nav-item').forEach(item => item.classList.remove('active'));
+    if (screenId === 'homeScreen') document.querySelector('[onclick="showScreen(\'homeScreen\')"]').classList.add('active');
+    else if (screenId === 'profileScreen') document.querySelector('[onclick="showScreen(\'profileScreen\')"]').classList.add('active');
+}
+
+// --- ONBOARDING LOGICA ---
+function nextOnboardingStep() {
+    const input = document.getElementById('onboardingInput');
+    const questionText = document.getElementById('onboardingQuestion');
+    const currentStepNum = document.getElementById('currentOnboardingStep');
+
+    if (onboardingStep === 1) {
+        if (!input.value) return speak("Graag je naam invullen.");
+        userProfile.name = input.value;
+        questionText.innerText = "Hoe oud ben je?";
+        input.type = "number";
+        input.placeholder = "Leeftijd in jaren...";
+    } else if (onboardingStep === 2) {
+        if (!input.value || isNaN(input.value)) return speak("Graag een geldig getal invullen voor leeftijd.");
+        userProfile.age = input.value;
+        questionText.innerText = "Wat is je fitness doel?";
+        input.type = "text";
+        input.placeholder = "Bijv. Spieropbouw, Afvallen...";
+    } else if (onboardingStep === 3) {
+        if (!input.value) return speak("Graag je doel invullen.");
+        userProfile.goal = input.value;
+        questionText.innerText = "Wat is je gewicht in kg?";
+        input.type = "number";
+        input.placeholder = "Gewicht in kg...";
+    } else if (onboardingStep === 4) {
+        if (!input.value || isNaN(input.value)) return speak("Graag een geldig getal invullen voor gewicht.");
+        userProfile.weight = input.value;
+        saveUserProfile();
+        speak(`Welkom ${userProfile.name}, laten we beginnen met trainen!`);
+        showScreen('homeScreen');
+        document.getElementById('bottomNavBar').classList.remove('hidden');
+        updateHomeDisplay();
+        return; // Stop verdere stappen
+    }
+    input.value = ""; // Reset input
+    onboardingStep++;
+    currentStepNum.innerText = onboardingStep;
+}
+
+function saveUserProfile() {
+    localStorage.setItem('smartFitnessProfile', JSON.stringify(userProfile));
+}
+
+function loadUserProfile() {
+    const savedProfile = localStorage.getItem('smartFitnessProfile');
+    if (savedProfile) {
+        userProfile = JSON.parse(savedProfile);
+        return true;
+    }
+    return false;
+}
+
+function resetApp() {
+    localStorage.clear();
+    location.reload(); // Herlaad de pagina om opnieuw te beginnen
+}
+
+// --- HOME SCREEN LOGICA ---
+function updateHomeDisplay() {
+    if (userProfile.name) {
+        document.getElementById('displayUserName').innerText = userProfile.name.toUpperCase();
+    }
+    // TODO: Dynamische data voor calories en duration
+    document.getElementById('displayCalories').innerText = '0'; // Dummy
+    document.getElementById('displayDuration').innerText = '0'; // Dummy
+}
+
+function updateProfileScreen() {
+    document.getElementById('profileName').innerText = userProfile.name;
+    document.getElementById('profileAge').innerText = userProfile.age;
+    document.getElementById('profileGoal').innerText = userProfile.goal;
+    document.getElementById('profileWeight').innerText = userProfile.weight;
+}
+
+// --- MEDIA PIPE EN WORKOUT LOGICA ---
+function calculateAngle(a, b, c) {
+    const radians = Math.atan2(c.y - b.y, c.x - b.x) - Math.atan2(a.y - b.y, a.x - b.x);
+    let angle = Math.abs((radians * 180.0) / Math.PI);
+    if (angle > 180.0) angle = 360 - angle;
+    return angle;
+}
+
+function onResults(results) {
+    if (!results.poseLandmarks) {
+        document.getElementById('aiFeedbackMessage').innerText = "Zoek positie...";
+        return;
+    }
+
+    canvasCtx.save();
+    canvasCtx.clearRect(0, 0, canvasElement.width, canvasElement.height);
+    canvasCtx.drawImage(results.image, 0, 0, canvasElement.width, canvasElement.height);
+
+    drawConnectors(canvasCtx, results.poseLandmarks, POSE_CONNECTIONS, {color: '#d1ff33', lineWidth: 4}); // Limegroen
+    drawLandmarks(canvasCtx, results.poseLandmarks, {color: '#ffffff', lineWidth: 2}); // Wit voor de punten
+
+    const marks = results.poseLandmarks;
+    const feedback = document.getElementById('aiFeedbackMessage');
+
+    if (currentWorkoutMode === "squat") {
+        // Punten: 24=RightHip, 26=RightKnee, 28=RightAnkle
+        const hip = marks[PoseLandmark.RIGHT_HIP];
+        const knee = marks[PoseLandmark.RIGHT_KNEE];
+        const ankle = marks[PoseLandmark.RIGHT_ANKLE];
+
+        if (!hip || !knee || !ankle) {
+            feedback.innerText = "Volledig in beeld blijven!";
+            stage = "initial";
+            canvasCtx.restore();
+            return;
+        }
+
+        let angle = calculateAngle(hip, knee, ankle);
+
+        if (angle < 90 && stage !== "down") { // Diep genoeg
+            stage = "down";
+            feedback.innerText = "GOED! NU OMHOOG!";
+            speak("Op!");
+        }
+        if (angle > 160 && stage === "down") { // Terug omhoog
+            stage = "up";
+            reps++;
+            document.getElementById('repCountDisplay').innerText = reps;
+            feedback.innerText = "TOP! GA DOOR!";
+            speak(reps.toString());
+        } else if (angle > 160 && stage === "initial") {
+            feedback.innerText = "Ga omlaag voor de eerste herhaling!";
+        }
+    } 
+    // TODO: Implementeer Pushup logica hier
+    else if (currentWorkoutMode === "pushup") {
+        // Punten: 12=RightShoulder, 14=RightElbow, 16=RightWrist
+        const shoulder = marks[PoseLandmark.RIGHT_SHOULDER];
+        const elbow = marks[PoseLandmark.RIGHT_ELBOW];
+        const wrist = marks[PoseLandmark.RIGHT_WRIST];
+
+        if (!shoulder || !elbow || !wrist) {
+            feedback.innerText = "Volledig in beeld blijven!";
+            stage = "initial";
+            canvasCtx.restore();
+            return;
+        }
+
+        let angle = calculateAngle(shoulder, elbow, wrist);
+
+        if (angle < 90 && stage !== "down") { // Diep genoeg
+            stage = "down";
+            feedback.innerText = "GOED! NU OMHOOG!";
+            speak("Op!");
+        }
+        if (angle > 160 && stage === "down") { // Terug omhoog
+            stage = "up";
+            reps++;
+            document.getElementById('repCountDisplay').innerText = reps;
+            feedback.innerText = "TOP! GA DOOR!";
+            speak(reps.toString());
+        } else if (angle > 160 && stage === "initial") {
+            feedback.innerText = "Ga omlaag voor de eerste herhaling!";
+        }
+    }
+
+    canvasCtx.restore();
+}
+
+const pose = new Pose({
+    locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/pose/${file}`
+});
+pose.setOptions({
+    modelComplexity: 1, // 0 is snel, 2 is accuraat
+    smoothLandmarks: true,
+    minDetectionConfidence: 0.7, // Hogere waarde, minder vals-positieven
+    minTrackingConfidence: 0.7
+});
+pose.onResults(onResults);
+
+let camera = null; // Zorg dat de camera globaal is
+
+function startWorkout(mode) {
+    currentWorkoutMode = mode;
+    reps = 0; // Reset reps
+    stage = "initial"; // Reset stage
+    document.getElementById('repCountDisplay').innerText = reps;
+    document.getElementById('workoutModeDisplay').innerText = mode.toUpperCase();
     
-    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/pose"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils"></script>
+    showScreen('workoutScreen');
+    document.getElementById('bottomNavBar').classList.add('hidden'); // Verberg navigatie tijdens workout
 
-    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;900&family=Inter:wght@300;400;700&display=swap" rel="stylesheet">
-    
-    <link rel="stylesheet" href="css/style.css">
-</head>
-<body>
+    // Camera starten
+    if (camera) { // Als camera al bestaat, stop deze dan eerst
+        camera.stop();
+        camera = null;
+    }
+    camera = new Camera(videoElement, {
+        onFrame: async () => {
+            canvasElement.width = videoElement.videoWidth;
+            canvasElement.height = videoElement.videoHeight;
+            await pose.send({image: videoElement});
+        },
+        width: 640,
+        height: 480
+    });
+    camera.start();
+}
 
-<div class="app-container">
+function stopWorkout() {
+    if (camera) {
+        camera.stop();
+        camera = null;
+    }
+    showScreen('homeScreen');
+    document.getElementById('bottomNavBar').classList.remove('hidden'); // Toon navigatie weer
+    speak("Training beëindigd.");
+}
 
-    <div id="onboardingScreen" class="screen active">
-        <div class="header-onboarding">WELKOM BIJ SMARTFITNESS ⚡</div>
-        <div class="card onboarding-card">
-            <h2 id="onboardingQuestion">Hoe heet je?</h2>
-            <input type="text" id="onboardingInput" placeholder="Typ hier je naam...">
-            <button class="button primary-btn" onclick="nextOnboardingStep()">VOLGENDE</button>
-        </div>
-        <div class="step-indicator"><span id="currentOnboardingStep">1</span>/5</div>
-    </div>
-
-    <div id="homeScreen" class="screen hidden">
-        <div class="top-bar">
-            <div class="profile-summary">
-                <div class="profile-avatar">👤</div>
-                <div>
-                    <span class="greeting">Welkom terug,</span>
-                    <div id="displayUserName" class="user-name-text">KAMPIOEN</div>
-                </div>
-            </div>
-            <button class="settings-btn">⚙️</button>
-        </div>
-
-        <div class="stats-overview">
-            <div class="stat-item">
-                <div class="stat-value">🔥 <span id="displayCalories">0</span></div>
-                <div class="stat-label">KCAL VERBRAND</div>
-            </div>
-            <div class="stat-item">
-                <div class="stat-value">⏱️ <span id="displayDuration">0</span></div>
-                <div class="stat-label">MINUTEN</div>
-            </div>
-        </div>
-
-        <div class="section-title">JOUW TRAININGEN</div>
-        <div class="workout-plan-card" onclick="startWorkout('squat')">
-            <img src="https://via.placeholder.com/100x80?text=SQUAT" alt="Squat afbeelding" class="workout-img">
-            <div class="workout-details">
-                <h3>BENEN & BILLEN</h3>
-                <p>Squats | 3 Sets | 12 Herhalingen</p>
-            </div>
-            <div class="play-icon">▶</div>
-        </div>
-        <div class="workout-plan-card" onclick="startWorkout('pushup')">
-            <img src="https://via.placeholder.com/100x80?text=PUSHUP" alt="Pushup afbeelding" class="workout-img">
-            <div class="workout-details">
-                <h3>BORST & ARMEN</h3>
-                <p>Push-ups | 3 Sets | 10 Herhalingen</p>
-            </div>
-            <div class="play-icon">▶</div>
-        </div>
-    </div>
-
-    <div id="workoutScreen" class="screen hidden">
-        <div class="workout-header">
-            <div class="workout-mode" id="workoutModeDisplay">SQUATS</div>
-            <div class="rep-counter" id="repCountDisplay">0</div>
-        </div>
-        <div class="camera-feedback-area">
-            <video id="input_video" style="display:none"></video>
-            <canvas id="output_canvas"></canvas>
-            <div id="aiFeedbackMessage" class="ai-feedback">Zoek positie...</div>
-        </div>
-        <button class="button stop-workout-btn" onclick="stopWorkout()">TRAINING STOPPEN</button>
-    </div>
-
-    <div id="profileScreen" class="screen hidden">
-        <div class="header">JOUW PROFIEL</div>
-        <div class="card profile-card">
-            <h3>Naam: <span id="profileName"></span></h3>
-            <h3>Leeftijd: <span id="profileAge"></span></h3>
-            <h3>Doel: <span id="profileGoal"></span></h3>
-            <h3>Gewicht: <span id="profileWeight"></span> kg</h3>
-            <button class="button reset-btn" onclick="resetApp()">RESET APP</button>
-        </div>
-    </div>
-
-</div>
-
-<nav id="bottomNavBar" class="bottom-nav hidden">
-    <div class="nav-item active" onclick="showScreen('homeScreen')">🏠<br>Home</div>
-    <div class="nav-item" onclick="showScreen('profileScreen')">👤<br>Profiel</div>
-    <div class="nav-item" onclick="alert('Jouw badges komen hier!')">🏆<br>Badges</div>
-</nav>
-
-<script src="js/app.js"></script>
-</body>
-</html>
+// --- APP STARTUP LOGICA ---
+// Check bij het laden of er een profiel is, anders start onboarding
+window.onload = () => {
+    if (loadUserProfile()) {
+        showScreen('homeScreen');
+        document.getElementById('bottomNavBar').classList.remove('hidden');
+        updateHomeDisplay();
+        updateProfileScreen(); // Update profielscherm bij laden
+    } else {
+        showScreen('onboardingScreen');
+        speak("Welkom bij Smart Fitness. Laten we je profiel aanmaken.");
+    }
+};
