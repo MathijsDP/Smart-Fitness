@@ -3,274 +3,344 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>SmartFitness AI Pro ⚡</title>
+    <title>SmartFitness AI | Premium</title>
     
     <script src="https://cdn.jsdelivr.net/npm/@mediapipe/pose"></script>
     <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils"></script>
     <script src="https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;900&family=Inter:wght@300;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&family=Montserrat:wght@700;900&display=swap" rel="stylesheet">
 
     <style>
-        :root { --bg: #050a18; --card: #111a2e; --blue: #3b82f6; --accent: #d1ff33; --text: #ffffff; }
-        body { margin: 0; font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); overflow: hidden; height: 100vh; }
-        .screen { height: 100vh; display: flex; flex-direction: column; padding: 20px; box-sizing: border-box; overflow-y: auto; padding-bottom: 100px; }
+        :root {
+            --bg: #000000;
+            --surface: #121212;
+            --accent: #ffffff;
+            --subtext: #8e8e93;
+            --blue: #007aff;
+        }
+
+        body { 
+            margin: 0; 
+            font-family: 'Inter', sans-serif; 
+            background: var(--bg); 
+            color: var(--accent); 
+            -webkit-font-smoothing: antialiased;
+            overflow: hidden;
+            height: 100vh;
+        }
+
+        .screen { 
+            height: 100vh; 
+            display: flex; 
+            flex-direction: column; 
+            padding: 40px 25px; 
+            box-sizing: border-box; 
+            overflow-y: auto; 
+            animation: fadeIn 0.5s ease-out;
+        }
+
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
         .hidden { display: none !important; }
 
-        h1, h2 { font-family: 'Orbitron'; color: var(--blue); text-transform: uppercase; }
-        .card { background: var(--card); border-radius: 20px; padding: 20px; border: 1px solid rgba(59, 130, 246, 0.2); margin-bottom: 15px; }
-        
-        .btn { background: var(--blue); color: white; border: none; padding: 15px; border-radius: 12px; width: 100%; font-weight: bold; font-family: 'Orbitron'; margin-top: 10px; cursor: pointer; }
-        .btn-outline { background: transparent; border: 1px solid var(--blue); color: white; padding: 12px; border-radius: 12px; margin: 5px 0; width: 100%; text-align: left; cursor: pointer; }
-        .btn-outline.selected { background: rgba(59, 130, 246, 0.4); border-color: white; }
+        h1 { font-family: 'Montserrat', sans-serif; font-size: 32px; font-weight: 900; letter-spacing: -1px; margin-bottom: 5px; }
+        .subtitle { color: var(--subtext); font-size: 14px; margin-bottom: 30px; text-transform: uppercase; letter-spacing: 2px; }
 
-        input, select { width: 100%; padding: 14px; margin: 10px 0; border-radius: 12px; border: 1px solid var(--blue); background: #050a18; color: white; box-sizing: border-box; }
+        .card { 
+            background: var(--surface); 
+            border-radius: 12px; 
+            padding: 24px; 
+            margin-bottom: 20px; 
+            border: 1px solid rgba(255,255,255,0.05);
+            transition: 0.3s;
+        }
 
-        /* Body Progress Visualization */
-        .body-viz { height: 250px; position: relative; display: flex; justify-content: center; margin: 20px 0; border: 1px dashed var(--blue); border-radius: 20px; padding: 20px; }
-        .muscle-info { position: absolute; background: rgba(59, 130, 246, 0.8); padding: 5px 10px; border-radius: 8px; font-size: 10px; font-family: 'Orbitron'; border: 1px solid white; }
-        
-        /* Navigatie */
-        .nav { position: fixed; bottom: 0; width: 100%; background: var(--card); display: flex; justify-content: space-around; padding: 15px 0 30px; border-top: 1px solid rgba(255,255,255,0.1); z-index: 100; }
-        .nav-item { text-align: center; font-size: 10px; color: #94a3b8; cursor: pointer; }
-        .nav-item.active { color: var(--blue); font-weight: bold; }
+        .btn { 
+            background: var(--accent); 
+            color: var(--bg); 
+            border: none; 
+            padding: 18px; 
+            border-radius: 8px; 
+            width: 100%; 
+            font-weight: 700; 
+            font-family: 'Inter'; 
+            text-transform: uppercase; 
+            letter-spacing: 1px;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
 
-        /* Workout Overlay */
-        .workout-box { position: relative; flex: 1; background: #000; border-radius: 24px; overflow: hidden; }
-        canvas { width: 100%; height: 100%; object-fit: cover; transform: scaleX(-1); }
-        .overlay-stats { position: absolute; top: 15px; left: 15px; right: 15px; display: flex; justify-content: space-between; z-index: 5; }
-        .stat-pill { background: rgba(17, 26, 46, 0.9); padding: 10px; border-radius: 12px; text-align: center; min-width: 60px; border: 1px solid var(--blue); }
+        .btn:active { transform: scale(0.98); }
+
+        .btn-outline { 
+            background: transparent; 
+            border: 1px solid rgba(255,255,255,0.2); 
+            color: var(--accent); 
+            padding: 20px; 
+            border-radius: 8px; 
+            margin: 8px 0; 
+            width: 100%; 
+            text-align: left; 
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-weight: 600;
+        }
+
+        .btn-outline.selected { border-color: var(--accent); background: rgba(255,255,255,0.05); }
+
+        input { 
+            width: 100%; 
+            padding: 16px; 
+            margin: 10px 0 20px 0; 
+            border-radius: 8px; 
+            border: 1px solid #333; 
+            background: #1c1c1e; 
+            color: white; 
+            font-size: 16px; 
+        }
+
+        /* Stats Visualization */
+        .body-viz { height: 300px; display: flex; justify-content: center; align-items: center; position: relative; }
+        #skelet-svg { height: 100%; filter: drop-shadow(0 0 10px rgba(255,255,255,0.1)); }
+
+        /* Navigation */
+        .nav { 
+            position: fixed; 
+            bottom: 0; 
+            width: 100%; 
+            background: rgba(18, 18, 18, 0.8); 
+            backdrop-filter: blur(20px); 
+            display: flex; 
+            justify-content: space-around; 
+            padding: 20px 0 35px; 
+            border-top: 1px solid rgba(255,255,255,0.05);
+        }
+
+        .nav-item { text-align: center; color: var(--subtext); font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; }
+        .nav-item.active { color: var(--accent); }
+
+        /* Workout View */
+        .workout-container { position: relative; flex: 1; border-radius: 20px; overflow: hidden; background: #000; }
+        canvas { width: 100%; height: 100%; object-fit: cover; }
         
-        #rest-screen { position: absolute; inset: 0; background: rgba(5,10,24,0.95); display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 20; }
-        .timer-circle { width: 100px; height: 100px; border: 4px solid var(--blue); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 30px; font-family: 'Orbitron'; color: var(--accent); }
+        .overlay { position: absolute; top: 0; width: 100%; padding: 25px; box-sizing: border-box; display: flex; justify-content: space-between; background: linear-gradient(to bottom, rgba(0,0,0,0.7), transparent); }
+        .stat-box { text-align: center; }
+        .stat-box span { display: block; color: var(--subtext); font-size: 10px; font-weight: 800; }
+        .stat-box strong { font-size: 24px; font-family: 'Montserrat'; }
+
+        #rest-overlay { 
+            position: absolute; inset: 0; background: rgba(0,0,0,0.9); 
+            display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 100; 
+        }
+        .timer { font-size: 80px; font-family: 'Montserrat'; font-weight: 900; }
     </style>
 </head>
 <body>
 
     <div id="screen-onboarding" class="screen">
-        <h1>Profiel Instellen</h1>
-        <div id="setup-steps">
-            <div class="card" id="step1">
-                <h2>Stap 1: Wie ben je?</h2>
-                <input type="text" id="in-name" placeholder="Je naam">
-                <select id="in-gender">
-                    <option value="M">Jongen (Skelet M)</option>
-                    <option value="V">Meisje (Skelet V)</option>
+        <h1>PROFIEL</h1>
+        <div class="subtitle">Personaliseer je ervaring</div>
+        
+        <div id="steps">
+            <div id="s1">
+                <input type="text" id="in-name" placeholder="VOLLEDIGE NAAM">
+                <select id="in-gender" style="width:100%; padding:16px; background:#1c1c1e; color:white; border:1px solid #333; border-radius:8px;">
+                    <option value="M">MAN</option>
+                    <option value="V">VROUW</option>
                 </select>
-                <button class="btn" onclick="nextStep(2)">VOLGENDE</button>
+                <button class="btn" style="margin-top:20px" onclick="next(2)">VOLGENDE</button>
             </div>
-            <div class="card hidden" id="step2">
-                <h2>Stap 2: Lichaam</h2>
-                <input type="number" id="in-height" placeholder="Lengte (cm)">
-                <input type="number" id="in-weight" placeholder="Gewicht (kg)">
-                <button class="btn" onclick="nextStep(3)">VOLGENDE</button>
+            
+            <div id="s2" class="hidden">
+                <input type="number" id="in-height" placeholder="LENGTE (CM)">
+                <input type="number" id="in-weight" placeholder="GEWICHT (KG)">
+                <button class="btn" onclick="next(3)">VOLGENDE</button>
             </div>
-            <div class="card hidden" id="step3">
-                <h2>Stap 3: Niveau</h2>
-                <button class="btn-outline" onclick="setLevel('beginner', this)">Beginner (8 reps)</button>
-                <button class="btn-outline" onclick="setLevel('matig', this)">Matig (12 reps)</button>
-                <button class="btn-outline" onclick="setLevel('gevorderd', this)">Elite (18 reps)</button>
-                <button class="btn" onclick="completeOnboarding()" style="margin-top:20px">STARTEN</button>
+
+            <div id="s3" class="hidden">
+                <div class="subtitle">SELECTEER NIVEAU</div>
+                <button class="btn-outline" onclick="setLvl('beginner', this)">BEGINNER <span>8 REPS</span></button>
+                <button class="btn-outline" onclick="setLvl('matig', this)">INTERMEDIATE <span>12 REPS</span></button>
+                <button class="btn-outline" onclick="setLvl('gevorderd', this)">ADVANCED <span>18 REPS</span></button>
+                <button class="btn" style="margin-top:20px" onclick="finish()">START COACH</button>
             </div>
         </div>
     </div>
 
     <div id="screen-home" class="screen hidden">
-        <h2 id="welcome-msg">Welkom!</h2>
-        <div class="card">
-            <h3>Kies je oefening</h3>
-            <button class="btn-outline" onclick="startTraining('squats')">🦵 Squats (Benen/Billen)</button>
-            <button class="btn-outline" onclick="startTraining('pushups')">💪 Push-ups (Borst/Armen)</button>
-            <button class="btn-outline" onclick="startTraining('jumpingjacks')">✨ Jumping Jacks (Core)</button>
+        <h1 id="user-title">COACH</h1>
+        <div class="subtitle" id="today-date">DAILY WORKOUT</div>
+        
+        <div class="card" onclick="start('squats')">
+            <div style="display:flex; justify-content:space-between; align-items:center;">
+                <div>
+                    <strong style="font-size:18px">LOWER BODY</strong>
+                    <div style="color:var(--subtext); font-size:12px">SQUATS • 3 SETS</div>
+                </div>
+                <div style="font-size:24px">→</div>
+            </div>
+        </div>
+
+        <div class="card" onclick="start('pushups')">
+            <div style="display:flex; justify-content:space-between; align-items:center;">
+                <div>
+                    <strong style="font-size:18px">UPPER BODY</strong>
+                    <div style="color:var(--subtext); font-size:12px">PUSH-UPS • 3 SETS</div>
+                </div>
+                <div style="font-size:24px">→</div>
+            </div>
         </div>
     </div>
 
     <div id="screen-stats" class="screen hidden">
-        <h2>Lichaams Progressie</h2>
-        <div class="card" style="text-align:center;">
-            <div class="body-viz">
-                <svg id="skelet-svg" viewBox="0 0 100 200" style="height: 100%; fill: none; stroke: var(--blue); stroke-width: 2;">
-                    <circle cx="50" cy="30" r="15" /> <line x1="50" y1="45" x2="50" y2="110" /> <line x1="30" y1="60" x2="70" y2="60" /> <line x1="30" y1="60" x2="20" y2="100" /> <line x1="70" y1="60" x2="80" y2="100" /> <line x1="50" y1="110" x2="35" y2="160" /> <line x1="50" y1="110" x2="65" y2="160" /> </svg>
-                <div class="muscle-info" style="top:50px; left:10px;">BORST: Lvl <span id="lvl-chest">1</span></div>
-                <div class="muscle-info" style="bottom:50px; right:10px;">BENEN: Lvl <span id="lvl-legs">1</span></div>
-                <div class="muscle-info" style="top:110px; right:-10px;">CORE: Lvl <span id="lvl-core">1</span></div>
-            </div>
-            <p id="body-text">Train om je skelet te versterken!</p>
-        </div>
-    </div>
-
-    <div id="screen-profile" class="screen hidden">
-        <h2>Profiel</h2>
+        <h1>PROGRESSIE</h1>
+        <div class="subtitle">Lichaamsanalyse</div>
+        
         <div class="card">
-            <label>Naam</label><input type="text" id="edit-name">
-            <label>Lengte</label><input type="number" id="edit-height">
-            <label>Gewicht</label><input type="number" id="edit-weight">
-            <button class="btn" onclick="updateProfileData()">WIJZIGINGEN OPSLAAN</button>
-            <button class="btn" style="background:transparent; border:1px solid red; color:red; margin-top:15px;" onclick="localStorage.clear(); location.reload();">RESET APP</button>
+            <div class="body-viz">
+                <svg id="skelet-svg" viewBox="0 0 100 200">
+                    <circle cx="50" cy="30" r="12" stroke="white" stroke-width="2" fill="none"/>
+                    <line x1="50" y1="42" x2="50" y2="100" stroke="white" stroke-width="2"/>
+                    <line x1="30" y1="55" x2="70" y2="55" stroke="white" stroke-width="2"/>
+                    <path d="M30 55 L20 90" stroke="white" stroke-width="2"/>
+                    <path d="M70 55 L80 90" stroke="white" stroke-width="2"/>
+                    <path d="M50 100 L35 150" stroke="white" stroke-width="2"/>
+                    <path d="M50 100 L65 150" stroke="white" stroke-width="2"/>
+                </svg>
+            </div>
+            <div style="display:flex; justify-content:space-around; margin-top:20px">
+                <div class="stat-box"><span>BORST</span><strong id="xp-chest">LVL 1</strong></div>
+                <div class="stat-box"><span>BENEN</span><strong id="xp-legs">LVL 1</strong></div>
+                <div class="stat-box"><span>CORE</span><strong id="xp-core">LVL 1</strong></div>
+            </div>
         </div>
     </div>
 
-    <div id="screen-workout" class="screen hidden">
-        <div class="workout-box">
+    <div id="screen-workout" class="screen hidden" style="padding:0">
+        <div class="workout-container">
             <video id="input_video" style="display:none"></video>
             <canvas id="output_canvas"></canvas>
             
-            <div id="rest-screen" class="hidden">
-                <h2>RUST</h2>
-                <div class="timer-circle" id="timer-txt">15</div>
-                <p>Maak je klaar voor de volgende set!</p>
+            <div id="rest-overlay" class="hidden">
+                <div class="subtitle">REST</div>
+                <div class="timer" id="timer-val">15</div>
             </div>
 
-            <div class="overlay-stats">
-                <div class="stat-pill"><small>SET</small><br><strong id="current-set">1/3</strong></div>
-                <div class="stat-pill" style="border-color:var(--accent);"><small>REPS</small><br><strong><span id="rep-count">0</span>/<span id="target-reps">18</span></strong></div>
+            <div class="overlay">
+                <div class="stat-box"><span>SET</span><strong id="set-val">1/3</strong></div>
+                <div class="stat-box"><span>REPS</span><strong id="rep-val">0/12</strong></div>
             </div>
-            <div id="live-coach" style="position:absolute; bottom:20px; width:100%; text-align:center; text-shadow:2px 2px #000;">Zoek de camera...</div>
+            
+            <div id="coach-hint" style="position:absolute; bottom:40px; width:100%; text-align:center; font-weight:800; font-size:12px; letter-spacing:2px">STEL JEZELF OP</div>
         </div>
-        <button class="btn" style="background:red; margin-top:10px;" onclick="location.reload()">STOP</button>
+        <div style="padding:20px; background:#000;">
+            <button class="btn" style="background:#1c1c1e; color:white" onclick="location.reload()">ANNULEREN</button>
+        </div>
     </div>
 
     <nav id="navbar" class="nav hidden">
-        <div class="nav-item active" onclick="navigate('home', this)">🏠<br>Home</div>
-        <div class="nav-item" onclick="navigate('stats', this)">💀<br>Body</div>
-        <div class="nav-item" onclick="navigate('profile', this)">👤<br>Profiel</div>
+        <div class="nav-item active" onclick="nav('home', this)">Training</div>
+        <div class="nav-item" onclick="nav('stats', this)">Body</div>
+        <div class="nav-item" onclick="nav('onboarding', this)">Profiel</div>
     </nav>
 
     <script>
-        let user = JSON.parse(localStorage.getItem('fitUser')) || {
-            name: '', gender: 'M', height: '', weight: '', level: 'beginner',
-            xp: { chest: 0, legs: 0, core: 0 }
-        };
+        let u = JSON.parse(localStorage.getItem('premiumFit')) || { name: '', gender: 'M', height: '', weight: '', level: 'beginner', xp: {chest:0, legs:0, core:0} };
+        let reps = 0, sets = 1, isRest = false, current = '', stage = 'up';
 
-        let reps = 0, sets = 1, isResting = false, currentExe = '', stage = 'up';
-
-        function speak(t) { const m = new SpeechSynthesisUtterance(t); m.lang='nl-NL'; window.speechSynthesis.speak(m); }
-
-        function nextStep(n) {
-            document.querySelectorAll('#setup-steps .card').forEach(c => c.classList.add('hidden'));
-            document.getElementById('step'+n).classList.remove('hidden');
+        function next(n) {
+            document.getElementById('s1').classList.add('hidden');
+            document.getElementById('s2').classList.add('hidden');
+            document.getElementById('s3').classList.add('hidden');
+            document.getElementById('s'+n).classList.remove('hidden');
         }
 
-        function setLevel(l, el) {
-            user.level = l;
+        function setLvl(l, el) {
+            u.level = l;
             el.parentElement.querySelectorAll('button').forEach(b => b.classList.remove('selected'));
             el.classList.add('selected');
         }
 
-        function completeOnboarding() {
-            user.name = document.getElementById('in-name').value;
-            user.gender = document.getElementById('in-gender').value;
-            user.height = document.getElementById('in-height').value;
-            user.weight = document.getElementById('in-weight').value;
-            save();
-            navigate('home');
+        function finish() {
+            u.name = document.getElementById('in-name').value;
+            u.gender = document.getElementById('in-gender').value;
+            u.height = document.getElementById('in-height').value;
+            u.weight = document.getElementById('in-weight').value;
+            save(); nav('home');
         }
 
-        function save() { localStorage.setItem('fitUser', JSON.stringify(user)); }
+        function save() { localStorage.setItem('premiumFit', JSON.stringify(u)); }
 
-        function navigate(s, el) {
-            document.querySelectorAll('.screen').forEach(scr => scr.classList.add('hidden'));
+        function nav(s, el) {
+            document.querySelectorAll('.screen').forEach(x => x.classList.add('hidden'));
             document.getElementById('screen-'+s).classList.remove('hidden');
             document.getElementById('navbar').classList.remove('hidden');
             if(el) {
                 document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
                 el.classList.add('active');
             }
-            if(s === 'home') document.getElementById('welcome-msg').innerText = "Hey " + user.name + "!";
-            if(s === 'stats') updateStatsUI();
-            if(s === 'profile') {
-                document.getElementById('edit-name').value = user.name;
-                document.getElementById('edit-height').value = user.height;
-                document.getElementById('edit-weight').value = user.weight;
+            if(s === 'home') document.getElementById('user-title').innerText = u.name.toUpperCase();
+            if(s === 'stats') {
+                document.getElementById('xp-chest').innerText = "LVL " + (Math.floor(u.xp.chest/50)+1);
+                document.getElementById('xp-legs').innerText = "LVL " + (Math.floor(u.xp.legs/50)+1);
+                document.getElementById('xp-core').innerText = "LVL " + (Math.floor(u.xp.core/50)+1);
             }
         }
 
-        function updateProfileData() {
-            user.name = document.getElementById('edit-name').value;
-            user.height = document.getElementById('edit-height').value;
-            user.weight = document.getElementById('edit-weight').value;
-            save();
-            alert("Profiel bijgewerkt!");
-        }
-
-        function updateStatsUI() {
-            document.getElementById('lvl-chest').innerText = Math.floor(user.xp.chest / 50) + 1;
-            document.getElementById('lvl-legs').innerText = Math.floor(user.xp.legs / 50) + 1;
-            document.getElementById('lvl-core').innerText = Math.floor(user.xp.core / 50) + 1;
-            document.getElementById('skelet-svg').style.stroke = user.gender === 'M' ? '#3b82f6' : '#f472b6';
-        }
-
-        // AI LOGIC
+        // AI Engine
         const videoElement = document.getElementById('input_video');
         const canvasElement = document.getElementById('output_canvas');
         const canvasCtx = canvasElement.getContext('2d');
 
         function onResults(results) {
-            if (!results.poseLandmarks || isResting) return;
+            if (!results.poseLandmarks || isRest) return;
             canvasCtx.save();
-            canvasCtx.clearRect(0, 0, canvasElement.width, canvasElement.height);
-            canvasCtx.drawImage(results.image, 0, 0, canvasElement.width, canvasElement.height);
-            drawConnectors(canvasCtx, results.poseLandmarks, POSE_CONNECTIONS, {color: '#3b82f6', lineWidth: 4});
-
+            canvasCtx.clearRect(0,0, canvasElement.width, canvasElement.height);
+            canvasCtx.drawImage(results.image, 0,0, canvasElement.width, canvasElement.height);
+            drawConnectors(canvasCtx, results.poseLandmarks, POSE_CONNECTIONS, {color: '#fff', lineWidth: 2});
+            
             const m = results.poseLandmarks;
-            const target = user.level === 'beginner' ? 8 : (user.level === 'matig' ? 12 : 18);
-            document.getElementById('target-reps').innerText = target;
+            const target = u.level === 'beginner' ? 8 : (u.level === 'matig' ? 12 : 18);
+            document.getElementById('rep-val').innerText = `${reps}/${target}`;
 
-            if(currentExe === 'squats') {
-                const angle = calcAngle(m[24], m[26], m[28]);
-                if(angle < 100) stage = 'down';
-                if(angle > 160 && stage === 'down') { countRep('legs', target); stage = 'up'; }
-            } else if(currentExe === 'pushups') {
-                const angle = calcAngle(m[11], m[13], m[15]);
-                if(angle < 90) stage = 'down';
-                if(angle > 150 && stage === 'down') { countRep('chest', target); stage = 'up'; }
-            } else if(currentExe === 'jumpingjacks') {
-                if(m[15].y < m[11].y) stage = 'up';
-                if(m[15].y > m[11].y && stage === 'up') { countRep('core', target); stage = 'down'; }
+            if(current === 'squats') {
+                const a = calcAngle(m[24], m[26], m[28]);
+                if(a < 100) stage = 'down';
+                if(a > 160 && stage === 'down') { count('legs', target); stage = 'up'; }
+            } else if(current === 'pushups') {
+                const a = calcAngle(m[11], m[13], m[15]);
+                if(a < 90) stage = 'down';
+                if(a > 150 && stage === 'down') { count('chest', target); stage = 'up'; }
             }
             canvasCtx.restore();
         }
 
         function calcAngle(a, b, c) {
-            const radians = Math.atan2(c.y - b.y, c.x - b.x) - Math.atan2(a.y - b.y, a.x - b.x);
-            let angle = Math.abs(radians * 180.0 / Math.PI);
-            return angle > 180 ? 360 - angle : angle;
+            const r = Math.atan2(c.y-b.y, c.x-b.x) - Math.atan2(a.y-b.y, a.x-b.x);
+            let ang = Math.abs(r*180/Math.PI);
+            return ang > 180 ? 360-ang : ang;
         }
 
-        function countRep(part, target) {
+        function count(part, target) {
             reps++;
-            document.getElementById('rep-count').innerText = reps;
-            speak(reps);
-            user.xp[part] += 10;
+            u.xp[part] += 10;
             save();
-
+            const s = new SpeechSynthesisUtterance(reps); s.lang='nl-NL'; window.speechSynthesis.speak(s);
             if(reps >= target) {
                 sets++;
-                if(sets > 3) {
-                    speak("Training voltooid!");
-                    document.getElementById('live-coach').innerText = "KLAAR!";
-                    setTimeout(() => location.reload(), 3000);
-                } else {
-                    startRest();
-                }
+                if(sets > 3) { location.reload(); }
+                else startRest();
             }
         }
 
         function startRest() {
-            isResting = true;
-            document.getElementById('rest-screen').classList.remove('hidden');
+            isRest = true;
+            document.getElementById('rest-overlay').classList.remove('hidden');
             let t = 15;
-            let timer = setInterval(() => {
-                t--;
-                document.getElementById('timer-txt').innerText = t;
-                if(t <= 0) {
-                    clearInterval(timer);
-                    isResting = false;
-                    reps = 0;
-                    document.getElementById('rep-count').innerText = "0";
-                    document.getElementById('current-set').innerText = sets + "/3";
-                    document.getElementById('rest-screen').classList.add('hidden');
-                    speak("Set " + sets + ". Begin maar!");
-                }
+            let iv = setInterval(() => {
+                t--; document.getElementById('timer-val').innerText = t;
+                if(t<=0) { clearInterval(iv); isRest=false; reps=0; document.getElementById('set-val').innerText = sets+"/3"; document.getElementById('rest-overlay').classList.add('hidden'); }
             }, 1000);
         }
 
@@ -278,20 +348,18 @@
         pose.setOptions({ modelComplexity: 1, minDetectionConfidence: 0.5, minTrackingConfidence: 0.5 });
         pose.onResults(onResults);
 
-        function startTraining(type) {
-            currentExe = type;
-            reps = 0; sets = 1;
-            document.getElementById('rep-count').innerText = "0";
-            document.getElementById('current-set').innerText = "1/3";
-            navigate('workout');
-            const camera = new Camera(videoElement, { onFrame: async () => {
+        function start(type) {
+            current = type; reps = 0; sets = 1;
+            nav('workout');
+            const cam = new Camera(videoElement, { onFrame: async () => {
                 canvasElement.width = videoElement.videoWidth; canvasElement.height = videoElement.videoHeight;
                 await pose.send({image: videoElement});
             }, width: 640, height: 480 });
-            camera.start();
+            cam.start();
         }
 
-        if(user.name) navigate('home');
+        if(u.name) nav('home');
+        document.getElementById('today-date').innerText = new Date().toLocaleDateString('nl-NL', {weekday:'long', day:'numeric', month:'long'}).toUpperCase();
     </script>
 </body>
 </html>
