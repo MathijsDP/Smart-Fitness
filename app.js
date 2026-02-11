@@ -1,9 +1,23 @@
-const LINKS = { legs: "https://teachablemachine.withgoogle.com/models/Nv8j7aUsi/", chest: "https://teachablemachine.withgoogle.com/models/VyHCtMsZf/" };
+const LINKS = { 
+    legs: "https://teachablemachine.withgoogle.com/models/Nv8j7aUsi/", 
+    chest: "https://teachablemachine.withgoogle.com/models/VyHCtMsZf/" 
+};
+
 let userData = {};
 let currentStep = 1;
 let model, webcam, ctx, animationId;
 let reps = 0, currentSet = 1, maxSets = 3, repsPerSet = 12, status = "up", isResting = false;
 
+// --- STEM ASSISTENT ---
+function speak(text) {
+    const msg = new SpeechSynthesisUtterance();
+    msg.text = text;
+    msg.lang = 'nl-NL';
+    msg.rate = 1.2;
+    window.speechSynthesis.speak(msg);
+}
+
+// --- INITIALISATIE ---
 init();
 
 function init() {
@@ -27,7 +41,11 @@ function renderStep() {
     }
 }
 
-function finalize() { localStorage.setItem("fitnessProFinal", JSON.stringify(userData)); showHome(); }
+function finalize() { 
+    localStorage.setItem("fitnessProFinal", JSON.stringify(userData)); 
+    speak("Profiel opgeslagen. Laten we beginnen!");
+    showHome(); 
+}
 
 function showHome() {
     hideAll();
@@ -42,51 +60,28 @@ function showHome() {
         <button class="button outline-btn" onclick="toggleGoal()">Wissel naar ${userData.goal==='legs'?'Borst':'Benen'}</button>
     `;
     updateChart();
+    checkBadges();
 }
 
-function toggleGoal() {
-    userData.goal = userData.goal === 'legs' ? 'chest' : 'legs';
-    finalize();
-}
-
-function switchTab(tab) {
-    hideAll();
-    document.getElementById(tab).classList.remove("hidden");
-    document.querySelectorAll(".nav-item").forEach(i => i.classList.remove('active'));
-    document.getElementById('n-'+tab).classList.add('active');
-    if(tab==='profile') loadProfileInputs();
-}
-
-function loadProfileInputs() {
-    document.getElementById('p-age').value = userData.age;
-    document.getElementById('p-height').value = userData.height;
-    document.getElementById('p-level').value = userData.level;
-    document.getElementById('p-goal').value = userData.goal;
-}
-
-function saveProfile() {
-    userData.age = document.getElementById('p-age').value;
-    userData.height = document.getElementById('p-height').value;
-    userData.level = document.getElementById('p-level').value;
-    userData.goal = document.getElementById('p-goal').value;
-    finalize();
-    alert("Profiel bijgewerkt!");
-    switchTab('home');
-}
-
-function hideAll() {
-    ["onboarding", "home", "workoutScreen", "profile"].forEach(id => document.getElementById(id).classList.add("hidden"));
-}
-
+// --- WORKOUT LOGICA ---
 async function startWorkout() {
-    hideAll(); document.getElementById("mainNav").style.display = "none";
+    hideAll(); 
+    document.getElementById("mainNav").style.display = "none";
     document.getElementById("workoutScreen").classList.remove("hidden");
     reps = 0; currentSet = 1;
-    document.getElementById("set-display").innerText = `1/3`;
+    
+    speak("Maak je klaar. De camera start op.");
+
+    document.getElementById("set-display").innerText = `1/${maxSets}`;
     document.getElementById("rep-display").innerText = `0/${repsPerSet}`;
+    
     model = await tmPose.load(LINKS[userData.goal] + "model.json", LINKS[userData.goal] + "metadata.json");
-    webcam = new tmPose.Webcam(300, 300, true); await webcam.setup(); await webcam.play();
+    webcam = new tmPose.Webcam(300, 300, true); 
+    await webcam.setup(); 
+    await webcam.play();
+    
     ctx = document.getElementById("canvas").getContext("2d");
+    speak("Begin maar!");
     loop();
 }
 
@@ -95,10 +90,15 @@ async function loop() {
     if (!isResting) {
         const { pose, posenetOutput } = await model.estimatePose(webcam.canvas);
         const prediction = await model.predict(posenetOutput);
+        
         if (prediction[1].probability > 0.85) status = "down";
+        
         if (prediction[0].probability > 0.85 && status === "down") {
-            status = "up"; reps++;
+            status = "up"; 
+            reps++;
             document.getElementById("rep-display").innerText = `${reps}/${repsPerSet}`;
+            speak(reps.toString()); // De AI telt hardop
+
             if (reps >= repsPerSet) handleSetCompletion();
         }
     }
@@ -109,30 +109,47 @@ async function loop() {
 function handleSetCompletion() {
     saveToHistory(reps);
     if (currentSet >= maxSets) {
-        alert("Top prestatie! Workout voltooid."); stopWorkout();
+        speak("Geweldig gedaan! Workout voltooid."); 
+        setTimeout(() => { stopWorkout(); }, 2000);
     } else {
         isResting = true;
+        speak("Goed zo. Neem dertig seconden rust.");
         document.getElementById("rest-overlay").style.display = "flex";
         let t = 30;
         let timer = setInterval(() => {
-            t--; document.getElementById("rest-timer").innerText = t;
-            if(t<=0){ 
-                clearInterval(timer); isResting=false; 
-                document.getElementById("rest-overlay").style.display="none"; 
+            t--; 
+            document.getElementById("rest-timer").innerText = t;
+            if(t <= 0){ 
+                clearInterval(timer); 
+                isResting = false; 
+                document.getElementById("rest-overlay").style.display = "none"; 
                 reps = 0;
                 currentSet++;
-                document.getElementById("set-display").innerText=`${currentSet}/3`; 
-                document.getElementById("rep-display").innerText=`0/${repsPerSet}`;
+                speak("Rust voorbij. Volgende set!");
+                document.getElementById("set-display").innerText = `${currentSet}/${maxSets}`; 
+                document.getElementById("rep-display").innerText = `0/${repsPerSet}`;
             }
         }, 1000);
     }
 }
 
+// --- DATA & HELPER FUNCTIES ---
 function saveToHistory(amount) {
     const history = JSON.parse(localStorage.getItem("repHistory") || "{}");
     const todayStr = new Date().toISOString().split('T')[0];
     history[todayStr] = (history[todayStr] || 0) + amount;
     localStorage.setItem("repHistory", JSON.stringify(history));
+}
+
+function checkBadges() {
+    const history = JSON.parse(localStorage.getItem("repHistory") || "{}");
+    let totalReps = 0;
+    for (let date in history) { totalReps += history[date]; }
+    
+    if (totalReps >= 100 && !localStorage.getItem("badge_100")) {
+        speak("Gefeliciteerd! Je hebt de bronzen badge verdiend voor honderd herhalingen!");
+        localStorage.setItem("badge_100", "true");
+    }
 }
 
 function updateChart() {
@@ -153,4 +170,22 @@ function updateChart() {
     document.getElementById("weekChart").innerHTML = html;
 }
 
-function stopWorkout() { if(webcam) webcam.stop(); location.reload(); }
+function hideAll() {
+    ["onboarding", "home", "workoutScreen", "profile"].forEach(id => {
+        document.getElementById(id).classList.add("hidden");
+    });
+}
+
+function switchTab(tab) {
+    hideAll();
+    document.getElementById(tab).classList.remove("hidden");
+    document.querySelectorAll(".nav-item").forEach(i => i.classList.remove('active'));
+    document.getElementById('n-'+tab).classList.add('active');
+    if(tab==='profile') loadProfileInputs();
+}
+
+function stopWorkout() { 
+    if(webcam) webcam.stop(); 
+    cancelAnimationFrame(animationId);
+    showHome(); 
+}
