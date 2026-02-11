@@ -3,63 +3,102 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>SmartFitness Pro</title>
+    <title>SmartFitness Pro ⚡</title>
+    
     <script src="https://cdn.jsdelivr.net/npm/@mediapipe/pose"></script>
     <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils"></script>
     <script src="https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap" rel="stylesheet">
+
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;900&family=Inter:wght@300;400;700&display=swap" rel="stylesheet">
+    
     <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
 
-<div class="app">
-    <div id="onboarding">
-        <div class="header">Instellen ⚡</div>
-        <div class="card">
-            <h3 id="q-text">Hoe heet je?</h3>
-            <input type="text" id="u-input" placeholder="Typ hier...">
-            <button class="button" onclick="handleStep()">VOLGENDE</button>
+<div class="app-container">
+
+    <div id="onboardingScreen" class="screen active">
+        <div class="header-onboarding">WELKOM BIJ SMARTFITNESS ⚡</div>
+        <div class="card onboarding-card">
+            <h2 id="onboardingQuestion">Hoe heet je?</h2>
+            <input type="text" id="onboardingInput" placeholder="Typ hier je naam...">
+            <button class="button primary-btn" onclick="nextOnboardingStep()">VOLGENDE</button>
+        </div>
+        <div class="step-indicator"><span id="currentOnboardingStep">1</span>/5</div>
+    </div>
+
+    <div id="homeScreen" class="screen hidden">
+        <div class="top-bar">
+            <div class="profile-summary">
+                <div class="profile-avatar">👤</div>
+                <div>
+                    <span class="greeting">Welkom terug,</span>
+                    <div id="displayUserName" class="user-name-text">KAMPIOEN</div>
+                </div>
+            </div>
+            <button class="settings-btn">⚙️</button>
+        </div>
+
+        <div class="stats-overview">
+            <div class="stat-item">
+                <div class="stat-value">🔥 <span id="displayCalories">0</span></div>
+                <div class="stat-label">KCAL VERBRAND</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-value">⏱️ <span id="displayDuration">0</span></div>
+                <div class="stat-label">MINUTEN</div>
+            </div>
+        </div>
+
+        <div class="section-title">JOUW TRAININGEN</div>
+        <div class="workout-plan-card" onclick="startWorkout('squat')">
+            <img src="https://via.placeholder.com/100x80?text=SQUAT" alt="Squat afbeelding" class="workout-img">
+            <div class="workout-details">
+                <h3>BENEN & BILLEN</h3>
+                <p>Squats | 3 Sets | 12 Herhalingen</p>
+            </div>
+            <div class="play-icon">▶</div>
+        </div>
+        <div class="workout-plan-card" onclick="startWorkout('pushup')">
+            <img src="https://via.placeholder.com/100x80?text=PUSHUP" alt="Pushup afbeelding" class="workout-img">
+            <div class="workout-details">
+                <h3>BORST & ARMEN</h3>
+                <p>Push-ups | 3 Sets | 10 Herhalingen</p>
+            </div>
+            <div class="play-icon">▶</div>
         </div>
     </div>
 
-    <div id="home" class="hidden">
-        <div class="header">Hey <span id="user-name">Naam</span>!</div>
-        <div class="card">
-            <h4 style="color:#94a3b8; margin:0 0 15px 0">KIES TRAINING</h4>
-            <div class="grid-2">
-                <button class="choice-btn" onclick="startWorkout('squat')">🦵 Squats</button>
-                <button class="choice-btn" onclick="startWorkout('pushup')">💪 Pushups</button>
-            </div>
+    <div id="workoutScreen" class="screen hidden">
+        <div class="workout-header">
+            <div class="workout-mode" id="workoutModeDisplay">SQUATS</div>
+            <div class="rep-counter" id="repCountDisplay">0</div>
         </div>
-        <div class="card">
-            <h4 style="color:#94a3b8; margin:0">WEEK STATS</h4>
-            <div class="chart-container">
-                <div class="bar" style="height: 60%"></div>
-                <div class="bar" style="height: 40%"></div>
-                <div class="bar" style="height: 80%"></div>
-                <div class="bar" style="height: 50%"></div>
-            </div>
-        </div>
-    </div>
-
-    <div id="workoutScreen" class="hidden">
-        <div class="stats-grid">
-            <div class="stat-box"><span>OEFENING</span><div class="stat-value" id="mode-title">-</div></div>
-            <div class="stat-box"><span>REPS</span><div class="stat-value" id="rep-count">0</div></div>
-        </div>
-        <div class="canvas-wrapper">
+        <div class="camera-feedback-area">
             <video id="input_video" style="display:none"></video>
             <canvas id="output_canvas"></canvas>
-            <div id="ai-feedback">Camera laden...</div>
+            <div id="aiFeedbackMessage" class="ai-feedback">Zoek positie...</div>
         </div>
-        <button class="button" style="background:#ef4444; margin-top:20px" onclick="location.reload()">STOP</button>
+        <button class="button stop-workout-btn" onclick="stopWorkout()">TRAINING STOPPEN</button>
     </div>
+
+    <div id="profileScreen" class="screen hidden">
+        <div class="header">JOUW PROFIEL</div>
+        <div class="card profile-card">
+            <h3>Naam: <span id="profileName"></span></h3>
+            <h3>Leeftijd: <span id="profileAge"></span></h3>
+            <h3>Doel: <span id="profileGoal"></span></h3>
+            <h3>Gewicht: <span id="profileWeight"></span> kg</h3>
+            <button class="button reset-btn" onclick="resetApp()">RESET APP</button>
+        </div>
+    </div>
+
 </div>
 
-<nav class="bottom-nav hidden" id="mainNav">
-    <div class="nav-item active">🏠<br>Home</div>
-    <div class="nav-item">🏆<br>Badges</div>
-    <div class="nav-item" onclick="localStorage.clear(); location.reload();">👤<br>Reset</div>
+<nav id="bottomNavBar" class="bottom-nav hidden">
+    <div class="nav-item active" onclick="showScreen('homeScreen')">🏠<br>Home</div>
+    <div class="nav-item" onclick="showScreen('profileScreen')">👤<br>Profiel</div>
+    <div class="nav-item" onclick="alert('Jouw badges komen hier!')">🏆<br>Badges</div>
 </nav>
 
 <script src="js/app.js"></script>
