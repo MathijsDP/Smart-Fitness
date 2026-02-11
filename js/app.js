@@ -11,20 +11,12 @@ function speak(text) {
     window.speechSynthesis.speak(msg);
 }
 
-function startApp() {
-    document.getElementById('onboarding').classList.add('hidden');
-    document.getElementById('home').classList.remove('hidden');
-    document.getElementById('mainNav').style.display = 'flex';
-    speak("Welkom terug, kampioen. Wat gaan we vandaag trainen?");
-}
-
 function openWorkout(mode) {
     currentMode = mode;
     document.getElementById('home').classList.add('hidden');
-    document.getElementById('mainNav').style.display = 'none';
     document.getElementById('workoutScreen').classList.remove('hidden');
     document.getElementById('mode-title').innerText = mode.toUpperCase();
-    speak("Maak je klaar voor de " + mode + "s. Ga volledig in beeld staan.");
+    speak("Laten we beginnen met " + mode + "s. Ga in beeld staan.");
     startCamera();
 }
 
@@ -46,29 +38,22 @@ function onResults(results) {
     drawLandmarks(canvasCtx, results.poseLandmarks, {color: '#ffffff', lineWidth: 2});
 
     const marks = results.poseLandmarks;
-    let angle = 0;
     const feedback = document.getElementById('ai-feedback');
 
     if (currentMode === "squat") {
-        angle = calculateAngle(marks[24], marks[26], marks[28]); // Heup-Knie-Enkel
-        if (angle < 100) {
-            stage = "down";
-            feedback.innerText = "GOED ZO! NU OMHOOG!";
-            feedback.style.color = "#10b981";
-        }
+        let angle = calculateAngle(marks[24], marks[26], marks[28]);
+        if (angle < 100) { stage = "down"; feedback.innerText = "Lager..."; }
         if (angle > 150 && stage === "down") {
-            stage = "up";
-            reps++;
+            stage = "up"; reps++;
             document.getElementById('rep-count').innerText = reps;
             speak(reps.toString());
-            feedback.innerText = "TOP! GA DOOR!";
+            feedback.innerText = "TOP!";
         }
     } else if (currentMode === "pushup") {
-        angle = calculateAngle(marks[12], marks[14], marks[16]); // Schouder-Elleboog-Pols
+        let angle = calculateAngle(marks[12], marks[14], marks[16]);
         if (angle < 90) stage = "down";
         if (angle > 150 && stage === "down") {
-            stage = "up";
-            reps++;
+            stage = "up"; reps++;
             document.getElementById('rep-count').innerText = reps;
             speak(reps.toString());
         }
