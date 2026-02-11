@@ -3,76 +3,63 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>SmartFitness AI Pro</title>
+    <title>SmartFitness Pro</title>
     <script src="https://cdn.jsdelivr.net/npm/@mediapipe/pose"></script>
     <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils"></script>
     <script src="https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;900&family=Inter:wght@300;400;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
 
-<div class="app-container">
-    <div id="onboarding" class="screen">
-        <div class="header">MAAK JE PROFIEL ⚡</div>
-        <div class="card" id="questionBox">
-            <h2 id="questionText">Hoe heet je?</h2>
-            <input type="text" id="userInput" placeholder="Typ hier...">
-            <button class="next-btn" onclick="handleOnboarding()">VOLGENDE</button>
-        </div>
-        <div class="step-indicator"><span id="stepNum">1</span>/4</div>
-    </div>
-
-    <div id="home" class="screen hidden">
-        <div class="user-bar">
-            <div class="profile-pic">👤</div>
-            <div>
-                <span class="welcome">Welkom terug,</span>
-                <div id="userNameDisplay" class="name-bold">KAMPIOEN</div>
-            </div>
-        </div>
-
-        <div class="stats-row">
-            <div class="mini-card">🔥 <span>538</span><br><small>KCAL</small></div>
-            <div class="mini-card">⏱️ <span>12</span><br><small>MINS</small></div>
-        </div>
-
-        <div class="header-small">JOUW PLAN</div>
-        <div class="workout-card" onclick="openWorkout('squat')">
-            <div class="workout-info">
-                <h3>Lower Body Workout</h3>
-                <p>Squats • 3 sets • 12 reps</p>
-            </div>
-            <div class="play-icon">▶</div>
-        </div>
-
-        <div class="workout-card" onclick="openWorkout('pushup')">
-            <div class="workout-info">
-                <h3>Upper Body Workout</h3>
-                <p>Pushups • 3 sets • 10 reps</p>
-            </div>
-            <div class="play-icon">▶</div>
+<div class="app">
+    <div id="onboarding">
+        <div class="header">Instellen ⚡</div>
+        <div class="card">
+            <h3 id="q-text">Hoe heet je?</h3>
+            <input type="text" id="u-input" placeholder="Typ hier...">
+            <button class="button" onclick="handleStep()">VOLGENDE</button>
         </div>
     </div>
 
-    <div id="workoutScreen" class="screen hidden">
-        <div class="ai-header">
-            <div id="mode-title">SQUATS</div>
-            <div id="rep-count">0</div>
+    <div id="home" class="hidden">
+        <div class="header">Hey <span id="user-name">Naam</span>!</div>
+        <div class="card">
+            <h4 style="color:#94a3b8; margin:0 0 15px 0">KIES TRAINING</h4>
+            <div class="grid-2">
+                <button class="choice-btn" onclick="startWorkout('squat')">🦵 Squats</button>
+                <button class="choice-btn" onclick="startWorkout('pushup')">💪 Pushups</button>
+            </div>
         </div>
-        <div class="camera-box">
+        <div class="card">
+            <h4 style="color:#94a3b8; margin:0">WEEK STATS</h4>
+            <div class="chart-container">
+                <div class="bar" style="height: 60%"></div>
+                <div class="bar" style="height: 40%"></div>
+                <div class="bar" style="height: 80%"></div>
+                <div class="bar" style="height: 50%"></div>
+            </div>
+        </div>
+    </div>
+
+    <div id="workoutScreen" class="hidden">
+        <div class="stats-grid">
+            <div class="stat-box"><span>OEFENING</span><div class="stat-value" id="mode-title">-</div></div>
+            <div class="stat-box"><span>REPS</span><div class="stat-value" id="rep-count">0</div></div>
+        </div>
+        <div class="canvas-wrapper">
             <video id="input_video" style="display:none"></video>
             <canvas id="output_canvas"></canvas>
-            <div id="ai-feedback">Zoek positie...</div>
+            <div id="ai-feedback">Camera laden...</div>
         </div>
-        <button class="stop-btn" onclick="location.reload()">STOP TRAINING</button>
+        <button class="button" style="background:#ef4444; margin-top:20px" onclick="location.reload()">STOP</button>
     </div>
 </div>
 
 <nav class="bottom-nav hidden" id="mainNav">
-    <div class="nav-item active" onclick="showScreen('home')">🏠<br>Home</div>
-    <div class="nav-item" onclick="alert('Programma\'s komen eraan!')">🏋️<br>Plan</div>
-    <div class="nav-item" onclick="showScreen('onboarding')">👤<br>Profiel</div>
+    <div class="nav-item active">🏠<br>Home</div>
+    <div class="nav-item">🏆<br>Badges</div>
+    <div class="nav-item" onclick="localStorage.clear(); location.reload();">👤<br>Reset</div>
 </nav>
 
 <script src="js/app.js"></script>
