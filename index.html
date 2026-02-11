@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Elite AI Coach v7.2</title>
+    <title>Elite AI Coach v8.0</title>
     
     <script src="https://cdn.jsdelivr.net/npm/@mediapipe/pose"></script>
     <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils"></script>
@@ -11,38 +11,44 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&family=Montserrat:wght@700;900&display=swap" rel="stylesheet">
 
     <style>
-        :root { --bg: #000; --surface: #121212; --accent: #fff; --sub: #888; --blue: #007aff; --orange: #ff9500; }
+        :root { --bg: #000; --surface: #121212; --accent: #fff; --sub: #888; --blue: #007aff; --orange: #ff9500; --green: #34c759; }
         body { margin: 0; font-family: 'Inter', sans-serif; background: var(--bg); color: var(--accent); overflow: hidden; height: 100vh; }
-        .screen { position: absolute; inset: 0; padding: 30px 20px 100px; display: flex; flex-direction: column; overflow-y: auto; transition: 0.3s; }
+        .screen { position: absolute; inset: 0; padding: 30px 20px 110px; display: flex; flex-direction: column; overflow-y: auto; transition: 0.3s; }
         .hidden { display: none !important; }
         
         h1 { font-family: 'Montserrat'; font-size: 26px; font-weight: 900; text-transform: uppercase; margin-bottom: 5px; }
         .subtitle { color: var(--sub); font-size: 11px; letter-spacing: 1.5px; text-transform: uppercase; margin-bottom: 25px; }
         
         .q-box { flex: 1; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; }
-        input, select { width: 100%; max-width: 320px; padding: 18px; border-radius: 12px; border: 1px solid #333; background: #1c1c1e; color: #fff; font-size: 16px; margin-bottom: 15px; outline: none; }
+        input, select { width: 100%; max-width: 320px; padding: 16px; border-radius: 12px; border: 1px solid #333; background: #1c1c1e; color: #fff; font-size: 16px; margin-bottom: 12px; outline: none; transition: 0.2s; }
+        input:focus { border-color: var(--blue); }
         
         .btn { background: var(--accent); color: #000; border: none; padding: 18px; border-radius: 14px; width: 100%; max-width: 320px; font-weight: 800; text-transform: uppercase; cursor: pointer; }
         .btn-small { padding: 10px 15px; font-size: 12px; margin: 5px; width: auto; background: #222; color: #fff; border: 1px solid #444; border-radius: 8px; cursor: pointer; }
-        .card { background: var(--surface); border-radius: 20px; padding: 20px; margin-bottom: 15px; border: 1px solid #222; cursor: pointer; }
+        .card { background: var(--surface); border-radius: 20px; padding: 20px; margin-bottom: 15px; border: 1px solid #222; }
 
         .streak-badge { background: rgba(255,149,0,0.1); color: var(--orange); padding: 8px 15px; border-radius: 20px; font-weight: 800; font-size: 14px; display: inline-flex; align-items: center; gap: 8px; margin-bottom: 20px; }
-        .hud { position: absolute; top: 0; width: 100%; padding: 20px; display: flex; justify-content: space-between; background: linear-gradient(to bottom, rgba(0,0,0,0.7), transparent); z-index: 2001; pointer-events: none; }
+        .hud { position: absolute; top: 0; width: 100%; padding: 20px; display: flex; justify-content: space-between; background: linear-gradient(to bottom, rgba(0,0,0,0.8), transparent); z-index: 2001; pointer-events: none; box-sizing: border-box; }
         .hud-val { text-align: center; }
         .hud-val span { display: block; font-size: 9px; color: var(--sub); font-weight: 700; }
-        .hud-val strong { font-size: 20px; font-family: 'Montserrat'; text-shadow: 0 2px 4px rgba(0,0,0,0.5); }
+        .hud-val strong { font-size: 22px; font-family: 'Montserrat'; text-shadow: 0 2px 4px rgba(0,0,0,0.8); }
 
-        #coaching-tip { position: absolute; bottom: 100px; left: 0; width: 100%; text-align: center; color: var(--accent); font-weight: 800; font-size: 18px; text-shadow: 2px 2px 10px rgba(0,0,0,1); z-index: 2002; transition: 0.3s; }
+        #coaching-tip { position: absolute; bottom: 120px; left: 0; width: 100%; text-align: center; color: var(--accent); font-weight: 800; font-size: 18px; text-shadow: 2px 2px 10px rgba(0,0,0,1); z-index: 2002; pointer-events: none; }
 
-        #rest-overlay { position: absolute; inset: 0; background: rgba(0,0,0,0.95); z-index: 3000; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; }
+        #rest-overlay { position: absolute; inset: 0; background: rgba(0,0,0,0.96); z-index: 3000; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 20px; }
         .timer-txt { font-size: 80px; font-weight: 900; color: var(--blue); font-family: 'Montserrat'; margin: 10px 0; }
 
         .navbar { position: fixed; bottom: 0; width: 100%; background: #0a0a0a; border-top: 1px solid #222; display: flex; justify-content: space-around; padding: 15px 0 35px; z-index: 1000; }
-        .nav-item { color: var(--sub); font-size: 10px; font-weight: 700; cursor: pointer; text-align: center; }
+        .nav-item { color: var(--sub); font-size: 10px; font-weight: 700; cursor: pointer; text-align: center; text-transform: uppercase; }
         .nav-item.active { color: #fff; }
 
         #output_canvas { width: 100%; height: 100%; object-fit: contain; transform: scaleX(-1); background: #000; }
-        .bar-bg { background: #222; height: 10px; border-radius: 5px; overflow: hidden; margin-top: 10px; }
+        
+        /* Stats Styles */
+        .stat-row { margin-bottom: 15px; }
+        .stat-header { display: flex; justify-content: space-between; font-size: 12px; font-weight: 700; margin-bottom: 5px; }
+        .bar-bg { background: #222; height: 8px; border-radius: 4px; overflow: hidden; }
+        .bar-fill { height: 100%; background: var(--blue); transition: width 0.5s ease-out; }
     </style>
 </head>
 <body>
@@ -55,35 +61,28 @@
         <div class="streak-badge"><i>🔥</i> <span id="streak-val">0</span> DAGEN STREAK</div>
         <h1 id="dash-greet">HEY!</h1>
         <div class="subtitle">Klaar voor je sessie?</div>
-        <div class="card" onclick="startCircuit('Upper')"><strong>UPPER BODY</strong><p style="color:var(--sub);font-size:12px;">6 Oefeningen • Kracht</p></div>
-        <div class="card" onclick="startCircuit('Lower')"><strong>LOWER BODY</strong><p style="color:var(--sub);font-size:12px;">6 Oefeningen • Benen</p></div>
-        <div class="card" onclick="startCircuit('Conditie')"><strong>CONDITIE</strong><p style="color:var(--sub);font-size:12px;">6 Oefeningen • Cardio</p></div>
+        <div class="card" onclick="startCircuit('Upper')"><strong>UPPER BODY</strong><p style="color:var(--sub);font-size:12px;">Borst, Armen & Schouders</p></div>
+        <div class="card" onclick="startCircuit('Lower')"><strong>LOWER BODY</strong><p style="color:var(--sub);font-size:12px;">Benen, Billen & Kuiten</p></div>
+        <div class="card" onclick="startCircuit('Conditie')"><strong>FULL BODY / CORE</strong><p style="color:var(--sub);font-size:12px;">Vetverbranding & Abs</p></div>
     </div>
 
     <div id="scr-progress" class="screen hidden">
-        <h1>PROGRESSIE</h1>
-        <div class="subtitle">XP per categorie</div>
-        <div id="stats-render"></div>
+        <h1>LICHAAMS STATS</h1>
+        <div class="subtitle">Level up per spiergroep</div>
+        <div id="stats-render" class="card"></div>
     </div>
 
     <div id="scr-profile" class="screen hidden">
         <h1>PROFIEL</h1>
         <div class="subtitle">Pas je gegevens aan</div>
-        <div class="card">
-            <label style="font-size:10px; color:var(--sub)">VOORNAAM</label>
-            <input type="text" id="edit-name" onchange="updateUser('name', this.value)">
-            <label style="font-size:10px; color:var(--sub)">GEWICHT (KG)</label>
-            <input type="number" id="edit-weight" onchange="updateUser('weight', this.value)">
-            <label style="font-size:10px; color:var(--sub)">NIVEAU (REPS)</label>
-            <input type="number" id="edit-reps" onchange="updateUser('reps', this.value)">
-        </div>
-        <button class="btn" style="background:#ff3b30; color:#fff" onclick="localStorage.clear(); location.reload();">RESET ACCOUNT</button>
+        <div class="card" id="profile-fields">
+            </div>
     </div>
 
     <div id="scr-workout" class="screen hidden" style="padding:0; z-index: 2000;">
         <video id="input_video" style="display:none"></video>
         <canvas id="output_canvas"></canvas>
-        <div id="coaching-tip">Bereid je voor...</div>
+        <div id="coaching-tip"></div>
         
         <div id="rest-overlay" class="hidden">
             <div id="rest-title" class="subtitle">RUST</div>
@@ -97,11 +96,11 @@
         </div>
 
         <div class="hud">
-            <div class="hud-val"><span>OEF</span><strong id="hud-idx">1/6</strong></div>
+            <div class="hud-val"><span>OEFENING</span><strong id="hud-idx">1/6</strong></div>
             <div class="hud-val"><span>SET</span><strong id="hud-set">1/3</strong></div>
             <div class="hud-val"><span>REPS</span><strong id="hud-reps">0/12</strong></div>
         </div>
-        <button class="btn" style="position:absolute; bottom:20px; left:50%; transform:translateX(-50%); width:80%; z-index:2001; background:rgba(255,59,48,0.9); color:#fff;" onclick="stopWorkout()">STOP TRAINING</button>
+        <button class="btn" style="position:absolute; bottom:20px; left:50%; transform:translateX(-50%); width:80%; z-index:2001; background:rgba(255,59,48,0.95); color:#fff;" onclick="stopWorkout()">STOP TRAINING</button>
     </div>
 
     <nav class="navbar hidden" id="nav">
@@ -111,36 +110,43 @@
     </nav>
 
     <script>
+        // OEFENINGEN MET SPIERGROEPEN
         const exercises = {
             Upper: [
-                {n:"Push-up", i:"Houd je lichaam in een rechte lijn. Borst naar de grond."},
-                {n:"Shoulder Taps", i:"In plankpositie om de beurt je schouder aantikken."},
-                {n:"Pike Push-up", i:"Vorm een V. Duw je hoofd richting de grond."},
-                {n:"Superman", i:"Lig op je buik, til armen en benen tegelijk op."},
-                {n:"Diamond Push-up", i:"Maak een ruit met je handen voor triceps."},
-                {n:"Plank", i:"Houd je core strak en rug recht."}
+                {n:"Push-up", i:"Borst & Triceps focus. Rug recht.", focus:["Borst", "Triceps", "Schouders"]},
+                {n:"Shoulder Taps", i:"Stabiele plank, tik schouders aan.", focus:["Schouders", "Abs"]},
+                {n:"Pike Push-up", i:"Billen in de lucht, hoofd naar grond.", focus:["Schouders", "Triceps"]},
+                {n:"Superman", i:"Lig op buik, til armen/benen op.", focus:["Rug", "Schouders"]},
+                {n:"Diamond Push-up", i:"Handen in ruitvorm.", focus:["Triceps", "Borst"]},
+                {n:"Plank Taps", i:"Tik zijwaarts de grond aan.", focus:["Abs", "Schouders"]}
             ],
             Lower: [
-                {n:"Squat", i:"Zak diep door je heupen, rug recht houden."},
-                {n:"Lunge", i:"Grote stap vooruit tot je knie 90 graden is."},
-                {n:"Glute Bridge", i:"Lig op je rug, duw je heupen maximaal omhoog."},
-                {n:"Side Lunges", i:"Stap zijwaarts en zak door je been."},
-                {n:"Calf Raise", i:"Ga op je tenen staan en houd even vast."},
-                {n:"Wall Sit", i:"Zit tegen de muur in een hoek van 90 graden."}
+                {n:"Squat", i:"Zak diep, borst vooruit.", focus:["Benen", "Billen"]},
+                {n:"Lunge", i:"Knie net boven de grond.", focus:["Benen", "Billen"]},
+                {n:"Glute Bridge", i:"Duw heupen naar het plafond.", focus:["Billen", "Rug"]},
+                {n:"Side Lunges", i:"Zijwaartse stap, diep zakken.", focus:["Benen", "Billen"]},
+                {n:"Calf Raise", i:"Maximaal op je tenen komen.", focus:["Kuiten"]},
+                {n:"High Knees", i:"Knieën hoog, tempo maken.", focus:["Benen", "Abs"]}
             ],
             Conditie: [
-                {n:"Jumping Jacks", i:"Spring wijd en klap boven je hoofd."},
-                {n:"High Knees", i:"Ren op de plaats, knieën boven je heupen."},
-                {n:"Burpees", i:"Spring omhoog, zak in een push-up, en herhaal."},
-                {n:"Mountain Climbers", i:"In plankpositie je knieën naar je borst trekken."},
-                {n:"Skater Jumps", i:"Spring zijwaarts van het ene naar het andere been."},
-                {n:"Shadow Boxing", i:"Sla rechtuit op ooghoogte, blijf bewegen."}
+                {n:"Jumping Jacks", i:"Hele lichaam in beweging.", focus:["Benen", "Schouders"]},
+                {n:"Burpees", i:"Explosieve sprong en push-up.", focus:["Borst", "Benen", "Abs"]},
+                {n:"Mountain Climbers", i:"Knieën naar borst in plank.", focus:["Abs", "Schouders"]},
+                {n:"Skater Jumps", i:"Zijwaartse sprongen.", focus:["Benen", "Billen"]},
+                {n:"Plank", i:"Statisch vasthouden.", focus:["Abs", "Rug"]},
+                {n:"Crunches", i:"Kleine beweging, focus op buik.", focus:["Abs"]}
             ]
         };
 
-        let user = JSON.parse(localStorage.getItem('elite_v8')) || {
+        // USER DATA INITIALISATIE
+        let user = JSON.parse(localStorage.getItem('elite_v9')) || {
             name: '', age: '', gender: '', height: '', weight: '', goal: '', reps: 12, availability: '',
-            xp: {Upper:0, Lower:0, Conditie:0}, lvls: {Upper:1, Lower:1, Conditie:1}, streak: 0, lastDate: null
+            streak: 0, lastDate: null,
+            stats: {
+                Borst: {xp:0, lvl:1}, Schouders: {xp:0, lvl:1}, Triceps: {xp:0, lvl:1},
+                Abs: {xp:0, lvl:1}, Rug: {xp:0, lvl:1}, Benen: {xp:0, lvl:1},
+                Billen: {xp:0, lvl:1}, Kuiten: {xp:0, lvl:1}
+            }
         };
 
         let currentStep = 1;
@@ -150,25 +156,26 @@
         let camera = null;
 
         const questions = [
-            { k: 'name', q: 'WAT IS JE VOORNAAM?', t: 'text' },
-            { k: 'age', q: 'WAT IS JE LEEFTIJD?', t: 'number' },
-            { k: 'gender', q: 'WAT IS JE GESLACHT?', t: 'select', o: ['Man', 'Vrouw', 'X'] },
-            { k: 'height', q: 'HOE LANG BEN JE? (CM)', t: 'number' },
-            { k: 'weight', q: 'WAT IS JE GEWICHT? (KG)', t: 'number' },
-            { k: 'goal', q: 'WAT IS JE DOEL?', t: 'select', o: ['Afvallen', 'Spiermassa', 'Conditie'] },
-            { k: 'reps', q: 'TRAININGSNIVEAU', t: 'select', o: [{n:'Beginner', v:8}, {n:'Gemiddeld', v:12}, {n:'Pro', v:18}] },
-            { k: 'availability', q: 'HOEVEEL DAGEN PER WEEK?', t: 'select', o: ['1-2 dagen', '3-4 dagen', '5+ dagen'] }
+            { k: 'name', q: 'VOORNAAM', t: 'text' },
+            { k: 'age', q: 'LEEFTIJD', t: 'number' },
+            { k: 'gender', q: 'GESLACHT', t: 'select', o: ['Man', 'Vrouw', 'X'] },
+            { k: 'height', q: 'LENGTE (CM)', t: 'number' },
+            { k: 'weight', q: 'GEWICHT (KG)', t: 'number' },
+            { k: 'goal', q: 'DOEL', t: 'select', o: ['Afvallen', 'Spiermassa', 'Conditie'] },
+            { k: 'reps', q: 'TRAININGSNIVEAU (REPS)', t: 'number' },
+            { k: 'availability', q: 'DAGEN PER WEEK', t: 'select', o: ['1-2', '3-4', '5+'] }
         ];
 
+        // ONBOARDING ENGINE
         function renderQ() {
             const q = questions[currentStep-1];
-            let html = `<h1>${q.q}</h1><div class="subtitle">Stap ${currentStep} van 8</div>`;
+            let html = `<h1>${q.q}</h1><div class="subtitle">Vraag ${currentStep} van 8</div>`;
             if(q.t === 'select') {
-                html += `<select id="q-val">` + q.o.map(o => `<option value="${o.v || o}">${o.n || o}</option>`).join('') + `</select>`;
+                html += `<select id="q-val">` + q.o.map(o => `<option value="${o}">${o}</option>`).join('') + `</select>`;
             } else {
-                html += `<input type="${q.t}" id="q-val" placeholder="...">`;
+                html += `<input type="${q.t}" id="q-val" value="${user[q.k] || ''}" placeholder="...">`;
             }
-            html += `<button class="btn" onclick="saveQ()">VOLGENDE</button>`;
+            html += `<button class="btn" onclick="saveQ()">VERDER</button>`;
             document.getElementById('q-container').innerHTML = html;
         }
 
@@ -179,9 +186,10 @@
             else { save(); checkStreak(); tab('dash'); document.getElementById('nav').classList.remove('hidden'); }
         }
 
-        function save() { localStorage.setItem('elite_v8', JSON.stringify(user)); }
+        function save() { localStorage.setItem('elite_v9', JSON.stringify(user)); }
         function updateUser(k, v) { user[k] = v; save(); }
 
+        // NAVIGATION & UI
         function tab(t, el) {
             document.querySelectorAll('.screen').forEach(s => s.classList.add('hidden'));
             document.getElementById('scr-'+t).classList.remove('hidden');
@@ -190,12 +198,34 @@
                 document.getElementById('dash-greet').innerText = "HEY " + (user.name || "CHAMP"); 
                 document.getElementById('streak-val').innerText = user.streak; 
             }
-            if(t === 'progress') renderProgress();
-            if(t === 'profile') { 
-                document.getElementById('edit-name').value = user.name; 
-                document.getElementById('edit-weight').value = user.weight; 
-                document.getElementById('edit-reps').value = user.reps; 
-            }
+            if(t === 'progress') renderStats();
+            if(t === 'profile') renderProfileFields();
+        }
+
+        function renderProfileFields() {
+            const container = document.getElementById('profile-fields');
+            container.innerHTML = questions.map(q => `
+                <label style="font-size:10px; color:var(--sub); display:block; margin-bottom:5px;">${q.q}</label>
+                ${q.t === 'select' ? 
+                    `<select onchange="updateUser('${q.k}', this.value)">${q.o.map(o => `<option value="${o}" ${user[q.k] == o ? 'selected' : ''}>${o}</option>`).join('')}</select>` :
+                    `<input type="${q.t}" value="${user[q.k]}" onchange="updateUser('${q.k}', this.value)">`
+                }
+            `).join('');
+        }
+
+        function renderStats() {
+            const container = document.getElementById('stats-render');
+            container.innerHTML = Object.keys(user.stats).map(key => {
+                const s = user.stats[key];
+                const target = s.lvl * 250;
+                const pct = (s.xp / target) * 100;
+                return `
+                    <div class="stat-row">
+                        <div class="stat-header"><span>${key.toUpperCase()}</span><span>LVL ${s.lvl}</span></div>
+                        <div class="bar-bg"><div class="bar-fill" style="width: ${pct}%"></div></div>
+                    </div>
+                `;
+            }).join('');
         }
 
         function checkStreak() {
@@ -207,17 +237,9 @@
             user.lastDate = today; save();
         }
 
-        function renderProgress() {
-            const area = document.getElementById('stats-render'); area.innerHTML = '';
-            ['Upper', 'Lower', 'Conditie'].forEach(c => {
-                const target = user.lvls[c] * 200;
-                area.innerHTML += `<div class="card" style="cursor:default"><strong>${c.toUpperCase()} LVL ${user.lvls[c]}</strong><div class="bar-bg"><div style="width:${(user.xp[c]/target)*100}%; background:var(--blue); height:100%; transition:1s"></div></div></div>`;
-            });
-        }
-
+        // WORKOUT LOGIC
         function stopWorkout() {
-            isRest = false;
-            clearInterval(restTimer);
+            isRest = false; clearInterval(restTimer);
             if(camera) camera.stop();
             tab('dash');
         }
@@ -228,7 +250,7 @@
             cIdx = 0; sets = 1; reps = 0;
             tab('workout'); 
             startAI(); 
-            startRest(30, "VOLG DE INSTRUCTIE");
+            startRest(30, "LEES DE UITLEG");
         }
 
         function startRest(time, title) {
@@ -258,11 +280,10 @@
             document.getElementById('hud-reps').innerText = `${reps}/${user.reps}`;
             
             const tipEl = document.getElementById('coaching-tip');
-            const remaining = user.reps - reps;
-            if (remaining <= 3 && remaining > 0) tipEl.innerText = "LAATSTE " + remaining + "!";
-            else if (reps > 0 && reps < 5) tipEl.innerText = "GOED BEZIG!";
-            else if (reps === 0) tipEl.innerText = "START NU!";
-            else tipEl.innerText = "JE BENT ER BIJNA!";
+            const rem = user.reps - reps;
+            if (rem <= 3 && rem > 0) tipEl.innerText = "LAATSTE " + rem + "!";
+            else if (reps > 0) tipEl.innerText = "GOED ZO! DIEPER!";
+            else tipEl.innerText = "LET'S GO!";
         }
 
         const videoElement = document.getElementById('input_video');
@@ -278,7 +299,7 @@
             const exe = circuit[cIdx].n.toLowerCase();
             let isGood = false;
 
-            if(exe.includes("squat") || exe.includes("lunge")) {
+            if(exe.includes("squat") || exe.includes("lunge") || exe.includes("sit")) {
                 const a = calcAngle(m[24], m[26], m[28]);
                 if(a < 110) { isGood = true; stage = 'down'; }
                 if(a > 160 && stage === 'down') { registerRep(); stage = 'up'; }
@@ -297,17 +318,25 @@
 
         function registerRep() {
             reps++; updateHUD(); speak(reps);
-            user.xp[currentCat] += 10;
-            const target = user.lvls[currentCat] * 200;
-            if(user.xp[currentCat] >= target) { user.xp[currentCat]=0; user.lvls[currentCat]++; speak("Level up!"); }
+            
+            // Verdeel XP over focus spieren
+            const focus = circuit[cIdx].focus;
+            focus.forEach(muscle => {
+                user.stats[muscle].xp += 15;
+                if(user.stats[muscle].xp >= user.stats[muscle].lvl * 250) {
+                    user.stats[muscle].xp = 0;
+                    user.stats[muscle].lvl++;
+                    speak("Level up voor " + muscle);
+                }
+            });
             save();
 
             if(reps >= user.reps) {
-                if(sets < 3) { sets++; reps=0; startRest(15, "GOED GEDAAN! VOLGENDE SET."); }
+                if(sets < 3) { sets++; reps=0; startRest(15, "SET VOLTOOID!"); }
                 else { 
                     cIdx++; 
-                    if(cIdx < 6) { sets=1; reps=0; startRest(30, "TOP! VOLGENDE OEFENING."); } 
-                    else { checkStreak(); speak("Gedaan!"); stopWorkout(); } 
+                    if(cIdx < 6) { sets=1; reps=0; startRest(30, "OEFENING VOLTOOID!"); } 
+                    else { checkStreak(); speak("Geweldig gedaan!"); stopWorkout(); } 
                 }
             }
         }
