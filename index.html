@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>SmartFitness Pro | Elite Coach</title>
+    <title>Elite AI Coach v6</title>
     
     <script src="https://cdn.jsdelivr.net/npm/@mediapipe/pose"></script>
     <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils"></script>
@@ -11,346 +11,264 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&family=Montserrat:wght@700;900&display=swap" rel="stylesheet">
 
     <style>
-        :root { --bg: #0a0a0a; --surface: #1a1a1a; --accent: #ffffff; --sub: #a0a0a0; --blue: #007aff; --success: #34c759; --danger: #ff3b30; }
-        
-        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+        :root { --bg: #000; --surface: #121212; --accent: #fff; --sub: #888; --blue: #007aff; --orange: #ff9500; }
         body { margin: 0; font-family: 'Inter', sans-serif; background: var(--bg); color: var(--accent); overflow: hidden; height: 100vh; }
+        .screen { position: absolute; inset: 0; padding: 30px 20px 100px; display: flex; flex-direction: column; overflow-y: auto; transition: 0.3s; }
+        .hidden { display: none !important; }
+        
+        h1 { font-family: 'Montserrat'; font-size: 26px; font-weight: 900; text-transform: uppercase; margin-bottom: 5px; }
+        .subtitle { color: var(--sub); font-size: 11px; letter-spacing: 1.5px; text-transform: uppercase; margin-bottom: 25px; }
+        
+        /* Onboarding */
+        .q-box { flex: 1; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; }
+        input, select { width: 100%; max-width: 320px; padding: 18px; border-radius: 12px; border: 1px solid #333; background: #1c1c1e; color: #fff; font-size: 16px; margin-bottom: 15px; outline: none; }
+        
+        /* Buttons */
+        .btn { background: var(--accent); color: #000; border: none; padding: 18px; border-radius: 14px; width: 100%; max-width: 320px; font-weight: 800; text-transform: uppercase; cursor: pointer; }
+        .btn-small { padding: 10px 15px; font-size: 12px; margin: 5px; width: auto; background: #222; color: #fff; }
+        .card { background: var(--surface); border-radius: 20px; padding: 20px; margin-bottom: 15px; border: 1px solid #222; }
 
-        .screen { 
-            position: absolute; inset: 0; padding: 40px 25px 120px; 
-            display: flex; flex-direction: column; overflow-y: auto; 
-            transition: opacity 0.4s ease, transform 0.4s ease;
-        }
-        .hidden { display: none !important; opacity: 0; transform: translateY(10px); }
+        /* Streak & HUD */
+        .streak-badge { background: rgba(255,149,0,0.1); color: var(--orange); padding: 8px 15px; border-radius: 20px; font-weight: 800; font-size: 14px; display: inline-flex; align-items: center; gap: 8px; margin-bottom: 20px; }
+        .hud { position: absolute; top: 0; width: 100%; padding: 20px; display: flex; justify-content: space-between; background: linear-gradient(to bottom, rgba(0,0,0,0.7), transparent); }
+        .hud-val { text-align: center; }
+        .hud-val span { display: block; font-size: 9px; color: var(--sub); font-weight: 700; }
+        .hud-val strong { font-size: 20px; font-family: 'Montserrat'; }
 
-        h1 { font-family: 'Montserrat'; font-size: 32px; font-weight: 900; letter-spacing: -1.5px; margin: 0 0 5px; text-transform: uppercase; }
-        .subtitle { color: var(--sub); font-size: 12px; letter-spacing: 2px; text-transform: uppercase; margin-bottom: 30px; display: block; }
+        /* Timer Overlays */
+        #rest-overlay { position: absolute; inset: 0; background: rgba(0,0,0,0.95); z-index: 1000; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; }
+        .timer-txt { font-size: 80px; font-weight: 900; color: var(--blue); font-family: 'Montserrat'; }
 
-        /* Onboarding Flow */
-        .q-wrapper { flex: 1; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; }
-        input, select { 
-            width: 100%; max-width: 350px; padding: 22px; border-radius: 16px; border: 2px solid #333; 
-            background: #222; color: white; font-size: 20px; text-align: center; margin-bottom: 25px; outline: none; transition: 0.3s;
-        }
-        input:focus { border-color: var(--blue); box-shadow: 0 0 15px rgba(0,122,255,0.3); }
-
-        .btn { 
-            background: var(--accent); color: #000; border: none; padding: 22px; border-radius: 18px; 
-            width: 100%; max-width: 350px; font-weight: 800; text-transform: uppercase; cursor: pointer; transition: 0.2s;
-        }
-        .btn:active { transform: scale(0.95); }
-        .btn-outline { 
-            background: var(--surface); color: white; border: 1px solid #333; padding: 20px; 
-            border-radius: 16px; margin: 10px 0; width: 100%; text-align: left; 
-            display: flex; justify-content: space-between; align-items: center; font-weight: 600;
-        }
-
-        /* Dashboard & Progress */
-        .card { background: var(--surface); border-radius: 24px; padding: 25px; margin-bottom: 20px; border: 1px solid #222; }
-        .prog-row { margin-bottom: 20px; }
-        .bar-bg { background: #333; height: 12px; border-radius: 6px; overflow: hidden; margin-top: 10px; }
-        .bar-fill { background: var(--blue); height: 100%; width: 0%; transition: width 1.5s cubic-bezier(0.1, 0.7, 1, 0.1); }
-
-        /* Workout UI */
-        .workout-container { position: relative; flex: 1; border-radius: 30px; overflow: hidden; background: #000; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
-        canvas { width: 100%; height: 100%; object-fit: cover; transform: scaleX(-1); }
-        .hud { position: absolute; top: 0; width: 100%; padding: 25px; background: linear-gradient(to bottom, rgba(0,0,0,0.8), transparent); display: flex; justify-content: space-between; }
-        .hud-item { text-align: center; }
-        .hud-item span { display: block; font-size: 10px; color: var(--sub); font-weight: 800; text-transform: uppercase; }
-        .hud-item strong { font-size: 24px; font-family: 'Montserrat'; }
-
-        /* Overlay */
-        #overlay { position: absolute; inset: 0; background: rgba(0,0,0,0.95); z-index: 100; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 30px; }
-        .timer-val { font-size: 100px; font-family: 'Montserrat'; font-weight: 900; color: var(--blue); }
-
-        /* Navigation Bar (The 3 Icons) */
-        .navbar { 
-            position: fixed; bottom: 0; width: 100%; background: rgba(20,20,20,0.95); 
-            backdrop-filter: blur(20px); display: flex; justify-content: space-around; 
-            padding: 20px 10px 35px; border-top: 1px solid #333; z-index: 1000;
-        }
-        .nav-btn { color: var(--sub); text-align: center; text-decoration: none; font-size: 10px; font-weight: 700; text-transform: uppercase; cursor: pointer; }
-        .nav-btn.active { color: #fff; }
-        .nav-btn i { display: block; font-size: 20px; margin-bottom: 5px; }
+        /* Nav */
+        .navbar { position: fixed; bottom: 0; width: 100%; background: #0a0a0a; border-top: 1px solid #222; display: flex; justify-content: space-around; padding: 15px 0 30px; }
+        .nav-item { color: var(--sub); font-size: 10px; font-weight: 700; cursor: pointer; text-align: center; }
+        .nav-item.active { color: #fff; }
     </style>
 </head>
 <body>
 
     <div id="scr-onboarding" class="screen">
-        <div id="step-1" class="q-wrapper">
-            <h1>HOE HEET JE?</h1>
-            <div class="subtitle">Personaliseer je profiel</div>
-            <input type="text" id="in-name" placeholder="Typ je naam...">
-            <button class="btn" onclick="nextStep(2)">VOLGENDE</button>
-        </div>
-        <div id="step-2" class="q-wrapper hidden">
-            <h1>GEWICHT?</h1>
-            <div class="subtitle">Stap 2 van 3</div>
-            <input type="number" id="in-weight" placeholder="KG">
-            <button class="btn" onclick="nextStep(3)">VOLGENDE</button>
-        </div>
-        <div id="step-3" class="q-wrapper hidden">
-            <h1>NIVEAU?</h1>
-            <div class="subtitle">Stap 3 van 3</div>
-            <select id="in-level">
-                <option value="8">BEGINNER (8 REPS)</option>
-                <option value="12">INTERMEDIATE (12 REPS)</option>
-                <option value="18">ELITE (18 REPS)</option>
-            </select>
-            <button class="btn" onclick="finishOnboarding()">START COACH</button>
-        </div>
+        <div class="q-box" id="q-container">
+            </div>
     </div>
 
-    <div id="scr-workout" class="screen hidden">
-        <h1>WORKOUT</h1>
-        <div class="subtitle">Kies je focus voor vandaag</div>
-        <div class="card" onclick="startFlow('Upper')">
-            <strong>UPPER BODY</strong>
-            <p style="color:var(--sub); font-size:12px; margin-top:8px;">Focus op borst, schouders en armen. 6 oefeningen.</p>
-        </div>
-        <div class="card" onclick="startFlow('Lower')">
-            <strong>LOWER BODY</strong>
-            <p style="color:var(--sub); font-size:12px; margin-top:8px;">Benen en billen versterken. 4 oefeningen.</p>
-        </div>
-        <div class="card" onclick="startFlow('Conditie')">
-            <strong>CONDITIE</strong>
-            <p style="color:var(--sub); font-size:12px; margin-top:8px;">Vetverbranding en uithouding. 4 oefeningen.</p>
-        </div>
+    <div id="scr-dash" class="screen hidden">
+        <div class="streak-badge"><i>🔥</i> <span id="streak-val">0</span> DAGEN STREAK</div>
+        <h1 id="dash-greet">HEY!</h1>
+        <div class="subtitle">Klaar voor je sessie?</div>
+        <div class="card" onclick="startCircuit('Upper')"><strong>UPPER BODY</strong><p style="color:var(--sub);font-size:12px;">6 Oefeningen • Focus op kracht</p></div>
+        <div class="card" onclick="startCircuit('Lower')"><strong>LOWER BODY</strong><p style="color:var(--sub);font-size:12px;">6 Oefeningen • Benen & Billen</p></div>
+        <div class="card" onclick="startCircuit('Conditie')"><strong>CONDITIE</strong><p style="color:var(--sub);font-size:12px;">6 Oefeningen • Vetverbranding</p></div>
     </div>
 
     <div id="scr-progress" class="screen hidden">
         <h1>PROGRESSIE</h1>
-        <div class="subtitle">Jouw groei per zone</div>
-        <div class="card" id="stats-render">
-            </div>
+        <div class="subtitle">XP per categorie</div>
+        <div id="stats-render"></div>
     </div>
 
     <div id="scr-profile" class="screen hidden">
         <h1>PROFIEL</h1>
-        <div class="subtitle">Jouw gegevens</div>
+        <div class="subtitle">Pas je gegevens aan</div>
         <div class="card">
-            <p id="prof-name" style="font-size:20px; font-weight:800; margin:0;"></p>
-            <p id="prof-weight" style="color:var(--sub); margin:5px 0 20px;"></p>
-            <button class="btn" style="background:#333; color:white; font-size:12px;" onclick="localStorage.clear(); location.reload();">RESET ACCOUNT</button>
+            <label style="font-size:10px; color:var(--sub)">VOORNAAM</label>
+            <input type="text" id="edit-name" onchange="updateUser('name', this.value)">
+            <label style="font-size:10px; color:var(--sub)">GEWICHT (KG)</label>
+            <input type="number" id="edit-weight" onchange="updateUser('weight', this.value)">
+            <label style="font-size:10px; color:var(--sub)">TRAININGSNIVEAU</label>
+            <select id="edit-level" onchange="updateUser('reps', this.value)">
+                <option value="8">Beginner (8)</option>
+                <option value="12">Gemiddeld (12)</option>
+                <option value="18">Pro (18)</option>
+            </select>
+        </div>
+        <button class="btn" style="background:#ff3b30; color:#fff" onclick="localStorage.clear(); location.reload();">RESET ALLES</button>
+    </div>
+
+    <div id="scr-workout" class="screen hidden" style="padding:0">
+        <video id="input_video" style="display:none"></video>
+        <canvas id="output_canvas" style="width:100%; height:100%; object-fit:cover; transform: scaleX(-1);"></canvas>
+        
+        <div id="rest-overlay" class="hidden">
+            <div id="rest-title" class="subtitle">RUST</div>
+            <div id="rest-exe" style="font-size:20px; font-weight:800;">OEFENING</div>
+            <div class="timer-txt" id="timer-val">30</div>
+            <div style="display:flex; gap:10px;">
+                <button class="btn btn-small" onclick="adjustTime(5)">+5 SEC</button>
+                <button class="btn btn-small" style="background:var(--blue)" onclick="skipRest()">SLA OVER</button>
+            </div>
+            <div id="rest-instr" style="color:var(--sub); font-size:13px; max-width:280px; margin-top:20px;"></div>
+        </div>
+
+        <div class="hud">
+            <div class="hud-val"><span>OEF</span><strong id="hud-idx">1/6</strong></div>
+            <div class="hud-val"><span>SET</span><strong id="hud-set">1/3</strong></div>
+            <div class="hud-val"><span>REPS</span><strong id="hud-reps">0/12</strong></div>
         </div>
     </div>
 
-    <div id="scr-active-workout" class="screen hidden" style="padding:0; z-index:2000;">
-        <div class="workout-container">
-            <video id="input_video" style="display:none"></video>
-            <canvas id="output_canvas"></canvas>
-            
-            <div id="overlay" class="hidden">
-                <div id="overlay-title" class="subtitle">VOLGENDE</div>
-                <div id="overlay-name" style="font-size:24px; font-weight:900;">---</div>
-                <div class="timer-val" id="timer-val">30</div>
-                <p id="overlay-instr" style="color:var(--sub); max-width:280px; margin-top:20px; font-size:14px;"></p>
-            </div>
-
-            <div class="hud">
-                <div class="hud-item"><span>OEFENING</span><strong id="hud-idx">1/6</strong></div>
-                <div class="hud-item"><span>SET</span><strong id="hud-set">1/3</strong></div>
-                <div class="hud-item"><span>REPS</span><strong id="hud-reps">0/12</strong></div>
-            </div>
-        </div>
-        <button class="btn" style="border-radius:0; background:#000; color:#ff3b30;" onclick="location.reload()">STOP TRAINING</button>
-    </div>
-
-    <nav class="navbar hidden" id="main-nav">
-        <div class="nav-btn active" onclick="tab('workout', this)"><i>🔥</i>Workout</div>
-        <div class="nav-btn" onclick="tab('progress', this)"><i>📊</i>Progressie</div>
-        <div class="nav-btn" onclick="tab('profile', this)"><i>👤</i>Profiel</div>
+    <nav class="navbar hidden" id="nav">
+        <div class="nav-item active" onclick="tab('dash', this)">DASHBOARD</div>
+        <div class="nav-item" onclick="tab('progress', this)">STATS</div>
+        <div class="nav-item" onclick="tab('profile', this)">PROFIEL</div>
     </nav>
 
     <script>
-        const library = {
-            Upper: [
-                {n: "Push-up", i: "Hou je rug recht en zak tot je borst de grond bijna raakt."},
-                {n: "Incline Push-up", i: "Gebruik een verhoging. Focus op de onderkant borst."},
-                {n: "Superman", i: "Lig op je buik, til armen en benen tegelijk op."},
-                {n: "Pike Push-up", i: "Vorm een V met je lichaam, hoofd naar de grond."},
-                {n: "Chair Dips", i: "Gebruik een stoel voor je triceps."},
-                {n: "Plank Taps", i: "Tik in plank om de beurt je schouders aan."}
-            ],
-            Lower: [
-                {n: "Squat", i: "Zak door je knieën alsof je gaat zitten."},
-                {n: "Lunge", i: "Stap vooruit tot je knie 90 graden is."},
-                {n: "Glute Bridge", i: "Lig op je rug, duw je heupen omhoog."},
-                {n: "Donkey Kicks", i: "Schop je been omhoog vanuit handen en knieën."}
-            ],
-            Conditie: [
-                {n: "Jumping Jacks", i: "Spring wijd en klap boven je hoofd."},
-                {n: "High Knees", i: "Ren ter plaatse, knieën hoog."},
-                {n: "Mountain Climbers", i: "In plank knieën naar je borst trekken."},
-                {n: "Burpees", i: "De ultieme full-body oefening."}
-            ]
+        const exercises = {
+            Upper: [{n:"Push-up", i:"Borst & Armen"}, {n:"Dips", i:"Triceps"}, {n:"Pike Push-up", i:"Schouders"}, {n:"Superman", i:"Lage rug"}, {n:"Plank Taps", i:"Core & Stabiliteit"}, {n:"Diamond Push-up", i:"Binnenkant borst"}],
+            Lower: [{n:"Squat", i:"Bovenbenen"}, {n:"Lunge", i:"Bilspieren"}, {n:"Bridge", i:"Billen & Hamstrings"}, {n:"Donkey Kick", i:"Grote bilspier"}, {n:"Side Lunges", i:"Binnenkant been"}, {n:"Calf Raise", i:"Kuiten"}],
+            Conditie: [{n:"Jumping Jacks", i:"Full body cardio"}, {n:"High Knees", i:"Hartslag omhoog"}, {n:"Burpees", i:"Kracht & Conditie"}, {n:"Mountain Climber", i:"Buikspieren & Cardio"}, {n:"Skater Jumps", i:"Explosiviteit"}, {n:"Bear Crawl", i:"Coördinatie"}]
         };
 
-        let user = JSON.parse(localStorage.getItem('smart_fit_elite')) || {
-            name: '', weight: 0, reps: 12, xp: {Upper:0, Lower:0, Conditie:0}, lvls: {Upper:1, Lower:1, Conditie:1}
+        let user = JSON.parse(localStorage.getItem('elite_v6')) || {
+            name: '', age: '', gender: '', height: '', weight: '', goal: '', reps: 12, availability: '',
+            xp: {Upper:0, Lower:0, Conditie:0}, lvls: {Upper:1, Lower:1, Conditie:1}, streak: 0, lastDate: null
         };
 
-        let circuit = [], cIdx = 0, reps = 0, sets = 1, isRest = false, stage = 'up', currentCat = '';
+        let currentStep = 1;
+        let circuit = [], cIdx = 0, reps = 0, sets = 1, isRest = false, restTimer = null, tLeft = 30;
 
-        function nextStep(n) {
-            document.querySelectorAll('.q-wrapper').forEach(q => q.classList.add('hidden'));
-            document.getElementById('step-'+n).classList.remove('hidden');
+        // ONBOARDING ENGINE
+        const questions = [
+            { k: 'name', q: 'WAT IS JE VOORNAAM?', t: 'text' },
+            { k: 'age', q: 'WAT IS JE LEEFTIJD?', t: 'number' },
+            { k: 'gender', q: 'WAT IS JE GESLACHT?', t: 'select', o: ['Man', 'Vrouw', 'X'] },
+            { k: 'height', q: 'HOE LANG BEN JE? (CM)', t: 'number' },
+            { k: 'weight', q: 'WAT IS JE GEWICHT? (KG)', t: 'number' },
+            { k: 'goal', q: 'WAT IS JE DOEL?', t: 'select', o: ['Afvallen', 'Spiermassa', 'Conditie'] },
+            { k: 'reps', q: 'TRAININGSNIVEAU', t: 'select', o: [{n:'Beginner', v:8}, {n:'Gemiddeld', v:12}, {n:'Pro', v:18}] },
+            { k: 'availability', q: 'BESCHIKBAARHEID PER WEEK', t: 'select', o: ['1-2 dagen', '3-4 dagen', '5+ dagen'] }
+        ];
+
+        function renderQ() {
+            const q = questions[currentStep-1];
+            let html = `<h1>${q.q}</h1><div class="subtitle">Stap ${currentStep} van 8</div>`;
+            if(q.t === 'select') {
+                html += `<select id="q-val">` + q.o.map(o => `<option value="${o.v || o}">${o.n || o}</option>`).join('') + `</select>`;
+            } else {
+                html += `<input type="${q.t}" id="q-val" placeholder="...">`;
+            }
+            html += `<button class="btn" onclick="saveQ()">VOLGENDE</button>`;
+            document.getElementById('q-container').innerHTML = html;
         }
 
-        function finishOnboarding() {
-            user.name = document.getElementById('in-name').value;
-            user.weight = document.getElementById('in-weight').value;
-            user.reps = parseInt(document.getElementById('in-level').value);
-            save();
-            tab('workout');
-            document.getElementById('main-nav').classList.remove('hidden');
+        function saveQ() {
+            const val = document.getElementById('q-val').value;
+            user[questions[currentStep-1].k] = val;
+            if(currentStep < 8) { currentStep++; renderQ(); }
+            else { save(); checkStreak(); tab('dash'); document.getElementById('nav').classList.remove('hidden'); }
         }
 
-        function save() { localStorage.setItem('smart_fit_elite', JSON.stringify(user)); }
+        // UTILS
+        function save() { localStorage.setItem('elite_v6', JSON.stringify(user)); }
+        function updateUser(k, v) { user[k] = v; save(); }
 
         function tab(t, el) {
             document.querySelectorAll('.screen').forEach(s => s.classList.add('hidden'));
             document.getElementById('scr-'+t).classList.remove('hidden');
-            if(el) {
-                document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
-                el.classList.add('active');
-            }
-            if(t === 'progress') renderStats();
-            if(t === 'profile') {
-                document.getElementById('prof-name').innerText = user.name.toUpperCase();
-                document.getElementById('prof-weight').innerText = user.weight + " KG";
-            }
+            if(el) { document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active')); el.classList.add('active'); }
+            if(t === 'dash') { document.getElementById('dash-greet').innerText = "HEY " + user.name.toUpperCase(); document.getElementById('streak-val').innerText = user.streak; }
+            if(t === 'progress') renderProgress();
+            if(t === 'profile') { document.getElementById('edit-name').value = user.name; document.getElementById('edit-weight').value = user.weight; document.getElementById('edit-level').value = user.reps; }
         }
 
-        function renderStats() {
-            const area = document.getElementById('stats-render');
-            area.innerHTML = '';
-            ['Upper', 'Lower', 'Conditie'].forEach(cat => {
-                const threshold = user.lvls[cat] * 200;
-                const pct = (user.xp[cat] / threshold) * 100;
-                area.innerHTML += `
-                    <div class="prog-row">
-                        <div style="display:flex; justify-content:space-between; font-size:12px; font-weight:800;">
-                            <span>${cat.toUpperCase()} LVL ${user.lvls[cat]}</span>
-                            <span>${user.xp[cat]} / ${threshold} XP</span>
-                        </div>
-                        <div class="bar-bg"><div class="bar-fill" style="width:${pct}%"></div></div>
-                    </div>`;
+        function checkStreak() {
+            const today = new Date().toDateString();
+            if(user.lastDate === today) return;
+            const yesterday = new Date(); yesterday.setDate(yesterday.getDate() - 1);
+            if(user.lastDate === yesterday.toDateString()) { user.streak++; }
+            else { user.streak = 1; }
+            user.lastDate = today; save();
+        }
+
+        function renderProgress() {
+            const area = document.getElementById('stats-render'); area.innerHTML = '';
+            ['Upper', 'Lower', 'Conditie'].forEach(c => {
+                const target = user.lvls[c] * 200;
+                area.innerHTML += `<div class="card"><strong>${c} LVL ${user.lvls[c]}</strong><div class="bar-bg"><div style="width:${(user.xp[c]/target)*100}%; background:var(--blue); height:100%"></div></div></div>`;
             });
         }
 
-        function startFlow(cat) {
+        // WORKOUT LOGIC
+        function startCircuit(cat) {
             currentCat = cat;
-            circuit = [...library[cat]].sort(() => 0.5 - Math.random());
+            circuit = [...exercises[cat]].sort(() => 0.5 - Math.random()); // Altijd 6 oefeningen
             cIdx = 0; sets = 1; reps = 0;
-            document.getElementById('scr-active-workout').classList.remove('hidden');
-            startAI();
-            startRest(30, "START TRAINING");
+            tab('workout'); startAI(); startRest(30, "START TRAINING");
         }
 
+        function startRest(time, title) {
+            isRest = true; tLeft = time;
+            document.getElementById('rest-overlay').classList.remove('hidden');
+            document.getElementById('rest-title').innerText = title;
+            document.getElementById('rest-exe').innerText = circuit[cIdx].n.toUpperCase();
+            document.getElementById('rest-instr').innerText = circuit[cIdx].i;
+            runTimer();
+        }
+
+        function runTimer() {
+            document.getElementById('timer-val').innerText = tLeft;
+            restTimer = setInterval(() => {
+                tLeft--; document.getElementById('timer-val').innerText = tLeft;
+                if(tLeft <= 0) skipRest();
+            }, 1000);
+        }
+
+        function skipRest() { clearInterval(restTimer); isRest = false; document.getElementById('rest-overlay').classList.add('hidden'); updateHUD(); speak("Start " + circuit[cIdx].n); }
+        function adjustTime(s) { tLeft += s; document.getElementById('timer-val').innerText = tLeft; }
+
         function updateHUD() {
-            document.getElementById('hud-idx').innerText = `${cIdx + 1}/${circuit.length}`;
+            document.getElementById('hud-idx').innerText = `${cIdx+1}/6`;
             document.getElementById('hud-set').innerText = `${sets}/3`;
             document.getElementById('hud-reps').innerText = `${reps}/${user.reps}`;
         }
 
-        function startRest(time, title) {
-            isRest = true;
-            const ov = document.getElementById('overlay');
-            ov.classList.remove('hidden');
-            document.getElementById('overlay-title').innerText = title;
-            document.getElementById('overlay-name').innerText = circuit[cIdx].n.toUpperCase();
-            document.getElementById('overlay-instr').innerText = circuit[cIdx].i;
-            
-            let t = time;
-            document.getElementById('timer-val').innerText = t;
-            let timer = setInterval(() => {
-                t--;
-                document.getElementById('timer-val').innerText = t;
-                if(t <= 0) {
-                    clearInterval(timer);
-                    isRest = false;
-                    ov.classList.add('hidden');
-                    updateHUD();
-                    speak("Start " + circuit[cIdx].n);
-                }
-            }, 1000);
-        }
-
-        // AI POSE LOGIC
+        // AI ENGINE
         const videoElement = document.getElementById('input_video');
         const canvasElement = document.getElementById('output_canvas');
         const canvasCtx = canvasElement.getContext('2d');
 
         function onResults(results) {
-            if (!results.poseLandmarks || isRest) return;
-            canvasCtx.save();
-            canvasCtx.clearRect(0,0, canvasElement.width, canvasElement.height);
-            canvasCtx.drawImage(results.image, 0,0, canvasElement.width, canvasElement.height);
-            
+            if(!results.poseLandmarks || isRest) return;
+            canvasCtx.save(); canvasCtx.clearRect(0,0, 640, 480);
+            canvasCtx.drawImage(results.image, 0,0, 640, 480);
             const m = results.poseLandmarks;
             const exe = circuit[cIdx].n.toLowerCase();
-            let isCorrect = false;
+            let isGood = false;
 
             if(exe.includes("squat") || exe.includes("lunge")) {
                 const a = calcAngle(m[24], m[26], m[28]);
-                if(a < 110) { isCorrect = true; stage = 'down'; }
+                if(a < 110) { isGood = true; stage = 'down'; }
                 if(a > 160 && stage === 'down') { registerRep(); stage = 'up'; }
             } else if(exe.includes("push-up") || exe.includes("dips")) {
                 const a = calcAngle(m[11], m[13], m[15]);
-                if(a < 100) { isCorrect = true; stage = 'down'; }
+                if(a < 100) { isGood = true; stage = 'down'; }
                 if(a > 155 && stage === 'down') { registerRep(); stage = 'up'; }
             } else {
-                isCorrect = m[15].y < m[11].y;
-                if(isCorrect) stage = 'up';
-                if(!isCorrect && stage === 'up') { registerRep(); stage = 'down'; }
+                isGood = m[15].y < m[11].y;
+                if(isGood) stage = 'up';
+                if(!isGood && stage === 'up') { registerRep(); stage = 'down'; }
             }
-
-            drawConnectors(canvasCtx, m, POSE_CONNECTIONS, {color: isCorrect ? '#34c759' : '#ff3b30', lineWidth: 6});
+            drawConnectors(canvasCtx, m, POSE_CONNECTIONS, {color: isGood?'#34c759':'#ff3b30', lineWidth:5});
             canvasCtx.restore();
         }
 
         function registerRep() {
             reps++; updateHUD(); speak(reps);
             user.xp[currentCat] += 10;
-            if(user.xp[currentCat] >= user.lvls[currentCat] * 200) { 
-                user.xp[currentCat] = 0; user.lvls[currentCat]++; 
-                speak("Level omhoog!"); 
-            }
+            if(user.xp[currentCat] >= user.lvls[currentCat]*200) { user.xp[currentCat]=0; user.lvls[currentCat]++; speak("Level up!"); }
             save();
-
             if(reps >= user.reps) {
-                if(sets < 3) { sets++; reps = 0; startRest(15, "VOLGENDE SET"); }
-                else {
-                    cIdx++;
-                    if(cIdx < circuit.length) { sets = 1; reps = 0; startRest(30, "VOLGENDE OEFENING"); }
-                    else { speak("Workout compleet!"); location.reload(); }
-                }
+                if(sets < 3) { sets++; reps=0; startRest(15, "VOLGENDE SET"); }
+                else { cIdx++; if(cIdx < 6) { sets=1; reps=0; startRest(30, "VOLGENDE OEFENING"); } else { checkStreak(); speak("Gedaan!"); tab('dash'); } }
             }
         }
 
-        function calcAngle(a, b, c) {
-            const r = Math.atan2(c.y-b.y, c.x-b.x) - Math.atan2(a.y-b.y, a.x-b.x);
-            let ang = Math.abs(r*180/Math.PI);
-            return ang > 180 ? 360-ang : ang;
-        }
-
-        function startAI() {
-            const pose = new Pose({locateFile: (f) => `https://cdn.jsdelivr.net/npm/@mediapipe/pose/${f}`});
-            pose.setOptions({ modelComplexity: 1, minDetectionConfidence: 0.5, minTrackingConfidence: 0.5 });
-            pose.onResults(onResults);
-            new Camera(videoElement, { onFrame: async () => {
-                canvasElement.width = videoElement.videoWidth; canvasElement.height = videoElement.videoHeight;
-                await pose.send({image: videoElement});
-            }, width: 640, height: 480 }).start();
-        }
-
+        function calcAngle(a,b,c) { const r = Math.atan2(c.y-b.y,c.x-b.x)-Math.atan2(a.y-b.y,a.x-b.x); let ang = Math.abs(r*180/Math.PI); return ang>180?360-ang:ang; }
+        function startAI() { const pose = new Pose({locateFile: (f) => `https://cdn.jsdelivr.net/npm/@mediapipe/pose/${f}`}); pose.setOptions({modelComplexity:1, minDetectionConfidence:0.5, minTrackingConfidence:0.5}); pose.onResults(onResults); new Camera(videoElement, {onFrame: async() => { await pose.send({image:videoElement}); }, width:640, height:480}).start(); }
         function speak(t) { const m = new SpeechSynthesisUtterance(t); m.lang='nl-NL'; window.speechSynthesis.speak(m); }
 
-        if(user.name) {
-            tab('workout');
-            document.getElementById('main-nav').classList.remove('hidden');
-        }
+        if(!user.name) renderQ(); else { tab('dash'); document.getElementById('nav').classList.remove('hidden'); }
     </script>
 </body>
 </html>
