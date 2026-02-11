@@ -2,81 +2,23 @@
 <html lang="nl">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>SmartFitness Pro - AI Coach</title>
-
+    <title>SmartFitness Pro</title>
     <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@1.3.1/dist/tf.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@teachablemachine/pose@0.8/dist/teachablemachine-pose.min.js"></script>
-
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap" rel="stylesheet">
-    
-    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="css/style.css">
 </head>
-
 <body>
-
-<div id="badge-notification"></div>
-
-<div class="app">
-    <div id="onboarding">
-        <div class="header">Welkom ⚡</div>
-        <div class="card" id="questionCard"></div>
-    </div>
-
-    <div id="home" class="hidden">
-        <div class="header">Mijn Dag</div>
-        <div class="card" id="startActionCard"></div>
-        <div class="card">
-            <h4 style="margin:0; color:#94a3b8">WEEK OVERZICHT</h4>
-            <div class="chart-container" id="weekChart"></div>
+    <div class="app">
+        <div id="onboarding">
+            <div class="card" id="questionCard"></div>
         </div>
-    </div>
-
-    <div id="workoutScreen" class="hidden">
-        <div class="header" id="exerciseTitle">Training</div>
-        <div class="card">
-            <div class="stats-grid">
-                <div class="stat-box"><span>SET</span><div class="stat-value" id="set-display">1/3</div></div>
-                <div class="stat-box"><span>REPS</span><div class="stat-value" id="rep-display">0/12</div></div>
+        <div id="home" class="hidden">
+            <div class="card">
+                <h2>Klaar voor je workout?</h2>
+                <button class="button" onclick="alert('Camera start...')">START</button>
             </div>
-            <div class="canvas-wrapper">
-                <div id="rest-overlay">
-                    <h2 style="color:var(--primary)">RUST</h2>
-                    <div id="rest-timer" style="font-size: 54px; font-weight: 900;">30</div>
-                </div>
-                <canvas id="canvas"></canvas>
-            </div>
-            <button class="button" style="background: #ef4444; margin-top: 25px;" onclick="stopWorkout()">Beëindigen</button>
         </div>
     </div>
-
-    <div id="profile" class="hidden">
-        <div class="header">Profiel 👤</div>
-        <div class="card">
-            <h3>Mijn Gegevens</h3>
-            <label>Leeftijd</label><input type="number" id="p-age">
-            <label>Lengte (cm)</label><input type="number" id="p-height">
-            <label>Niveau</label>
-            <select id="p-level">
-                <option value="beginner">Beginner</option>
-                <option value="advanced">Gevorderd</option>
-            </select>
-            <label>Focus</label>
-            <select id="p-goal">
-                <option value="legs">Benen (Squats)</option>
-                <option value="chest">Borst (Push-ups)</option>
-            </select>
-            <button class="button" onclick="saveProfile()">Opslaan</button>
-        </div>
-    </div>
-</div>
-
-<div class="bottom-nav" id="mainNav" style="display:none;">
-    <div class="nav-item active" id="n-home" onclick="switchTab('home')">🏠<br>Home</div>
-    <div class="nav-item" id="n-profile" onclick="switchTab('profile')">👤<br>Profiel</div>
-</div>
-
-<script src="app.js"></script>
-
+    <script src="js/app.js"></script>
 </body>
 </html>
