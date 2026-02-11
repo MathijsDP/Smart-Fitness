@@ -63,6 +63,12 @@ function showHome() {
     checkBadges();
 }
 
+function toggleGoal() {
+    userData.goal = (userData.goal === 'legs') ? 'chest' : 'legs';
+    localStorage.setItem("fitnessProFinal", JSON.stringify(userData));
+    showHome();
+}
+
 // --- WORKOUT LOGICA ---
 async function startWorkout() {
     hideAll(); 
@@ -86,20 +92,34 @@ async function startWorkout() {
 }
 
 async function loop() {
+    if (!webcam || !webcam.canvas) return; // Veiligheid voor afsluiten
     webcam.update();
+
     if (!isResting) {
+        // We halen hier specifiek 'pose' (het skelet) op
         const { pose, posenetOutput } = await model.estimatePose(webcam.canvas);
         const prediction = await model.predict(posenetOutput);
         
-        if (prediction[1].probability > 0.85) status = "down";
-        
-        if (prediction[0].probability > 0.85 && status === "down") {
-            status = "up"; 
-            reps++;
-            document.getElementById("rep-display").innerText = `${reps}/${repsPerSet}`;
-            speak(reps.toString()); // De AI telt hardop
+        // CHECK: Alleen actie ondernemen als er ECHT een mens (skelet) zichtbaar is
+        // pose.score > 0.6 filtert vingers en willekeurige objecten eruit
+        if (pose && pose.score > 0.6) {
+            
+            // Verhoogde drempel naar 0.95 voor meer precisie
+            const isDown = prediction[1].probability > 0.95;
+            const isUp = prediction[0].probability > 0.95;
 
-            if (reps >= repsPerSet) handleSetCompletion();
+            if (isDown) {
+                status = "down";
+            }
+            
+            if (isUp && status === "down") {
+                status = "up"; 
+                reps++;
+                document.getElementById("rep-display").innerText = `${reps}/${repsPerSet}`;
+                speak(reps.toString());
+
+                if (reps >= repsPerSet) handleSetCompletion();
+            }
         }
     }
     ctx.drawImage(webcam.canvas, 0, 0);
@@ -172,7 +192,8 @@ function updateChart() {
 
 function hideAll() {
     ["onboarding", "home", "workoutScreen", "profile"].forEach(id => {
-        document.getElementById(id).classList.add("hidden");
+        const el = document.getElementById(id);
+        if(el) el.classList.add("hidden");
     });
 }
 
@@ -180,11 +201,15 @@ function switchTab(tab) {
     hideAll();
     document.getElementById(tab).classList.remove("hidden");
     document.querySelectorAll(".nav-item").forEach(i => i.classList.remove('active'));
-    document.getElementById('n-'+tab).classList.add('active');
-    if(tab==='profile') loadProfileInputs();
+    const navItem = document.getElementById('n-'+tab);
+    if(navItem) navItem.classList.add('active');
 }
 
 function stopWorkout() { 
+    if(webcam) webcam.stop(); 
+    cancelAnimationFrame(animationId);
+    showHome(); 
+}
     if(webcam) webcam.stop(); 
     cancelAnimationFrame(animationId);
     showHome(); 
