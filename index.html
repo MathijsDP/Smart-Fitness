@@ -11,40 +11,58 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&family=Montserrat:wght@700;900&display=swap" rel="stylesheet">
 
     <style>
+        /* Kleurpalet variabelen - makkelijk aan te passen */
         :root { --bg: #000; --surface: #121212; --accent: #fff; --sub: #888; --blue: #007aff; --orange: #ff9500; --green: #34c759; }
+        
+        /* Basis instellingen */
         body { margin: 0; font-family: 'Inter', sans-serif; background: var(--bg); color: var(--accent); overflow: hidden; height: 100vh; }
+        
+        /* .screen: Elk "scherm" (dashboard, profiel, etc.) is een laag over elkaar */
         .screen { position: absolute; inset: 0; padding: 30px 20px 110px; display: flex; flex-direction: column; overflow-y: auto; transition: 0.3s; }
+        
+        /* Hulpklasse om schermen te verbergen */
         .hidden { display: none !important; }
         
+        /* Typografie */
         h1 { font-family: 'Montserrat'; font-size: 26px; font-weight: 900; text-transform: uppercase; margin-bottom: 5px; }
         .subtitle { color: var(--sub); font-size: 11px; letter-spacing: 1.5px; text-transform: uppercase; margin-bottom: 25px; }
         
+        /* Formulieren (Inputs en buttons) */
         .q-box { flex: 1; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; }
         input, select { width: 100%; max-width: 320px; padding: 16px; border-radius: 12px; border: 1px solid #333; background: #1c1c1e; color: #fff; font-size: 16px; margin-bottom: 12px; outline: none; transition: 0.2s; }
         input:focus { border-color: var(--blue); }
         
         .btn { background: var(--accent); color: #000; border: none; padding: 18px; border-radius: 14px; width: 100%; max-width: 320px; font-weight: 800; text-transform: uppercase; cursor: pointer; }
         .btn-small { padding: 10px 15px; font-size: 12px; margin: 5px; width: auto; background: #222; color: #fff; border: 1px solid #444; border-radius: 8px; cursor: pointer; }
+        
+        /* Kaarten voor menu items */
         .card { background: var(--surface); border-radius: 20px; padding: 20px; margin-bottom: 15px; border: 1px solid #222; }
 
+        /* Streak badge */
         .streak-badge { background: rgba(255,149,0,0.1); color: var(--orange); padding: 8px 15px; border-radius: 20px; font-weight: 800; font-size: 14px; display: inline-flex; align-items: center; gap: 8px; margin-bottom: 20px; }
+        
+        /* HUD (Heads Up Display) tijdens workout - toont reps/sets */
         .hud { position: absolute; top: 0; width: 100%; padding: 20px; display: flex; justify-content: space-between; background: linear-gradient(to bottom, rgba(0,0,0,0.8), transparent); z-index: 2001; pointer-events: none; box-sizing: border-box; }
         .hud-val { text-align: center; }
         .hud-val span { display: block; font-size: 9px; color: var(--sub); font-weight: 700; }
         .hud-val strong { font-size: 22px; font-family: 'Montserrat'; text-shadow: 0 2px 4px rgba(0,0,0,0.8); }
 
+        /* Coaching tip tekst onderin beeld */
         #coaching-tip { position: absolute; bottom: 120px; left: 0; width: 100%; text-align: center; color: var(--accent); font-weight: 800; font-size: 18px; text-shadow: 2px 2px 10px rgba(0,0,0,1); z-index: 2002; pointer-events: none; }
 
+        /* Rust overlay (zwart scherm tussen oefeningen) */
         #rest-overlay { position: absolute; inset: 0; background: rgba(0,0,0,0.96); z-index: 3000; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 20px; }
         .timer-txt { font-size: 80px; font-weight: 900; color: var(--blue); font-family: 'Montserrat'; margin: 10px 0; }
 
+        /* Navigatie balk onderaan */
         .navbar { position: fixed; bottom: 0; width: 100%; background: #0a0a0a; border-top: 1px solid #222; display: flex; justify-content: space-around; padding: 15px 0 35px; z-index: 1000; }
         .nav-item { color: var(--sub); font-size: 10px; font-weight: 700; cursor: pointer; text-align: center; text-transform: uppercase; }
         .nav-item.active { color: #fff; }
 
+        /* Canvas voor de camera output */
         #output_canvas { width: 100%; height: 100%; object-fit: contain; transform: scaleX(-1); background: #000; }
         
-        /* Stats Styles */
+        /* Stats (Level balkjes) */
         .stat-row { margin-bottom: 15px; }
         .stat-header { display: flex; justify-content: space-between; font-size: 12px; font-weight: 700; margin-bottom: 5px; }
         .bar-bg { background: #222; height: 8px; border-radius: 4px; overflow: hidden; }
@@ -80,9 +98,7 @@
     </div>
 
     <div id="scr-workout" class="screen hidden" style="padding:0; z-index: 2000;">
-        <video id="input_video" style="display:none"></video>
-        <canvas id="output_canvas"></canvas>
-        <div id="coaching-tip"></div>
+        <video id="input_video" style="display:none"></video> <canvas id="output_canvas"></canvas> <div id="coaching-tip"></div>
         
         <div id="rest-overlay" class="hidden">
             <div id="rest-title" class="subtitle">RUST</div>
@@ -110,52 +126,55 @@
     </nav>
 
     <script>
-        // OEFENINGEN MET SPIERGROEPEN
+        // --- DATA CONFIGURATIE ---
+        // Hier staan alle oefeningen, instructies en welke spieren ze trainen (voor XP).
         const exercises = {
-Upper: [
-    {n:"Push-up", i:"Houd je lichaam recht, zak tot je borst bijna de grond raakt en duw jezelf omhoog.", focus:["Borst", "Triceps", "Schouders"]},
-    {n:"Shoulder Taps", i:"Blijf in plank en tik om de beurt je schouders aan zonder je heupen te draaien.", focus:["Schouders", "Abs"]},
-    {n:"Pike Push-up", i:"Duw je heupen omhoog in een V-vorm en laat je hoofd gecontroleerd naar de grond zakken.", focus:["Schouders", "Triceps"]},
-    {n:"Superman", i:"Lig op je buik en til tegelijk je armen en benen kort van de grond.", focus:["Rug", "Schouders"]},
-    {n:"Diamond Push-up", i:"Plaats je handen in een ruitvorm onder je borst en duw jezelf gecontroleerd omhoog.", focus:["Triceps", "Borst"]},
-    {n:"Plank Taps", i:"Ga in hoge plank en tik om de beurt zijwaarts de grond aan terwijl je stabiel blijft.", focus:["Abs", "Schouders"]}
-],
-Lower: [
-    {n:"Squat", i:"Zak met rechte rug naar beneden alsof je op een stoel zit en duw via je hielen omhoog.", focus:["Benen", "Billen"]},
-    {n:"Lunge", i:"Stap naar voren en buig beide knieën tot 90 graden voordat je terugduwt.", focus:["Benen", "Billen"]},
-    {n:"Glute Bridge", i:"Lig op je rug en duw je heupen omhoog tot je lichaam een rechte lijn vormt.", focus:["Billen", "Rug"]},
-    {n:"Side Lunges", i:"Stap zijwaarts en buig het standbeen diep terwijl het andere been gestrekt blijft.", focus:["Benen", "Billen"]},
-    {n:"Calf Raise", i:"Duw jezelf zo hoog mogelijk op je tenen en laat je hielen langzaam zakken.", focus:["Kuiten"]},
-    {n:"High Knees", i:"Ren op de plaats en breng je knieën zo hoog mogelijk in een snel tempo.", focus:["Benen", "Abs"]}
-],
-Conditie: [
-    {n:"Jumping Jacks", i:"Spring je benen uit elkaar terwijl je armen boven je hoofd samenkomen en keer terug.", focus:["Benen", "Schouders"]},
-    {n:"Burpees", i:"Ga van squat naar plank, spring terug naar voren en kom explosief omhoog.", focus:["Borst", "Benen", "Abs"]},
-    {n:"Mountain Climbers", i:"Blijf in plank en breng om de beurt snel je knieën richting je borst.", focus:["Abs", "Schouders"]},
-    {n:"Skater Jumps", i:"Spring zijwaarts van het ene been naar het andere en land gecontroleerd.", focus:["Benen", "Billen"]},
-    {n:"Plank", i:"Steun op onderarmen en tenen en houd je lichaam in een rechte lijn vast.", focus:["Abs", "Rug"]},
-    {n:"Crunches", i:"Lig op je rug en til je schouders gecontroleerd van de grond zonder aan je nek te trekken.", focus:["Abs"]}
-]
-
+            Upper: [
+                {n:"Push-up", i:"Houd je lichaam recht, zak tot je borst bijna de grond raakt en duw jezelf omhoog.", focus:["Borst", "Triceps", "Schouders"]},
+                {n:"Shoulder Taps", i:"Blijf in plank en tik om de beurt je schouders aan zonder je heupen te draaien.", focus:["Schouders", "Abs"]},
+                {n:"Pike Push-up", i:"Duw je heupen omhoog in een V-vorm en laat je hoofd gecontroleerd naar de grond zakken.", focus:["Schouders", "Triceps"]},
+                {n:"Superman", i:"Lig op je buik en til tegelijk je armen en benen kort van de grond.", focus:["Rug", "Schouders"]},
+                {n:"Diamond Push-up", i:"Plaats je handen in een ruitvorm onder je borst en duw jezelf gecontroleerd omhoog.", focus:["Triceps", "Borst"]},
+                {n:"Plank Taps", i:"Ga in hoge plank en tik om de beurt zijwaarts de grond aan terwijl je stabiel blijft.", focus:["Abs", "Schouders"]}
+            ],
+            Lower: [
+                {n:"Squat", i:"Zak met rechte rug naar beneden alsof je op een stoel zit en duw via je hielen omhoog.", focus:["Benen", "Billen"]},
+                {n:"Lunge", i:"Stap naar voren en buig beide knieën tot 90 graden voordat je terugduwt.", focus:["Benen", "Billen"]},
+                {n:"Glute Bridge", i:"Lig op je rug en duw je heupen omhoog tot je lichaam een rechte lijn vormt.", focus:["Billen", "Rug"]},
+                {n:"Side Lunges", i:"Stap zijwaarts en buig het standbeen diep terwijl het andere been gestrekt blijft.", focus:["Benen", "Billen"]},
+                {n:"Calf Raise", i:"Duw jezelf zo hoog mogelijk op je tenen en laat je hielen langzaam zakken.", focus:["Kuiten"]},
+                {n:"High Knees", i:"Ren op de plaats en breng je knieën zo hoog mogelijk in een snel tempo.", focus:["Benen", "Abs"]}
+            ],
+            Conditie: [
+                {n:"Jumping Jacks", i:"Spring je benen uit elkaar terwijl je armen boven je hoofd samenkomen en keer terug.", focus:["Benen", "Schouders"]},
+                {n:"Burpees", i:"Ga van squat naar plank, spring terug naar voren en kom explosief omhoog.", focus:["Borst", "Benen", "Abs"]},
+                {n:"Mountain Climbers", i:"Blijf in plank en breng om de beurt snel je knieën richting je borst.", focus:["Abs", "Schouders"]},
+                {n:"Skater Jumps", i:"Spring zijwaarts van het ene been naar het andere en land gecontroleerd.", focus:["Benen", "Billen"]},
+                {n:"Plank", i:"Steun op onderarmen en tenen en houd je lichaam in een rechte lijn vast.", focus:["Abs", "Rug"]},
+                {n:"Crunches", i:"Lig op je rug en til je schouders gecontroleerd van de grond zonder aan je nek te trekken.", focus:["Abs"]}
+            ]
         };
 
-        // USER DATA INITIALISATIE
+        // --- GEBRUIKERS DATA (LOCAL STORAGE) ---
+        // We proberen data uit de browser op te halen. Als die er niet is, maken we een standaard object.
         let user = JSON.parse(localStorage.getItem('elite_v9')) || {
             name: '', age: '', gender: '', height: '', weight: '', goal: '', reps: 12, availability: '',
             streak: 0, lastDate: null,
-            stats: {
+            stats: { // XP systeem
                 Borst: {xp:0, lvl:1}, Schouders: {xp:0, lvl:1}, Triceps: {xp:0, lvl:1},
                 Abs: {xp:0, lvl:1}, Rug: {xp:0, lvl:1}, Benen: {xp:0, lvl:1},
                 Billen: {xp:0, lvl:1}, Kuiten: {xp:0, lvl:1}
             }
         };
 
-        let currentStep = 1;
+        // Variabelen voor de workout status
+        let currentStep = 1; // Voor onboarding
         let circuit = [], cIdx = 0, reps = 0, sets = 1, isRest = false, restTimer = null, tLeft = 30;
-        let stage = 'up';
+        let stage = 'up'; // Bewaakt of je in een beweging omhoog of omlaag gaat
         let currentCat = '';
         let camera = null;
 
+        // Vragenlijst config
         const questions = [
             { k: 'name', q: 'VOORNAAM', t: 'text' },
             { k: 'age', q: 'LEEFTIJD', t: 'number' },
@@ -167,7 +186,8 @@ Conditie: [
             { k: 'availability', q: 'DAGEN PER WEEK', t: 'select', o: ['1-2', '3-4', '5+'] }
         ];
 
-        // ONBOARDING ENGINE
+        // --- ONBOARDING FUNCTIES ---
+        // Toont de huidige vraag
         function renderQ() {
             const q = questions[currentStep-1];
             let html = `<h1>${q.q}</h1><div class="subtitle">Vraag ${currentStep} van 8</div>`;
@@ -180,6 +200,7 @@ Conditie: [
             document.getElementById('q-container').innerHTML = html;
         }
 
+        // Slaat antwoord op en gaat naar volgende
         function saveQ() {
             const val = document.getElementById('q-val').value;
             user[questions[currentStep-1].k] = val;
@@ -187,14 +208,18 @@ Conditie: [
             else { save(); checkStreak(); tab('dash'); document.getElementById('nav').classList.remove('hidden'); }
         }
 
+        // --- UTILITEIT FUNCTIES ---
         function save() { localStorage.setItem('elite_v9', JSON.stringify(user)); }
         function updateUser(k, v) { user[k] = v; save(); }
 
-        // NAVIGATION & UI
+        // --- NAVIGATIE & UI ---
+        // Wisselt tussen tabbladen (voegt 'hidden' class toe of verwijdert deze)
         function tab(t, el) {
             document.querySelectorAll('.screen').forEach(s => s.classList.add('hidden'));
             document.getElementById('scr-'+t).classList.remove('hidden');
             if(el) { document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active')); el.classList.add('active'); }
+            
+            // Update specifieke schermen bij laden
             if(t === 'dash') { 
                 document.getElementById('dash-greet').innerText = "HEY " + (user.name || "CHAMP"); 
                 document.getElementById('streak-val').innerText = user.streak; 
@@ -214,6 +239,7 @@ Conditie: [
             `).join('');
         }
 
+        // Genereert de XP balkjes
         function renderStats() {
             const container = document.getElementById('stats-render');
             container.innerHTML = Object.keys(user.stats).map(key => {
@@ -229,6 +255,7 @@ Conditie: [
             }).join('');
         }
 
+        // Berekent je streak
         function checkStreak() {
             const today = new Date().toDateString();
             if(user.lastDate === today) return;
@@ -238,22 +265,25 @@ Conditie: [
             user.lastDate = today; save();
         }
 
-        // WORKOUT LOGIC
+        // --- WORKOUT LOGICA ---
+        
         function stopWorkout() {
             isRest = false; clearInterval(restTimer);
-            if(camera) camera.stop();
+            if(camera) camera.stop(); // Zet camera uit om batterij te sparen
             tab('dash');
         }
 
+        // Start een workout sessie op basis van categorie
         function startCircuit(cat) {
             currentCat = cat;
-            circuit = [...exercises[cat]].sort(() => 0.5 - Math.random());
+            circuit = [...exercises[cat]].sort(() => 0.5 - Math.random()); // Schud de oefeningen
             cIdx = 0; sets = 1; reps = 0;
             tab('workout'); 
             startAI(); 
-            startRest(30, "LEES DE UITLEG");
+            startRest(30, "LEES DE UITLEG"); // Eerst uitleg tonen
         }
 
+        // Beheert de rustpauzes
         function startRest(time, title) {
             isRest = true; tLeft = time;
             document.getElementById('rest-overlay').classList.remove('hidden');
@@ -275,6 +305,7 @@ Conditie: [
         function skipRest() { clearInterval(restTimer); isRest = false; document.getElementById('rest-overlay').classList.add('hidden'); updateHUD(); speak("Start " + circuit[cIdx].n); }
         function adjustTime(s) { tLeft += s; document.getElementById('timer-val').innerText = tLeft; }
 
+        // Update de tellers op het scherm
         function updateHUD() {
             document.getElementById('hud-idx').innerText = `${cIdx+1}/6`;
             document.getElementById('hud-set').innerText = `${sets}/3`;
@@ -287,36 +318,51 @@ Conditie: [
             else tipEl.innerText = "LET'S GO!";
         }
 
+        // --- AI & CAMERA SETUP (MediaPipe) ---
+        
         const videoElement = document.getElementById('input_video');
         const canvasElement = document.getElementById('output_canvas');
         const canvasCtx = canvasElement.getContext('2d');
 
+        // Dit is de LOOP die elke frame wordt uitgevoerd
         function onResults(results) {
             if(!results.poseLandmarks || isRest) return;
+            
+            // Tekenen
             canvasCtx.save();
             canvasCtx.clearRect(0, 0, canvasElement.width, canvasElement.height);
             canvasCtx.drawImage(results.image, 0, 0, canvasElement.width, canvasElement.height);
+            
+            // AI Logica voor tellen
             const m = results.poseLandmarks;
             const exe = circuit[cIdx].n.toLowerCase();
             let isGood = false;
 
+            // Logica voor Squats & Lunges (Hoek knie)
             if(exe.includes("squat") || exe.includes("lunge") || exe.includes("sit")) {
-                const a = calcAngle(m[24], m[26], m[28]);
-                if(a < 110) { isGood = true; stage = 'down'; }
-                if(a > 160 && stage === 'down') { registerRep(); stage = 'up'; }
+                const a = calcAngle(m[24], m[26], m[28]); // Heup, Knie, Enkel
+                if(a < 110) { isGood = true; stage = 'down'; } // Diep genoeg
+                if(a > 160 && stage === 'down') { registerRep(); stage = 'up'; } // Weer omhoog
+            
+            // Logica voor Pushups (Hoek elleboog)
             } else if(exe.includes("push-up") || exe.includes("diamond")) {
-                const a = calcAngle(m[11], m[13], m[15]);
+                const a = calcAngle(m[11], m[13], m[15]); // Schouder, Elleboog, Pols
                 if(a < 100) { isGood = true; stage = 'down'; }
                 if(a > 155 && stage === 'down') { registerRep(); stage = 'up'; }
+            
+            // Algemene bewegingsdetectie (handen boven/onder schouders)
             } else {
-                isGood = m[15].y < m[11].y;
+                isGood = m[15].y < m[11].y; // Simpele check
                 if(isGood) stage = 'up';
                 if(!isGood && stage === 'up') { registerRep(); stage = 'down'; }
             }
+            
+            // Teken skelet over video (Groen = goed, Rood = neutraal)
             drawConnectors(canvasCtx, m, POSE_CONNECTIONS, {color: isGood?'#34c759':'#ff3b30', lineWidth:4});
             canvasCtx.restore();
         }
 
+        // Verwerkt een voltooide herhaling
         function registerRep() {
             reps++; updateHUD(); speak(reps);
             
@@ -324,6 +370,7 @@ Conditie: [
             const focus = circuit[cIdx].focus;
             focus.forEach(muscle => {
                 user.stats[muscle].xp += 15;
+                // Level Up logica
                 if(user.stats[muscle].xp >= user.stats[muscle].lvl * 250) {
                     user.stats[muscle].xp = 0;
                     user.stats[muscle].lvl++;
@@ -332,6 +379,7 @@ Conditie: [
             });
             save();
 
+            // Check of set of oefening klaar is
             if(reps >= user.reps) {
                 if(sets < 3) { sets++; reps=0; startRest(15, "SET VOLTOOID!"); }
                 else { 
@@ -342,8 +390,10 @@ Conditie: [
             }
         }
 
+        // Wiskunde om hoeken tussen ledematen te berekenen
         function calcAngle(a,b,c) { const r = Math.atan2(c.y-b.y,c.x-b.x)-Math.atan2(a.y-b.y,a.x-b.x); let ang = Math.abs(r*180/Math.PI); return ang>180?360-ang:ang; }
         
+        // Initialiseer Camera en AI Model
         function startAI() {
             const pose = new Pose({locateFile: (f) => `https://cdn.jsdelivr.net/npm/@mediapipe/pose/${f}`});
             pose.setOptions({modelComplexity:1, minDetectionConfidence:0.5, minTrackingConfidence:0.5});
@@ -358,8 +408,10 @@ Conditie: [
             camera.start();
         }
         
+        // Text-to-Speech functie
         function speak(t) { const m = new SpeechSynthesisUtterance(t); m.lang='nl-NL'; window.speechSynthesis.speak(m); }
 
+        // Start applicatie: check of user bestaat
         if(!user.name) renderQ(); else { tab('dash'); document.getElementById('nav').classList.remove('hidden'); }
     </script>
 </body>
