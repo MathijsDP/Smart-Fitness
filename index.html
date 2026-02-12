@@ -2,536 +2,364 @@
 <html lang="nl">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>Elite Smart Coach v11</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Elite AI Coach v8.0</title>
     
     <script src="https://cdn.jsdelivr.net/npm/@mediapipe/pose"></script>
     <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils"></script>
     <script src="https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils"></script>
-    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
-    
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&family=Oswald:wght@500;700&display=swap" rel="stylesheet">
-    
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&family=Montserrat:wght@700;900&display=swap" rel="stylesheet">
+
     <style>
-        /* --- CORE VISUALS --- */
-        :root {
-            --bg: #09090b;
-            --card: #18181b;
-            --primary: #a855f7; /* Purple Neon */
-            --accent: #22d3ee;  /* Cyan Neon */
-            --success: #4ade80;
-            --text: #ffffff;
-            --sub: #a1a1aa;
-            --radius: 20px;
-        }
-
-        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; user-select: none; }
+        :root { --bg: #000; --surface: #121212; --accent: #fff; --sub: #888; --blue: #007aff; --orange: #ff9500; --green: #34c759; }
+        body { margin: 0; font-family: 'Inter', sans-serif; background: var(--bg); color: var(--accent); overflow: hidden; height: 100vh; }
+        .screen { position: absolute; inset: 0; padding: 30px 20px 110px; display: flex; flex-direction: column; overflow-y: auto; transition: 0.3s; }
+        .hidden { display: none !important; }
         
-        body {
-            margin: 0; font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text);
-            height: 100vh; overflow: hidden; display: flex; flex-direction: column;
-        }
-
-        /* --- SCREEN MANAGEMENT --- */
-        .screen {
-            position: absolute; inset: 0; padding: 20px 20px 100px;
-            display: flex; flex-direction: column; overflow-y: auto;
-            opacity: 0; pointer-events: none; transform: scale(0.95); transition: 0.4s ease;
-            background: linear-gradient(to bottom, #09090b 0%, #000 100%);
-        }
-        .screen.active { opacity: 1; pointer-events: auto; transform: scale(1); z-index: 10; }
-
-        /* --- TYPOGRAPHY --- */
-        h1 { font-family: 'Oswald', sans-serif; font-size: 28px; margin: 0; text-transform: uppercase; letter-spacing: 1px; }
-        .subtitle { color: var(--sub); font-size: 13px; margin-bottom: 20px; }
-        .section-header { font-size: 12px; font-weight: 700; color: var(--sub); text-transform: uppercase; margin-top: 25px; margin-bottom: 10px; letter-spacing: 1px; }
-
-        /* --- UI COMPONENTS --- */
-        .card {
-            background: var(--card); border: 1px solid rgba(255,255,255,0.08);
-            border-radius: var(--radius); padding: 20px; margin-bottom: 15px;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.4); position: relative; overflow: hidden;
-            transition: transform 0.2s;
-        }
-        .card:active { transform: scale(0.98); }
-
-        .btn {
-            background: linear-gradient(135deg, var(--primary), #7c3aed); color: #fff;
-            border: none; padding: 18px; border-radius: 16px; width: 100%;
-            font-weight: 700; font-family: 'Oswald'; text-transform: uppercase; letter-spacing: 1px;
-            box-shadow: 0 4px 15px rgba(168, 85, 247, 0.4); cursor: pointer; margin-top: 10px;
-        }
+        h1 { font-family: 'Montserrat'; font-size: 26px; font-weight: 900; text-transform: uppercase; margin-bottom: 5px; }
+        .subtitle { color: var(--sub); font-size: 11px; letter-spacing: 1.5px; text-transform: uppercase; margin-bottom: 25px; }
         
-        .badge-grid { display: flex; gap: 10px; overflow-x: auto; padding-bottom: 10px; }
-        .badge { 
-            min-width: 80px; background: rgba(255,255,255,0.05); padding: 10px; border-radius: 12px; 
-            text-align: center; border: 1px solid rgba(255,255,255,0.1); opacity: 0.5; filter: grayscale(1);
-        }
-        .badge.unlocked { opacity: 1; filter: grayscale(0); border-color: var(--accent); background: rgba(34, 211, 238, 0.1); }
-        .badge-icon { font-size: 24px; display: block; margin-bottom: 5px; }
+        .q-box { flex: 1; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; }
+        input, select { width: 100%; max-width: 320px; padding: 16px; border-radius: 12px; border: 1px solid #333; background: #1c1c1e; color: #fff; font-size: 16px; margin-bottom: 12px; outline: none; transition: 0.2s; }
+        input:focus { border-color: var(--blue); }
         
-        /* --- DASHBOARD ELEMENTS --- */
-        .fit-score {
-            display: flex; align-items: center; justify-content: space-between;
-            background: linear-gradient(90deg, rgba(168, 85, 247, 0.2), transparent);
-            padding: 15px; border-radius: 16px; border-left: 4px solid var(--primary);
-        }
+        .btn { background: var(--accent); color: #000; border: none; padding: 18px; border-radius: 14px; width: 100%; max-width: 320px; font-weight: 800; text-transform: uppercase; cursor: pointer; }
+        .btn-small { padding: 10px 15px; font-size: 12px; margin: 5px; width: auto; background: #222; color: #fff; border: 1px solid #444; border-radius: 8px; cursor: pointer; }
+        .card { background: var(--surface); border-radius: 20px; padding: 20px; margin-bottom: 15px; border: 1px solid #222; }
+
+        .streak-badge { background: rgba(255,149,0,0.1); color: var(--orange); padding: 8px 15px; border-radius: 20px; font-weight: 800; font-size: 14px; display: inline-flex; align-items: center; gap: 8px; margin-bottom: 20px; }
+        .hud { position: absolute; top: 0; width: 100%; padding: 20px; display: flex; justify-content: space-between; background: linear-gradient(to bottom, rgba(0,0,0,0.8), transparent); z-index: 2001; pointer-events: none; box-sizing: border-box; }
+        .hud-val { text-align: center; }
+        .hud-val span { display: block; font-size: 9px; color: var(--sub); font-weight: 700; }
+        .hud-val strong { font-size: 22px; font-family: 'Montserrat'; text-shadow: 0 2px 4px rgba(0,0,0,0.8); }
+
+        #coaching-tip { position: absolute; bottom: 120px; left: 0; width: 100%; text-align: center; color: var(--accent); font-weight: 800; font-size: 18px; text-shadow: 2px 2px 10px rgba(0,0,0,1); z-index: 2002; pointer-events: none; }
+
+        #rest-overlay { position: absolute; inset: 0; background: rgba(0,0,0,0.96); z-index: 3000; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 20px; }
+        .timer-txt { font-size: 80px; font-weight: 900; color: var(--blue); font-family: 'Montserrat'; margin: 10px 0; }
+
+        .navbar { position: fixed; bottom: 0; width: 100%; background: #0a0a0a; border-top: 1px solid #222; display: flex; justify-content: space-around; padding: 15px 0 35px; z-index: 1000; }
+        .nav-item { color: var(--sub); font-size: 10px; font-weight: 700; cursor: pointer; text-align: center; text-transform: uppercase; }
+        .nav-item.active { color: #fff; }
+
+        #output_canvas { width: 100%; height: 100%; object-fit: contain; transform: scaleX(-1); background: #000; }
         
-        /* Stats Bars */
-        .stat-bar { height: 6px; background: #333; border-radius: 3px; margin-top: 8px; overflow: hidden; }
-        .stat-fill { height: 100%; background: var(--accent); transition: width 1s ease; }
-
-        /* --- WORKOUT & CAMERA --- */
-        #scr-workout { padding: 0; background: #000; }
-        #output_canvas { width: 100%; height: 100%; object-fit: contain; transform: scaleX(-1); }
-        
-        .hud-overlay {
-            position: absolute; inset: 0; pointer-events: none;
-            display: flex; flex-direction: column; justify-content: space-between;
-            background: linear-gradient(to bottom, rgba(0,0,0,0.8), transparent 15%, transparent 85%, rgba(0,0,0,0.9));
-            padding: 40px 20px;
-        }
-
-        .rep-counter { font-size: 80px; font-family: 'Oswald'; font-weight: 700; text-align: center; color: #fff; text-shadow: 0 0 20px var(--primary); }
-        .feedback-flash { position: absolute; inset: 0; background: rgba(74, 222, 128, 0.3); opacity: 0; transition: opacity 0.1s; pointer-events: none; }
-
-        /* --- NAVIGATION --- */
-        .navbar {
-            position: fixed; bottom: 20px; left: 20px; right: 20px;
-            background: rgba(24, 24, 27, 0.9); backdrop-filter: blur(10px);
-            border-radius: 25px; padding: 15px; display: flex; justify-content: space-around;
-            border: 1px solid rgba(255,255,255,0.1); z-index: 100;
-        }
-        .nav-item { color: #555; font-size: 22px; transition: 0.3s; display: flex; flex-direction: column; align-items: center; }
-        .nav-item.active { color: var(--primary); transform: translateY(-3px); text-shadow: 0 0 10px rgba(168,85,247,0.5); }
-
-        /* Rest Overlay */
-        #rest-overlay { position: absolute; inset: 0; background: rgba(9,9,11,0.95); z-index: 50; display: flex; flex-direction: column; align-items: center; justify-content: center; backdrop-filter: blur(5px); }
-        .timer-circle { width: 140px; height: 140px; border-radius: 50%; border: 6px solid #333; border-top-color: var(--primary); display: flex; align-items: center; justify-content: center; font-size: 50px; font-family: 'Oswald'; margin: 20px 0; animation: spin 2s linear infinite; }
-        @keyframes spin { to { transform: rotate(360deg); } }
-
-        /* Inputs */
-        input, select { width: 100%; padding: 16px; background: #27272a; border: 1px solid #3f3f46; color: white; border-radius: 12px; margin-bottom: 12px; font-size: 16px; }
+        /* Stats Styles */
+        .stat-row { margin-bottom: 15px; }
+        .stat-header { display: flex; justify-content: space-between; font-size: 12px; font-weight: 700; margin-bottom: 5px; }
+        .bar-bg { background: #222; height: 8px; border-radius: 4px; overflow: hidden; }
+        .bar-fill { height: 100%; background: var(--blue); transition: width 0.5s ease-out; }
     </style>
 </head>
 <body>
 
-    <div id="scr-onboarding" class="screen active">
-        <div style="flex:1; display:flex; flex-direction:column; justify-content:center;">
-            <div style="font-size:60px; margin-bottom:10px;">🤖</div>
-            <h1>Elite AI Coach</h1>
-            <p class="subtitle">Laten we je profiel bouwen voor maximale resultaten.</p>
-            <div id="q-area"></div>
-        </div>
+    <div id="scr-onboarding" class="screen">
+        <div class="q-box" id="q-container"></div>
     </div>
 
-    <div id="scr-dash" class="screen">
-        <div style="display:flex; justify-content:space-between; align-items:center;">
-            <div>
-                <h1 id="user-greet">HELLO</h1>
-                <div class="subtitle" id="date-display">...</div>
-            </div>
-            <div onclick="shareApp()" style="background:#27272a; padding:8px 15px; border-radius:20px; font-size:12px; font-weight:700;">
-                🔥 <span id="streak-disp">0</span>
-            </div>
-        </div>
+    <div id="scr-dash" class="screen hidden">
+        <div class="streak-badge"><i>🔥</i> <span id="streak-val">0</span> DAGEN STREAK</div>
+        <h1 id="dash-greet">HEY!</h1>
+        <div class="subtitle">Klaar voor je sessie?</div>
+        <div class="card" onclick="startCircuit('Upper')"><strong>UPPER BODY</strong><p style="color:var(--sub);font-size:12px;">Borst, Armen & Schouders</p></div>
+        <div class="card" onclick="startCircuit('Lower')"><strong>LOWER BODY</strong><p style="color:var(--sub);font-size:12px;">Benen, Billen & Kuiten</p></div>
+        <div class="card" onclick="startCircuit('Conditie')"><strong>FULL BODY / CORE</strong><p style="color:var(--sub);font-size:12px;">Vetverbranding & Abs</p></div>
+    </div>
 
-        <div class="fit-score" onclick="nav('stats', document.getElementById('nav-stats'))">
-            <div>
-                <div style="font-size:10px; font-weight:700; color:var(--primary);">FIT SCORE</div>
-                <div style="font-size:24px; font-weight:800;" id="fit-score-val">0</div>
-            </div>
-            <div style="text-align:right;">
-                <div style="font-size:10px; color:#aaa;">FOCUS VANDAAG</div>
-                <div style="font-weight:700; color:#fff;" id="smart-focus">Borst</div>
-            </div>
-        </div>
+    <div id="scr-progress" class="screen hidden">
+        <h1>LICHAAMS STATS</h1>
+        <div class="subtitle">Level up per spiergroep</div>
+        <div id="stats-render" class="card"></div>
+    </div>
 
-        <div class="section-header">START TRAINING</div>
-        
-        <div class="card" onclick="startRecommended()" style="border-color:var(--primary); background: linear-gradient(45deg, rgba(168,85,247,0.1), transparent);">
-            <div style="display:flex; justify-content:space-between; align-items:center;">
-                <div>
-                    <div style="background:var(--primary); color:#000; font-size:9px; font-weight:800; padding:3px 8px; border-radius:4px; display:inline-block; margin-bottom:5px;">AI AANBEVOLEN</div>
-                    <h3 style="margin:0;" id="rec-title">UPPER BODY</h3>
-                    <div style="font-size:11px; color:#aaa; margin-top:4px;">Gebaseerd op je Fit Score</div>
-                </div>
-                <div style="font-size:30px;">🎯</div>
-            </div>
-        </div>
-
-        <div class="card" onclick="startCircuit('Upper')">
-            <strong>Upper Body</strong> <span style="color:#666; font-size:12px;">• Kracht & Volume</span>
-        </div>
-        <div class="card" onclick="startCircuit('Lower')">
-            <strong>Lower Body</strong> <span style="color:#666; font-size:12px;">• Benen & Billen</span>
-        </div>
-        
-        <div class="section-header">PRESTATIES DEZE WEEK</div>
-        <div class="card" style="height:100px; display:flex; align-items:flex-end; gap:5px; padding-top:40px;" id="week-chart">
+    <div id="scr-profile" class="screen hidden">
+        <h1>PROFIEL</h1>
+        <div class="subtitle">Pas je gegevens aan</div>
+        <div class="card" id="profile-fields">
             </div>
     </div>
 
-    <div id="scr-stats" class="screen">
-        <h1>Jouw Progressie</h1>
-        <div class="subtitle">Badges & Spiergroepen</div>
-
-        <div class="section-header">BADGES</div>
-        <div class="badge-grid" id="badge-area">
-            </div>
-
-        <div class="section-header">SPIERGROEP LEVELS</div>
-        <div id="stats-list"></div>
-    </div>
-
-    <div id="scr-workout" class="screen">
+    <div id="scr-workout" class="screen hidden" style="padding:0; z-index: 2000;">
         <video id="input_video" style="display:none"></video>
         <canvas id="output_canvas"></canvas>
-        <div class="feedback-flash" id="flash"></div>
-
-        <div class="hud-overlay">
-            <div style="display:flex; justify-content:space-between;">
-                <div>
-                    <div style="font-size:10px; font-weight:700; color:#aaa;">OEFENING</div>
-                    <div style="font-size:20px; font-weight:700; font-family:'Oswald';" id="hud-ex-name">SQUAT</div>
-                </div>
-                <div>
-                    <div style="font-size:10px; font-weight:700; color:#aaa; text-align:right;">SET</div>
-                    <div style="font-size:20px; font-weight:700; font-family:'Oswald'; text-align:right;" id="hud-set">1/3</div>
-                </div>
-            </div>
-
-            <div style="text-align:center;">
-                <div class="rep-counter" id="hud-reps">0</div>
-                <div style="color:var(--success); font-weight:700; font-size:14px; opacity:0; transition:0.3s;" id="hud-feedback">GOED!</div>
-            </div>
-
-            <button onclick="stopWorkout()" style="background:rgba(255,255,255,0.1); border:1px solid rgba(255,255,255,0.2); color:#fff; padding:10px; border-radius:20px; font-size:12px; margin:0 auto; display:block;">STOP SESSIE</button>
-        </div>
-
+        <div id="coaching-tip"></div>
+        
         <div id="rest-overlay" class="hidden">
-            <h1 id="rest-title">RUST</h1>
-            <div class="subtitle">Volgende: <span id="next-ex-name" style="color:var(--accent); font-weight:bold;">...</span></div>
-            <div class="timer-circle" id="timer-val">30</div>
-            <p id="rest-tip" style="color:#aaa; font-size:13px; max-width:250px; text-align:center;">Haal diep adem en maak je klaar.</p>
-            <button class="btn" onclick="skipRest()">START NU</button>
-        </div>
-    </div>
-
-    <div id="scr-finish" class="screen">
-        <div style="flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center;">
-            <div style="font-size:60px;">🏆</div>
-            <h1>WORKOUT COMPLETE</h1>
-            <p class="subtitle">Je bent een stap dichter bij je doel.</p>
-            
-            <div class="card" style="width:100%; text-align:left;">
-                <div style="font-size:12px; color:#aaa;">SAMENVATTING</div>
-                <div style="font-size:24px; font-weight:700; color:var(--text);" id="fin-total-reps">0 REPS</div>
-                <div style="font-size:14px; color:var(--primary);" id="fin-xp">+150 XP verdiend</div>
+            <div id="rest-title" class="subtitle">RUST</div>
+            <div id="rest-exe" style="font-size:24px; font-weight:900;">OEFENING</div>
+            <div class="timer-txt" id="timer-val">30</div>
+            <div style="display:flex; gap:10px;">
+                <button class="btn-small" onclick="adjustTime(5)">+5 SEC</button>
+                <button class="btn-small" style="background:var(--blue)" onclick="skipRest()">SLA OVER</button>
             </div>
-
-            <button class="btn" onclick="shareResult()">DEEL RESULTAAT 📤</button>
-            <button class="btn" style="background:#333; margin-top:10px;" onclick="nav('dash', document.getElementById('nav-dash'))">TERUG NAAR DASHBOARD</button>
+            <div id="rest-instr" style="color:var(--sub); font-size:14px; max-width:300px; margin-top:20px; line-height:1.5;"></div>
         </div>
+
+        <div class="hud">
+            <div class="hud-val"><span>OEFENING</span><strong id="hud-idx">1/6</strong></div>
+            <div class="hud-val"><span>SET</span><strong id="hud-set">1/3</strong></div>
+            <div class="hud-val"><span>REPS</span><strong id="hud-reps">0/12</strong></div>
+        </div>
+        <button class="btn" style="position:absolute; bottom:20px; left:50%; transform:translateX(-50%); width:80%; z-index:2001; background:rgba(255,59,48,0.95); color:#fff;" onclick="stopWorkout()">STOP TRAINING</button>
     </div>
 
     <nav class="navbar hidden" id="nav">
-        <div class="nav-item active" id="nav-dash" onclick="nav('dash', this)">🏠</div>
-        <div class="nav-item" id="nav-stats" onclick="nav('stats', this)">📊</div>
+        <div class="nav-item active" onclick="tab('dash', this)">DASHBOARD</div>
+        <div class="nav-item" onclick="tab('progress', this)">STATS</div>
+        <div class="nav-item" onclick="tab('profile', this)">PROFIEL</div>
     </nav>
 
     <script>
-        // --- DATA & CONFIG ---
+        // OEFENINGEN MET SPIERGROEPEN
         const exercises = {
             Upper: [
-                {n:"Push-up", tip:"Borst naar de grond, rug recht.", mus:["Borst","Triceps"]},
-                {n:"Shoulder Taps", tip:"Tik om en om je schouders aan.", mus:["Schouders","Abs"]},
-                {n:"Pike Push-up", tip:"Duw je billen omhoog in een V.", mus:["Schouders"]},
-                {n:"Diamond Push-up", tip:"Handen in een diamant vorm.", mus:["Triceps"]},
-                {n:"Superman", tip:"Til armen en benen tegelijk op.", mus:["Rug"]}
+                {n:"Push-up", i:"Borst & Triceps focus. Rug recht.", focus:["Borst", "Triceps", "Schouders"]},
+                {n:"Shoulder Taps", i:"Stabiele plank, tik schouders aan.", focus:["Schouders", "Abs"]},
+                {n:"Pike Push-up", i:"Billen in de lucht, hoofd naar grond.", focus:["Schouders", "Triceps"]},
+                {n:"Superman", i:"Lig op buik, til armen/benen op.", focus:["Rug", "Schouders"]},
+                {n:"Diamond Push-up", i:"Handen in ruitvorm.", focus:["Triceps", "Borst"]},
+                {n:"Plank Taps", i:"Tik zijwaarts de grond aan.", focus:["Abs", "Schouders"]}
             ],
             Lower: [
-                {n:"Squat", tip:"Zak diep, knieën naar buiten.", mus:["Benen","Billen"]},
-                {n:"Lunge", tip:"Achterste knie net boven de grond.", mus:["Benen"]},
-                {n:"Glute Bridge", tip:"Duw je heupen explosief omhoog.", mus:["Billen"]},
-                {n:"Calf Raise", tip:"Op je tenen en even vasthouden.", mus:["Kuiten"]},
-                {n:"High Knees", tip:"Knieën hoog, tempo maken!", mus:["Conditie"]}
+                {n:"Squat", i:"Zak diep, borst vooruit.", focus:["Benen", "Billen"]},
+                {n:"Lunge", i:"Knie net boven de grond.", focus:["Benen", "Billen"]},
+                {n:"Glute Bridge", i:"Duw heupen naar het plafond.", focus:["Billen", "Rug"]},
+                {n:"Side Lunges", i:"Zijwaartse stap, diep zakken.", focus:["Benen", "Billen"]},
+                {n:"Calf Raise", i:"Maximaal op je tenen komen.", focus:["Kuiten"]},
+                {n:"High Knees", i:"Knieën hoog, tempo maken.", focus:["Benen", "Abs"]}
+            ],
+            Conditie: [
+                {n:"Jumping Jacks", i:"Hele lichaam in beweging.", focus:["Benen", "Schouders"]},
+                {n:"Burpees", i:"Explosieve sprong en push-up.", focus:["Borst", "Benen", "Abs"]},
+                {n:"Mountain Climbers", i:"Knieën naar borst in plank.", focus:["Abs", "Schouders"]},
+                {n:"Skater Jumps", i:"Zijwaartse sprongen.", focus:["Benen", "Billen"]},
+                {n:"Plank", i:"Statisch vasthouden.", focus:["Abs", "Rug"]},
+                {n:"Crunches", i:"Kleine beweging, focus op buik.", focus:["Abs"]}
             ]
         };
 
-        const badgesList = [
-            {id:'first', icon:'🥇', title:'Eerste Stap', cond: u => u.totalWorkouts >= 1},
-            {id:'streak3', icon:'🔥', title:'On Fire', cond: u => u.streak >= 3},
-            {id:'reps100', icon:'🤖', title:'Rep Machine', cond: u => u.totalReps >= 100},
-            {id:'early', icon:'🌅', title:'Vroege Vogel', cond: u => new Date().getHours() < 9 && u.totalWorkouts > 0}
+        // USER DATA INITIALISATIE
+        let user = JSON.parse(localStorage.getItem('elite_v9')) || {
+            name: '', age: '', gender: '', height: '', weight: '', goal: '', reps: 12, availability: '',
+            streak: 0, lastDate: null,
+            stats: {
+                Borst: {xp:0, lvl:1}, Schouders: {xp:0, lvl:1}, Triceps: {xp:0, lvl:1},
+                Abs: {xp:0, lvl:1}, Rug: {xp:0, lvl:1}, Benen: {xp:0, lvl:1},
+                Billen: {xp:0, lvl:1}, Kuiten: {xp:0, lvl:1}
+            }
+        };
+
+        let currentStep = 1;
+        let circuit = [], cIdx = 0, reps = 0, sets = 1, isRest = false, restTimer = null, tLeft = 30;
+        let stage = 'up';
+        let currentCat = '';
+        let camera = null;
+
+        const questions = [
+            { k: 'name', q: 'VOORNAAM', t: 'text' },
+            { k: 'age', q: 'LEEFTIJD', t: 'number' },
+            { k: 'gender', q: 'GESLACHT', t: 'select', o: ['Man', 'Vrouw', 'X'] },
+            { k: 'height', q: 'LENGTE (CM)', t: 'number' },
+            { k: 'weight', q: 'GEWICHT (KG)', t: 'number' },
+            { k: 'goal', q: 'DOEL', t: 'select', o: ['Afvallen', 'Spiermassa', 'Conditie'] },
+            { k: 'reps', q: 'TRAININGSNIVEAU (REPS)', t: 'number' },
+            { k: 'availability', q: 'DAGEN PER WEEK', t: 'select', o: ['1-2', '3-4', '5+'] }
         ];
 
-        let user = JSON.parse(localStorage.getItem('elite_ai_v11')) || {
-            name: '', goal: '', xp: {}, totalReps: 0, totalWorkouts: 0, streak: 0, lastDate: null, history: [], badges: []
-        };
-        
-        // Init XP if empty
-        ['Borst','Rug','Benen','Billen','Schouders','Triceps','Abs','Conditie','Kuiten'].forEach(m => {
-            if(!user.xp[m]) user.xp[m] = {lvl:1, val:0};
-        });
-
-        // Runtime State
-        let activeC = [], cIdx=0, set=1, reps=0, stage='up', isRest=false, timer=null;
-        let camera, pose;
-
-        // --- INIT ---
-        if(!user.name) initOnboarding();
-        else { nav('dash', document.getElementById('nav-dash')); updateDash(); }
-
-        // --- ONBOARDING ---
-        function initOnboarding() {
-            const qArea = document.getElementById('q-area');
-            let step = 0;
-            const qs = [
-                {t:'Wat is je voornaam?', k:'name', type:'text'},
-                {t:'Wat is je hoofddoel?', k:'goal', type:'select', opts:['Sterker worden', 'Afvallen', 'Atletisch']},
-            ];
-
-            function showQ() {
-                if(step >= qs.length) { 
-                    localStorage.setItem('elite_ai_v11', JSON.stringify(user)); 
-                    nav('dash', document.getElementById('nav-dash')); updateDash();
-                    return; 
-                }
-                const q = qs[step];
-                let html = `<label>${q.t}</label>`;
-                if(q.type=='text') html += `<input id="inp" type="text">`;
-                else html += `<select id="inp">${q.opts.map(o=>`<option>${o}</option>`)}</select>`;
-                html += `<button class="btn" onclick="saveA()">VOLGENDE</button>`;
-                qArea.innerHTML = html;
-            }
-            window.saveA = () => {
-                user[qs[step].k] = document.getElementById('inp').value;
-                step++; showQ();
-            };
-            showQ();
-        }
-
-        // --- DASHBOARD LOGIC ---
-        function updateDash() {
-            document.getElementById('user-greet').innerText = `HEY ${user.name.toUpperCase()}`;
-            document.getElementById('date-display').innerText = new Date().toLocaleDateString('nl-NL', {weekday:'long', day:'numeric', month:'long'});
-            
-            // Streak Logic
-            const today = new Date().toDateString();
-            if(user.lastDate !== today) {
-                const y = new Date(); y.setDate(y.getDate()-1);
-                if(user.lastDate === y.toDateString()) { /* streak continues */ }
-                else if(user.lastDate !== today) { user.streak = (user.streak > 0 && user.lastDate === today) ? user.streak : 0; }
-            }
-            document.getElementById('streak-disp').innerText = user.streak;
-
-            // Fit Score & Smart Rec
-            let totalLvl = 0, lowest = {n:'Upper', v:999};
-            Object.keys(user.xp).forEach(k => {
-                totalLvl += user.xp[k].lvl;
-                if(user.xp[k].lvl < lowest.v) lowest = {n:k, v:user.xp[k].lvl};
-            });
-            const score = Math.min(100, Math.floor((totalLvl / 9) * 10) + user.totalWorkouts);
-            document.getElementById('fit-score-val').innerText = score;
-            
-            // Smart Focus Logic
-            let recCat = 'Upper';
-            if(['Benen','Billen','Kuiten'].includes(lowest.n)) recCat = 'Lower';
-            document.getElementById('smart-focus').innerText = recCat === 'Upper' ? 'Upper Body' : 'Lower Body';
-            document.getElementById('rec-title').innerText = recCat.toUpperCase();
-            window.recommendedCat = recCat;
-
-            // Chart (Simple CSS bars)
-            const ch = document.getElementById('week-chart');
-            ch.innerHTML = user.history.slice(-7).map(h => {
-                const hgt = Math.min(100, h.reps * 0.5); // scale
-                return `<div style="flex:1; background:#333; border-radius:4px; display:flex; align-items:flex-end;"><div style="width:100%; background:var(--accent); height:${hgt}%; border-radius:4px;"></div></div>`;
-            }).join('');
-        }
-
-        function startRecommended() { startCircuit(window.recommendedCat); }
-
-        // --- WORKOUT ENGINE ---
-        function startCircuit(cat) {
-            activeC = [...exercises[cat]].sort(()=>0.5-Math.random());
-            cIdx=0; set=1; reps=0;
-            document.getElementById('nav').classList.add('hidden');
-            document.querySelector('.screen.active').classList.remove('active');
-            document.getElementById('scr-workout').classList.add('active');
-            
-            startCamera();
-            startRest(10, "KLAARSTAAN");
-        }
-
-        function startRest(sec, title) {
-            isRest = true;
-            document.getElementById('rest-overlay').classList.remove('hidden');
-            document.getElementById('rest-title').innerText = title || "RUST";
-            document.getElementById('next-ex-name').innerText = activeC[cIdx].n;
-            document.getElementById('rest-tip').innerText = activeC[cIdx].tip;
-            
-            let t = sec;
-            document.getElementById('timer-val').innerText = t;
-            if(timer) clearInterval(timer);
-            timer = setInterval(() => {
-                t--; document.getElementById('timer-val').innerText = t;
-                if(t<=0) skipRest();
-            }, 1000);
-        }
-
-        function skipRest() {
-            clearInterval(timer); isRest = false;
-            document.getElementById('rest-overlay').classList.add('hidden');
-            speak(`Start ${activeC[cIdx].n}`);
-            updateHUD();
-        }
-
-        function updateHUD() {
-            document.getElementById('hud-ex-name').innerText = activeC[cIdx].n.toUpperCase();
-            document.getElementById('hud-set').innerText = `${set}/3`;
-            document.getElementById('hud-reps').innerText = reps;
-        }
-
-        function flashFeedback() {
-            const f = document.getElementById('flash');
-            f.style.opacity = 1;
-            setTimeout(()=>f.style.opacity=0, 150);
-            const txt = document.getElementById('hud-feedback');
-            txt.style.opacity = 1;
-            setTimeout(()=>txt.style.opacity=0, 800);
-        }
-
-        // --- AI VISION ---
-        function onPose(res) {
-            if(!res.poseLandmarks || isRest) return;
-            const ctx = document.getElementById('output_canvas').getContext('2d');
-            ctx.clearRect(0,0, ctx.canvas.width, ctx.canvas.height);
-            ctx.drawImage(res.image, 0,0, ctx.canvas.width, ctx.canvas.height);
-            
-            const lm = res.poseLandmarks;
-            const ex = activeC[cIdx].n.toLowerCase();
-            let good = false;
-
-            // Simple Logic for Demo
-            if(ex.includes('squat') || ex.includes('lunge')) {
-                const ang = calcAngle(lm[24], lm[26], lm[28]);
-                if(ang < 120) { stage='down'; good=true; }
-                if(ang > 160 && stage=='down') { countRep(); stage='up'; }
+        // ONBOARDING ENGINE
+        function renderQ() {
+            const q = questions[currentStep-1];
+            let html = `<h1>${q.q}</h1><div class="subtitle">Vraag ${currentStep} van 8</div>`;
+            if(q.t === 'select') {
+                html += `<select id="q-val">` + q.o.map(o => `<option value="${o}">${o}</option>`).join('') + `</select>`;
             } else {
-                if(lm[12].y > lm[24].y - 0.1) { stage='down'; good=true; }
-                else if(stage=='down') { countRep(); stage='up'; }
+                html += `<input type="${q.t}" id="q-val" value="${user[q.k] || ''}" placeholder="...">`;
             }
-            
-            drawConnectors(ctx, lm, POSE_CONNECTIONS, {color: good?'#4ade80':'#a855f7', lineWidth:4});
+            html += `<button class="btn" onclick="saveQ()">VERDER</button>`;
+            document.getElementById('q-container').innerHTML = html;
         }
 
-        function countRep() {
-            reps++; user.totalReps++;
-            updateHUD(); flashFeedback(); speak(reps);
-            
-            // Give XP
-            activeC[cIdx].mus.forEach(m => {
-                user.xp[m].val += 10;
-                if(user.xp[m].val >= user.xp[m].lvl * 100) {
-                    user.xp[m].val=0; user.xp[m].lvl++;
-                    speak(`${m} Level Up`);
-                }
-            });
+        function saveQ() {
+            const val = document.getElementById('q-val').value;
+            user[questions[currentStep-1].k] = val;
+            if(currentStep < 8) { currentStep++; renderQ(); }
+            else { save(); checkStreak(); tab('dash'); document.getElementById('nav').classList.remove('hidden'); }
+        }
 
-            if(reps >= 10) { // Demo: 10 reps per set
-                if(set < 3) { set++; reps=0; startRest(30, "EINDE SET"); }
-                else {
-                    cIdx++;
-                    if(cIdx < activeC.length) { set=1; reps=0; startRest(45, "VOLGENDE OEFENING"); }
-                    else { finishWorkout(); }
-                }
+        function save() { localStorage.setItem('elite_v9', JSON.stringify(user)); }
+        function updateUser(k, v) { user[k] = v; save(); }
+
+        // NAVIGATION & UI
+        function tab(t, el) {
+            document.querySelectorAll('.screen').forEach(s => s.classList.add('hidden'));
+            document.getElementById('scr-'+t).classList.remove('hidden');
+            if(el) { document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active')); el.classList.add('active'); }
+            if(t === 'dash') { 
+                document.getElementById('dash-greet').innerText = "HEY " + (user.name || "CHAMP"); 
+                document.getElementById('streak-val').innerText = user.streak; 
             }
+            if(t === 'progress') renderStats();
+            if(t === 'profile') renderProfileFields();
         }
 
-        function finishWorkout() {
-            stopWorkout();
-            user.totalWorkouts++;
-            user.lastDate = new Date().toDateString();
-            user.history.push({date: new Date(), reps: user.totalReps}); // Log history
-            checkBadges();
-            localStorage.setItem('elite_ai_v11', JSON.stringify(user));
-
-            document.getElementById('scr-finish').classList.add('active');
-            document.getElementById('nav').classList.remove('hidden');
-            document.getElementById('fin-total-reps').innerText = `${user.totalReps} TOTAL REPS`;
-            
-            confetti({ particleCount: 150, spread: 70, origin: { y: 0.6 } });
-            speak("Gefeliciteerd. Training voltooid.");
-        }
-
-        function stopWorkout() {
-            isRest = false; clearInterval(timer);
-            if(camera) camera.stop();
-            document.getElementById('scr-workout').classList.remove('active');
-        }
-
-        // --- GAMIFICATION ---
-        function checkBadges() {
-            badgesList.forEach(b => {
-                if(!user.badges.includes(b.id) && b.cond(user)) {
-                    user.badges.push(b.id);
-                    // Badge toast could go here
+        function renderProfileFields() {
+            const container = document.getElementById('profile-fields');
+            container.innerHTML = questions.map(q => `
+                <label style="font-size:10px; color:var(--sub); display:block; margin-bottom:5px;">${q.q}</label>
+                ${q.t === 'select' ? 
+                    `<select onchange="updateUser('${q.k}', this.value)">${q.o.map(o => `<option value="${o}" ${user[q.k] == o ? 'selected' : ''}>${o}</option>`).join('')}</select>` :
+                    `<input type="${q.t}" value="${user[q.k]}" onchange="updateUser('${q.k}', this.value)">`
                 }
-            });
+            `).join('');
         }
 
         function renderStats() {
-            // Badges
-            const bArea = document.getElementById('badge-area');
-            bArea.innerHTML = badgesList.map(b => `
-                <div class="badge ${user.badges.includes(b.id)?'unlocked':''}">
-                    <span class="badge-icon">${b.icon}</span>
-                    <div style="font-size:10px; font-weight:700;">${b.title}</div>
-                </div>
-            `).join('');
-
-            // Levels
-            const lArea = document.getElementById('stats-list');
-            lArea.innerHTML = Object.keys(user.xp).map(k => {
-                const x = user.xp[k];
-                const pct = (x.val / (x.lvl*100))*100;
+            const container = document.getElementById('stats-render');
+            container.innerHTML = Object.keys(user.stats).map(key => {
+                const s = user.stats[key];
+                const target = s.lvl * 250;
+                const pct = (s.xp / target) * 100;
                 return `
-                <div class="card" style="padding:15px; margin-bottom:10px;">
-                    <div style="display:flex; justify-content:space-between; font-size:12px; font-weight:700;">
-                        <span>${k}</span> <span>LVL ${x.lvl}</span>
+                    <div class="stat-row">
+                        <div class="stat-header"><span>${key.toUpperCase()}</span><span>LVL ${s.lvl}</span></div>
+                        <div class="bar-bg"><div class="bar-fill" style="width: ${pct}%"></div></div>
                     </div>
-                    <div class="stat-bar"><div class="stat-fill" style="width:${pct}%"></div></div>
-                </div>`;
+                `;
             }).join('');
         }
 
-        function shareResult() {
-            const txt = `🚀 Elite AI Coach\nIk heb net getraind!\n🔥 Streak: ${user.streak}\n💪 Totaal Reps: ${user.totalReps}\nLevel: ${document.getElementById('fit-score-val').innerText}/100`;
-            navigator.clipboard.writeText(txt).then(() => alert("Tekst gekopieerd! Deel het op social media."));
+        function checkStreak() {
+            const today = new Date().toDateString();
+            if(user.lastDate === today) return;
+            const yesterday = new Date(); yesterday.setDate(yesterday.getDate() - 1);
+            if(user.lastDate === yesterday.toDateString()) { user.streak++; }
+            else { user.streak = 1; }
+            user.lastDate = today; save();
         }
 
-        // --- UTILS ---
-        function nav(scr, el) {
-            document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
-            document.getElementById('scr-'+scr).classList.add('active');
-            document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
-            if(el) el.classList.add('active');
-            if(scr === 'stats') renderStats();
-            if(scr === 'dash') updateDash();
+        // WORKOUT LOGIC
+        function stopWorkout() {
+            isRest = false; clearInterval(restTimer);
+            if(camera) camera.stop();
+            tab('dash');
         }
-        function speak(t) { window.speechSynthesis.speak(new SpeechSynthesisUtterance(t)); }
-        function startCamera() {
-            const v = document.getElementById('input_video');
-            const c = document.getElementById('output_canvas');
-            pose = new Pose({locateFile:(f)=>`https://cdn.jsdelivr.net/npm/@mediapipe/pose/${f}`});
-            pose.setOptions({modelComplexity:1, smoothLandmarks:true});
-            pose.onResults(onPose);
-            camera = new Camera(v, {onFrame:async()=>{c.width=v.videoWidth;c.height=v.videoHeight;await pose.send({image:v})}});
+
+        function startCircuit(cat) {
+            currentCat = cat;
+            circuit = [...exercises[cat]].sort(() => 0.5 - Math.random());
+            cIdx = 0; sets = 1; reps = 0;
+            tab('workout'); 
+            startAI(); 
+            startRest(30, "LEES DE UITLEG");
+        }
+
+        function startRest(time, title) {
+            isRest = true; tLeft = time;
+            document.getElementById('rest-overlay').classList.remove('hidden');
+            document.getElementById('rest-title').innerText = title;
+            document.getElementById('rest-exe').innerText = circuit[cIdx].n.toUpperCase();
+            document.getElementById('rest-instr').innerText = circuit[cIdx].i;
+            runTimer();
+        }
+
+        function runTimer() {
+            document.getElementById('timer-val').innerText = tLeft;
+            if(restTimer) clearInterval(restTimer);
+            restTimer = setInterval(() => {
+                tLeft--; document.getElementById('timer-val').innerText = tLeft;
+                if(tLeft <= 0) skipRest();
+            }, 1000);
+        }
+
+        function skipRest() { clearInterval(restTimer); isRest = false; document.getElementById('rest-overlay').classList.add('hidden'); updateHUD(); speak("Start " + circuit[cIdx].n); }
+        function adjustTime(s) { tLeft += s; document.getElementById('timer-val').innerText = tLeft; }
+
+        function updateHUD() {
+            document.getElementById('hud-idx').innerText = `${cIdx+1}/6`;
+            document.getElementById('hud-set').innerText = `${sets}/3`;
+            document.getElementById('hud-reps').innerText = `${reps}/${user.reps}`;
+            
+            const tipEl = document.getElementById('coaching-tip');
+            const rem = user.reps - reps;
+            if (rem <= 3 && rem > 0) tipEl.innerText = "LAATSTE " + rem + "!";
+            else if (reps > 0) tipEl.innerText = "GOED ZO! DIEPER!";
+            else tipEl.innerText = "LET'S GO!";
+        }
+
+        const videoElement = document.getElementById('input_video');
+        const canvasElement = document.getElementById('output_canvas');
+        const canvasCtx = canvasElement.getContext('2d');
+
+        function onResults(results) {
+            if(!results.poseLandmarks || isRest) return;
+            canvasCtx.save();
+            canvasCtx.clearRect(0, 0, canvasElement.width, canvasElement.height);
+            canvasCtx.drawImage(results.image, 0, 0, canvasElement.width, canvasElement.height);
+            const m = results.poseLandmarks;
+            const exe = circuit[cIdx].n.toLowerCase();
+            let isGood = false;
+
+            if(exe.includes("squat") || exe.includes("lunge") || exe.includes("sit")) {
+                const a = calcAngle(m[24], m[26], m[28]);
+                if(a < 110) { isGood = true; stage = 'down'; }
+                if(a > 160 && stage === 'down') { registerRep(); stage = 'up'; }
+            } else if(exe.includes("push-up") || exe.includes("diamond")) {
+                const a = calcAngle(m[11], m[13], m[15]);
+                if(a < 100) { isGood = true; stage = 'down'; }
+                if(a > 155 && stage === 'down') { registerRep(); stage = 'up'; }
+            } else {
+                isGood = m[15].y < m[11].y;
+                if(isGood) stage = 'up';
+                if(!isGood && stage === 'up') { registerRep(); stage = 'down'; }
+            }
+            drawConnectors(canvasCtx, m, POSE_CONNECTIONS, {color: isGood?'#34c759':'#ff3b30', lineWidth:4});
+            canvasCtx.restore();
+        }
+
+        function registerRep() {
+            reps++; updateHUD(); speak(reps);
+            
+            // Verdeel XP over focus spieren
+            const focus = circuit[cIdx].focus;
+            focus.forEach(muscle => {
+                user.stats[muscle].xp += 15;
+                if(user.stats[muscle].xp >= user.stats[muscle].lvl * 250) {
+                    user.stats[muscle].xp = 0;
+                    user.stats[muscle].lvl++;
+                    speak("Level up voor " + muscle);
+                }
+            });
+            save();
+
+            if(reps >= user.reps) {
+                if(sets < 3) { sets++; reps=0; startRest(15, "SET VOLTOOID!"); }
+                else { 
+                    cIdx++; 
+                    if(cIdx < 6) { sets=1; reps=0; startRest(30, "OEFENING VOLTOOID!"); } 
+                    else { checkStreak(); speak("Geweldig gedaan!"); stopWorkout(); } 
+                }
+            }
+        }
+
+        function calcAngle(a,b,c) { const r = Math.atan2(c.y-b.y,c.x-b.x)-Math.atan2(a.y-b.y,a.x-b.x); let ang = Math.abs(r*180/Math.PI); return ang>180?360-ang:ang; }
+        
+        function startAI() {
+            const pose = new Pose({locateFile: (f) => `https://cdn.jsdelivr.net/npm/@mediapipe/pose/${f}`});
+            pose.setOptions({modelComplexity:1, minDetectionConfidence:0.5, minTrackingConfidence:0.5});
+            pose.onResults(onResults);
+            camera = new Camera(videoElement, {
+                onFrame: async() => { 
+                    canvasElement.width = videoElement.videoWidth;
+                    canvasElement.height = videoElement.videoHeight;
+                    await pose.send({image:videoElement}); 
+                }
+            });
             camera.start();
         }
-        function calcAngle(a,b,c){const r=Math.atan2(c.y-b.y,c.x-b.x)-Math.atan2(a.y-b.y,a.x-b.x);let d=Math.abs(r*180/Math.PI);return d>180?360-d:d;}
+        
+        function speak(t) { const m = new SpeechSynthesisUtterance(t); m.lang='nl-NL'; window.speechSynthesis.speak(m); }
 
+        if(!user.name) renderQ(); else { tab('dash'); document.getElementById('nav').classList.remove('hidden'); }
     </script>
 </body>
 </html>
