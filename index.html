@@ -14,24 +14,38 @@
         /* --- CORE STYLING --- */
         :root { --bg: #050505; --surface: #121212; --surface-2: #1e1e1e; --accent: #fff; --sub: #888; --blue: #007aff; --orange: #ff9500; --green: #34c759; --red: #ff3b30; --gold: #ffd700; }
         
-        body { margin: 0; font-family: 'Inter', sans-serif; background: var(--bg); color: var(--accent); overflow: hidden; height: 100vh; user-select: none; -webkit-user-select: none; }
+        body { margin: 0; font-family: 'Inter', sans-serif; background: var(--bg); color: var(--accent); overflow: hidden; height: 100vh; width: 100vw; user-select: none; -webkit-user-select: none; }
         
-        .screen { position: absolute; inset: 0; padding: 30px 20px 110px; display: flex; flex-direction: column; overflow-y: auto; transition: opacity 0.3s ease, transform 0.3s ease; opacity: 1; transform: scale(1); }
+        /* SCROLL FIX HIER */
+        .screen { 
+            position: absolute; 
+            inset: 0; 
+            padding: 30px 20px 120px; 
+            display: flex; 
+            flex-direction: column; 
+            overflow-y: auto; 
+            -webkit-overflow-scrolling: touch;
+            height: 100%;
+            box-sizing: border-box;
+            transition: opacity 0.3s ease, transform 0.3s ease; 
+            opacity: 1; 
+            transform: scale(1); 
+        }
         .hidden { display: none !important; opacity: 0; pointer-events: none; }
         
         h1 { font-family: 'Montserrat'; font-size: 26px; font-weight: 900; text-transform: uppercase; margin: 0 0 5px; letter-spacing: -0.5px; }
         .subtitle { color: var(--sub); font-size: 11px; letter-spacing: 1.5px; text-transform: uppercase; margin-bottom: 25px; font-weight: 700; }
         
         /* UI Components */
-        .q-box { flex: 1; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; }
-        input, select { width: 100%; max-width: 320px; padding: 16px; border-radius: 12px; border: 1px solid #333; background: var(--surface-2); color: #fff; font-size: 16px; margin-bottom: 12px; outline: none; transition: 0.2s; }
+        .q-box { flex: 1; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; min-height: min-content; }
+        input, select { width: 100%; max-width: 320px; padding: 16px; border-radius: 12px; border: 1px solid #333; background: var(--surface-2); color: #fff; font-size: 16px; margin-bottom: 12px; outline: none; transition: 0.2s; box-sizing: border-box; }
         input:focus { border-color: var(--blue); box-shadow: 0 0 15px rgba(0,122,255,0.3); }
         
-        .btn { background: var(--accent); color: #000; border: none; padding: 18px; border-radius: 16px; width: 100%; max-width: 320px; font-weight: 800; text-transform: uppercase; cursor: pointer; transition: transform 0.1s; box-shadow: 0 4px 15px rgba(255,255,255,0.1); }
+        .btn { background: var(--accent); color: #000; border: none; padding: 18px; border-radius: 16px; width: 100%; max-width: 320px; font-weight: 800; text-transform: uppercase; cursor: pointer; transition: transform 0.1s; box-shadow: 0 4px 15px rgba(255,255,255,0.1); flex-shrink: 0; }
         .btn:active { transform: scale(0.98); }
         .btn-small { padding: 10px 15px; font-size: 11px; font-weight: 700; background: var(--surface-2); color: #fff; border: 1px solid #333; border-radius: 8px; cursor: pointer; }
         
-        .card { background: var(--surface); border-radius: 24px; padding: 20px; margin-bottom: 15px; border: 1px solid #222; position: relative; overflow: hidden; }
+        .card { background: var(--surface); border-radius: 24px; padding: 20px; margin-bottom: 15px; border: 1px solid #222; position: relative; overflow: hidden; flex-shrink: 0; }
         .card:active { background: var(--surface-2); }
 
         /* Dashboard Elements */
@@ -39,7 +53,7 @@
         .rank-badge { background: rgba(0,122,255,0.15); color: var(--blue); padding: 5px 10px; border-radius: 6px; font-size: 10px; font-weight: 800; text-transform: uppercase; margin-left: 10px; vertical-align: middle; }
 
         /* Workout HUD */
-        .hud { position: absolute; top: 0; width: 100%; padding: 20px 20px 40px; display: flex; justify-content: space-between; background: linear-gradient(to bottom, rgba(0,0,0,0.9), transparent); z-index: 2001; pointer-events: none; }
+        .hud { position: absolute; top: 0; width: 100%; padding: 20px 20px 40px; display: flex; justify-content: space-between; background: linear-gradient(to bottom, rgba(0,0,0,0.9), transparent); z-index: 2001; pointer-events: none; box-sizing: border-box; }
         .hud-val span { display: block; font-size: 9px; color: var(--sub); font-weight: 700; letter-spacing: 1px; }
         .hud-val strong { font-size: 24px; font-family: 'Montserrat'; text-shadow: 0 2px 10px rgba(0,0,0,1); }
 
@@ -60,8 +74,8 @@
         @keyframes floatUp { 0% { transform: translateY(0) scale(1); opacity: 1; } 100% { transform: translateY(-80px) scale(1.2); opacity: 0; } }
 
         /* Navigation */
-        .navbar { position: fixed; bottom: 0; width: 100%; background: rgba(18,18,18,0.95); backdrop-filter: blur(10px); border-top: 1px solid #222; display: flex; justify-content: space-around; padding: 15px 0 35px; z-index: 1000; }
-        .nav-item { color: var(--sub); font-size: 9px; font-weight: 700; cursor: pointer; text-align: center; text-transform: uppercase; transition: 0.2s; }
+        .navbar { position: fixed; bottom: 0; width: 100%; background: rgba(18,18,18,0.95); backdrop-filter: blur(10px); border-top: 1px solid #222; display: flex; justify-content: space-around; padding: 15px 0 35px; z-index: 1000; box-sizing: border-box; }
+        .nav-item { color: var(--sub); font-size: 9px; font-weight: 700; cursor: pointer; text-align: center; text-transform: uppercase; transition: 0.2s; flex: 1; }
         .nav-item.active { color: var(--accent); transform: translateY(-2px); }
         .nav-item i { display: block; font-size: 20px; margin-bottom: 4px; font-style: normal; }
 
@@ -69,7 +83,7 @@
         #output_canvas { width: 100%; height: 100%; object-fit: contain; transform: scaleX(-1); background: #000; }
 
         /* Stats & Badges */
-        .stat-row { margin-bottom: 12px; }
+        .stat-row { margin-bottom: 12px; flex-shrink: 0; }
         .stat-header { display: flex; justify-content: space-between; font-size: 11px; font-weight: 700; margin-bottom: 6px; }
         .bar-bg { background: #222; height: 10px; border-radius: 5px; overflow: hidden; position: relative; }
         .bar-fill { height: 100%; background: var(--blue); transition: width 0.6s cubic-bezier(0.22, 1, 0.36, 1); box-shadow: 0 0 10px rgba(0,122,255,0.5); }
@@ -80,7 +94,6 @@
         .badge-icon { font-size: 24px; display: block; margin-bottom: 5px; }
         .badge-name { font-size: 9px; font-weight: 700; text-transform: uppercase; }
 
-        /* Form Feedback Colors */
         .feedback-good { color: var(--green); }
         .feedback-bad { color: var(--red); }
         .feedback-warn { color: var(--orange); }
@@ -194,7 +207,6 @@
 
     <script>
         // --- 1. CONFIGURATION & DATA ---
-        
         const exercises = {
             Upper: [
                 {n:"Push-up", i:"Houd je lichaam recht. Borst naar de grond.", focus:["Borst", "Triceps", "Schouders"]},
@@ -233,26 +245,16 @@
 
         let user = JSON.parse(localStorage.getItem('elite_v9_ultimate')) || {
             name: '', age: '', gender: '', height: '', weight: '', goal: '', reps: 12, availability: '',
-            streak: 0, lastDate: null,
-            totalWorkouts: 0,
-            badges: [],
-            history: [],
-            stats: { 
-                Borst: {xp:0, lvl:1}, Schouders: {xp:0, lvl:1}, Triceps: {xp:0, lvl:1},
-                Abs: {xp:0, lvl:1}, Rug: {xp:0, lvl:1}, Benen: {xp:0, lvl:1},
-                Billen: {xp:0, lvl:1}, Kuiten: {xp:0, lvl:1}
-            }
+            streak: 0, lastDate: null, totalWorkouts: 0, badges: [], history: [],
+            stats: { Borst: {xp:0, lvl:1}, Schouders: {xp:0, lvl:1}, Triceps: {xp:0, lvl:1}, Abs: {xp:0, lvl:1}, Rug: {xp:0, lvl:1}, Benen: {xp:0, lvl:1}, Billen: {xp:0, lvl:1}, Kuiten: {xp:0, lvl:1} }
         };
 
-        // --- 2. AUDIO SYSTEM (Synthesizer - No files needed) ---
         const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
         function playSound(type) {
             if(audioCtx.state === 'suspended') audioCtx.resume();
             const osc = audioCtx.createOscillator();
             const gain = audioCtx.createGain();
-            osc.connect(gain);
-            gain.connect(audioCtx.destination);
-            
+            osc.connect(gain); gain.connect(audioCtx.destination);
             if(type === 'rep') {
                 osc.frequency.setValueAtTime(600, audioCtx.currentTime);
                 osc.frequency.exponentialRampToValueAtTime(1200, audioCtx.currentTime + 0.1);
@@ -260,169 +262,82 @@
                 gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.1);
                 osc.start(); osc.stop(audioCtx.currentTime + 0.1);
             } else if (type === 'lvl') {
-                // Fanfare chord
                 [440, 554, 659].forEach((f, i) => {
-                    const o = audioCtx.createOscillator();
-                    const g = audioCtx.createGain();
-                    o.connect(g); g.connect(audioCtx.destination);
-                    o.type = 'triangle';
-                    o.frequency.value = f;
-                    g.gain.setValueAtTime(0, audioCtx.currentTime);
-                    g.gain.linearRampToValueAtTime(0.2, audioCtx.currentTime + 0.1 + (i*0.05));
-                    g.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 1.5);
-                    o.start(); o.stop(audioCtx.currentTime + 1.5);
+                    const o = audioCtx.createOscillator(); const g = audioCtx.createGain();
+                    o.connect(g); g.connect(audioCtx.destination); o.type = 'triangle'; o.frequency.value = f;
+                    g.gain.setValueAtTime(0, audioCtx.currentTime); g.gain.linearRampToValueAtTime(0.2, audioCtx.currentTime + 0.1 + (i*0.05));
+                    g.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 1.5); o.start(); o.stop(audioCtx.currentTime + 1.5);
                 });
             } else if (type === 'bad') {
-                osc.frequency.value = 150;
-                osc.type = 'sawtooth';
-                gain.gain.setValueAtTime(0.2, audioCtx.currentTime);
-                gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.3);
+                osc.frequency.value = 150; osc.type = 'sawtooth';
+                gain.gain.setValueAtTime(0.2, audioCtx.currentTime); gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.3);
                 osc.start(); osc.stop(audioCtx.currentTime + 0.3);
             }
         }
 
-        // --- 3. STATE VARIABLES ---
-        let currentStep = 1; 
-        let circuit = [], cIdx = 0, reps = 0, sets = 1, isRest = false, restTimer = null, tLeft = 30;
-        let stage = 'up'; 
-        let currentCat = '';
-        let camera = null;
-        let lastRepTime = 0; // Voor snelheid check
-
+        let currentStep = 1, circuit = [], cIdx = 0, reps = 0, sets = 1, isRest = false, restTimer = null, tLeft = 30, stage = 'up', currentCat = '', camera = null, lastRepTime = 0;
         const questions = [
-            { k: 'name', q: 'VOORNAAM', t: 'text' },
-            { k: 'age', q: 'LEEFTIJD', t: 'number' },
-            { k: 'gender', q: 'GESLACHT', t: 'select', o: ['Man', 'Vrouw', 'X'] },
-            { k: 'height', q: 'LENGTE (CM)', t: 'number' },
-            { k: 'weight', q: 'GEWICHT (KG)', t: 'number' },
-            { k: 'goal', q: 'DOEL', t: 'select', o: ['Afvallen', 'Spiermassa', 'Conditie'] },
-            { k: 'reps', q: 'TRAININGSNIVEAU (REPS)', t: 'number' },
-            { k: 'availability', q: 'DAGEN PER WEEK', t: 'select', o: ['1-2', '3-4', '5+'] }
+            { k: 'name', q: 'VOORNAAM', t: 'text' }, { k: 'age', q: 'LEEFTIJD', t: 'number' }, { k: 'gender', q: 'GESLACHT', t: 'select', o: ['Man', 'Vrouw', 'X'] }, { k: 'height', q: 'LENGTE (CM)', t: 'number' }, { k: 'weight', q: 'GEWICHT (KG)', t: 'number' }, { k: 'goal', q: 'DOEL', t: 'select', o: ['Afvallen', 'Spiermassa', 'Conditie'] }, { k: 'reps', q: 'TRAININGSNIVEAU (REPS)', t: 'number' }, { k: 'availability', q: 'DAGEN PER WEEK', t: 'select', o: ['1-2', '3-4', '5+'] }
         ];
-
-        // --- 4. CORE FUNCTIONS ---
 
         function save() { localStorage.setItem('elite_v9_ultimate', JSON.stringify(user)); }
         function resetData() { localStorage.removeItem('elite_v9_ultimate'); location.reload(); }
-
-        // RANG BEREKENING
-        function getRank() {
-            let totalLvl = Object.values(user.stats).reduce((a,b) => a + b.lvl, 0);
-            if(totalLvl < 10) return "ROOKIE";
-            if(totalLvl < 25) return "AMATEUR";
-            if(totalLvl < 50) return "ATLEET";
-            if(totalLvl < 100) return "PRO";
-            return "ELITE";
-        }
-
-        // --- 5. UI & NAVIGATIE ---
+        function getRank() { let totalLvl = Object.values(user.stats).reduce((a,b) => a + b.lvl, 0); if(totalLvl < 10) return "ROOKIE"; if(totalLvl < 25) return "AMATEUR"; if(totalLvl < 50) return "ATLEET"; if(totalLvl < 100) return "PRO"; return "ELITE"; }
 
         function tab(t, el) {
             document.querySelectorAll('.screen').forEach(s => s.classList.add('hidden'));
             document.getElementById('scr-'+t).classList.remove('hidden');
             if(el) { document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active')); el.classList.add('active'); }
-            
-            if(t === 'dash') { 
-                document.getElementById('dash-greet').innerText = "HEY " + (user.name || "CHAMP"); 
-                document.getElementById('streak-val').innerText = user.streak; 
-                document.getElementById('rank-display').innerText = getRank();
-            }
+            if(t === 'dash') { document.getElementById('dash-greet').innerText = "HEY " + (user.name || "CHAMP"); document.getElementById('streak-val').innerText = user.streak; document.getElementById('rank-display').innerText = getRank(); }
             if(t === 'progress') renderProgress();
             if(t === 'profile') renderProfileFields();
         }
 
         function renderProgress() {
-            // Stats Bars
             const container = document.getElementById('stats-render');
             container.innerHTML = Object.keys(user.stats).map(key => {
-                const s = user.stats[key];
-                const target = Math.round(100 * Math.pow(1.75, s.lvl - 1));
-                const pct = (s.xp / target) * 100;
-                return `
-                    <div class="stat-row">
-                        <div class="stat-header"><span>${key.toUpperCase()}</span><span>LVL ${s.lvl} <span style="color:var(--sub);font-weight:400;">(${Math.round(s.xp)}/${target})</span></span></div>
-                        <div class="bar-bg"><div class="bar-fill" style="width: ${Math.min(pct, 100)}%"></div></div>
-                    </div>`;
+                const s = user.stats[key]; const target = Math.round(100 * Math.pow(1.75, s.lvl - 1)); const pct = (s.xp / target) * 100;
+                return `<div class="stat-row"><div class="stat-header"><span>${key.toUpperCase()}</span><span>LVL ${s.lvl} <span style="color:var(--sub);font-weight:400;">(${Math.round(s.xp)}/${target})</span></span></div><div class="bar-bg"><div class="bar-fill" style="width: ${Math.min(pct, 100)}%"></div></div></div>`;
             }).join('');
-
-            // Badges
             const badgeCont = document.getElementById('badges-render');
-            badgeCont.innerHTML = badgeList.map(b => {
-                const unlocked = user.badges.includes(b.id);
-                return `<div class="badge-item ${unlocked?'unlocked':''}">
-                    <div class="badge-icon">${b.icon}</div>
-                    <div class="badge-name">${b.name}</div>
-                </div>`;
-            }).join('');
-
-            // History
+            badgeCont.innerHTML = badgeList.map(b => { const unlocked = user.badges.includes(b.id); return `<div class="badge-item ${unlocked?'unlocked':''}"><div class="badge-icon">${b.icon}</div><div class="badge-name">${b.name}</div></div>`; }).join('');
             const histCont = document.getElementById('history-render');
-            if(user.history.length > 0) {
-                histCont.innerHTML = user.history.slice().reverse().slice(0,5).map(h => 
-                    `<div style="display:flex; justify-content:space-between; padding:10px 0; border-bottom:1px solid #222;">
-                        <span>${h.date}</span> <span>${h.cat} (${h.reps} reps)</span>
-                    </div>`
-                ).join('');
-            }
+            if(user.history.length > 0) histCont.innerHTML = user.history.slice().reverse().slice(0,5).map(h => `<div style="display:flex; justify-content:space-between; padding:10px 0; border-bottom:1px solid #222;"><span>${h.date}</span> <span>${h.cat} (${h.reps} reps)</span></div>`).join('');
         }
 
-        // --- 6. ONBOARDING ---
         function renderQ() {
             const q = questions[currentStep-1];
             let html = `<h1>${q.q}</h1><div class="subtitle">Stap ${currentStep}/${questions.length}</div>`;
-            if(q.t === 'select') {
-                html += `<select id="q-val">` + q.o.map(o => `<option value="${o}">${o}</option>`).join('') + `</select>`;
-            } else {
-                html += `<input type="${q.t}" id="q-val" value="${user[q.k] || ''}" placeholder="...">`;
-            }
+            if(q.t === 'select') html += `<select id="q-val">` + q.o.map(o => `<option value="${o}">${o}</option>`).join('') + `</select>`;
+            else html += `<input type="${q.t}" id="q-val" value="${user[q.k] || ''}" placeholder="...">`;
             html += `<button class="btn" onclick="saveQ()">VERDER</button>`;
             document.getElementById('q-container').innerHTML = html;
         }
 
         function saveQ() {
-            const val = document.getElementById('q-val').value;
-            user[questions[currentStep-1].k] = val;
+            const val = document.getElementById('q-val').value; user[questions[currentStep-1].k] = val;
             if(currentStep < questions.length) { currentStep++; renderQ(); }
             else { save(); checkStreak(); tab('dash'); document.getElementById('nav').classList.remove('hidden'); }
         }
 
         function renderProfileFields() {
-            const container = document.getElementById('profile-fields');
-            container.innerHTML = questions.map(q => `
-                <label style="font-size:10px; color:var(--sub); display:block; margin-bottom:5px;">${q.q}</label>
-                ${q.t === 'select' ? 
-                    `<select onchange="updateUser('${q.k}', this.value)">${q.o.map(o => `<option value="${o}" ${user[q.k] == o ? 'selected' : ''}>${o}</option>`).join('')}</select>` :
-                    `<input type="${q.t}" value="${user[q.k]}" onchange="updateUser('${q.k}', this.value)">`
-                }
-            `).join('');
+            document.getElementById('profile-fields').innerHTML = questions.map(q => `<label style="font-size:10px; color:var(--sub); display:block; margin-bottom:5px;">${q.q}</label>${q.t === 'select' ? `<select onchange="updateUser('${q.k}', this.value)">${q.o.map(o => `<option value="${o}" ${user[q.k] == o ? 'selected' : ''}>${o}</option>`).join('')}</select>` : `<input type="${q.t}" value="${user[q.k]}" onchange="updateUser('${q.k}', this.value)">`}`).join('');
         }
         function updateUser(k, v) { user[k] = v; save(); }
 
-        // --- 7. WORKOUT LOGIC ---
-
         function checkStreak() {
-            const today = new Date().toDateString();
-            if(user.lastDate === today) return;
+            const today = new Date().toDateString(); if(user.lastDate === today) return;
             const yesterday = new Date(); yesterday.setDate(yesterday.getDate() - 1);
-            if(user.lastDate === yesterday.toDateString()) { user.streak++; }
-            else { user.streak = 1; }
+            if(user.lastDate === yesterday.toDateString()) user.streak++; else user.streak = 1;
             user.lastDate = today; save();
         }
 
         function startCircuit(cat) {
-            currentCat = cat;
-            circuit = [...exercises[cat]].sort(() => 0.5 - Math.random()); 
-            cIdx = 0; sets = 1; reps = 0;
-            tab('workout'); 
-            startAI(); 
-            startRest(30, "LEES DE UITLEG"); 
+            currentCat = cat; circuit = [...exercises[cat]].sort(() => 0.5 - Math.random()); cIdx = 0; sets = 1; reps = 0;
+            tab('workout'); startAI(); startRest(30, "LEES DE UITLEG"); 
         }
 
-        function stopWorkout() {
-            isRest = false; clearInterval(restTimer);
-            if(camera) camera.stop(); 
-            tab('dash');
-        }
+        function stopWorkout() { isRest = false; clearInterval(restTimer); if(camera) camera.stop(); tab('dash'); }
 
         function startRest(time, title) {
             isRest = true; tLeft = time;
@@ -434,205 +349,78 @@
         }
 
         function runTimer() {
-            document.getElementById('timer-val').innerText = tLeft;
-            if(restTimer) clearInterval(restTimer);
-            restTimer = setInterval(() => {
-                tLeft--; document.getElementById('timer-val').innerText = tLeft;
-                if(tLeft <= 0) skipRest();
-            }, 1000);
+            document.getElementById('timer-val').innerText = tLeft; if(restTimer) clearInterval(restTimer);
+            restTimer = setInterval(() => { tLeft--; document.getElementById('timer-val').innerText = tLeft; if(tLeft <= 0) skipRest(); }, 1000);
         }
         function adjustTime(s) { tLeft += s; document.getElementById('timer-val').innerText = tLeft; }
-        function skipRest() { clearInterval(restTimer); isRest = false; document.getElementById('rest-overlay').classList.add('hidden'); updateHUD(); speak("Start " + circuit[cIdx].n); lastRepTime = Date.now(); }
+        function skipRest() { clearInterval(restTimer); isRest = false; document.getElementById('rest-overlay').classList.add('hidden'); updateHUD(); lastRepTime = Date.now(); }
 
         function updateHUD(feedback = null) {
-            document.getElementById('hud-idx').innerText = `${cIdx+1}/6`;
-            document.getElementById('hud-set').innerText = `${sets}/3`;
-            document.getElementById('hud-reps').innerText = `${reps}/${user.reps}`;
-            
+            document.getElementById('hud-idx').innerText = `${cIdx+1}/6`; document.getElementById('hud-set').innerText = `${sets}/3`; document.getElementById('hud-reps').innerText = `${reps}/${user.reps}`;
             const tipEl = document.getElementById('coaching-tip');
-            
-            // Prioriteit aan feedback (bijv. "Te snel!")
-            if(feedback) {
-                tipEl.innerText = feedback;
-                tipEl.className = feedback.includes('GOED') ? 'feedback-good' : 'feedback-warn';
-                return;
-            }
-
-            const rem = user.reps - reps;
-            tipEl.className = '';
-            if (rem <= 3 && rem > 0) tipEl.innerText = "NOG " + rem + "...";
-            else if (reps > 0) tipEl.innerText = "BLIJF GAAN!";
-            else tipEl.innerText = "START!";
+            if(feedback) { tipEl.innerText = feedback; tipEl.className = feedback.includes('GOED') ? 'feedback-good' : 'feedback-warn'; return; }
+            const rem = user.reps - reps; tipEl.className = '';
+            if (rem <= 3 && rem > 0) tipEl.innerText = "NOG " + rem + "..."; else if (reps > 0) tipEl.innerText = "BLIJF GAAN!"; else tipEl.innerText = "START!";
         }
 
-        // --- 8. AI & COMPUTER VISION ---
         const videoElement = document.getElementById('input_video');
         const canvasElement = document.getElementById('output_canvas');
         const canvasCtx = canvasElement.getContext('2d');
 
         function onResults(results) {
             if(!results.poseLandmarks || isRest) return;
-            
-            canvasCtx.save();
-            canvasCtx.clearRect(0, 0, canvasElement.width, canvasElement.height);
+            canvasCtx.save(); canvasCtx.clearRect(0, 0, canvasElement.width, canvasElement.height);
             canvasCtx.drawImage(results.image, 0, 0, canvasElement.width, canvasElement.height);
-            
-            const m = results.poseLandmarks;
-            const exe = circuit[cIdx].n.toLowerCase();
-            let isGood = false;
-            let feedback = null;
-
-            // Form Correction Logic
+            const m = results.poseLandmarks; const exe = circuit[cIdx].n.toLowerCase(); let isGood = false; let feedback = null;
             if(exe.includes("squat")) {
-                const a = calcAngle(m[24], m[26], m[28]); 
-                // Check knees caving in (Valgus) - Simple heuristic: knee x should be close to hip x
-                if(Math.abs(m[26].x - m[24].x) < 0.05) feedback = "Knieën naar buiten!";
-                
-                if(a < 110) { isGood = true; stage = 'down'; } 
-                if(a > 160 && stage === 'down') { registerRep(); stage = 'up'; } 
-            
+                const a = calcAngle(m[24], m[26], m[28]); if(Math.abs(m[26].x - m[24].x) < 0.05) feedback = "Knieën naar buiten!";
+                if(a < 110) { isGood = true; stage = 'down'; } if(a > 160 && stage === 'down') { registerRep(); stage = 'up'; } 
             } else if(exe.includes("push-up") || exe.includes("diamond")) {
-                const a = calcAngle(m[11], m[13], m[15]); 
-                // Check hip sag
-                if(m[23].y > m[27].y) feedback = "Heupen omhoog!";
-
-                if(a < 100) { isGood = true; stage = 'down'; }
-                if(a > 160 && stage === 'down') { registerRep(); stage = 'up'; }
-            
-            } else {
-                // General movement
-                isGood = m[15].y < m[11].y; // Hands above shoulder
-                if(isGood) stage = 'up';
-                if(!isGood && stage === 'up') { registerRep(); stage = 'down'; }
-            }
-
-            if(feedback) updateHUD(feedback);
-            else if(stage === 'down') updateHUD("DUW OMHOOG!");
-
+                const a = calcAngle(m[11], m[13], m[15]); if(m[23].y > m[27].y) feedback = "Heupen omhoog!";
+                if(a < 100) { isGood = true; stage = 'down'; } if(a > 160 && stage === 'down') { registerRep(); stage = 'up'; }
+            } else { isGood = m[15].y < m[11].y; if(isGood) stage = 'up'; if(!isGood && stage === 'up') { registerRep(); stage = 'down'; } }
+            if(feedback) updateHUD(feedback); else if(stage === 'down') updateHUD("DUW OMHOOG!");
             drawConnectors(canvasCtx, m, POSE_CONNECTIONS, {color: isGood?'#34c759':'#fff', lineWidth:3});
-            drawLandmarks(canvasCtx, m, {color: isGood?'#34c759':'#007aff', lineWidth:1, radius:4});
-            canvasCtx.restore();
+            drawLandmarks(canvasCtx, m, {color: isGood?'#34c759':'#007aff', lineWidth:1, radius:4}); canvasCtx.restore();
         }
 
         function registerRep() {
-            // Speed Check
-            const now = Date.now();
-            if(now - lastRepTime < 800) {
-                updateHUD("TE SNEL! SLOMER");
-                playSound('bad');
-                lastRepTime = now;
-                return; // Tel rep niet
-            }
-            lastRepTime = now;
-
-            reps++; 
-            updateHUD("GOED BEZIG!"); 
-            playSound('rep');
-            
-            // Floating Text XP
-            showFloatingText("+15 XP");
-
-            // XP Logic
-            const focus = circuit[cIdx].focus;
-            focus.forEach(muscle => {
-                user.stats[muscle].xp += 15;
-                let currentTarget = Math.round(100 * Math.pow(1.75, user.stats[muscle].lvl - 1));
-                
-                if(user.stats[muscle].xp >= currentTarget) {
-                    user.stats[muscle].xp -= currentTarget;
-                    user.stats[muscle].lvl++;
-                    showLevelUp(muscle, user.stats[muscle].lvl);
-                    checkBadges(); // Check badge on level up
-                }
+            const now = Date.now(); if(now - lastRepTime < 800) { updateHUD("TE SNEL! SLOMER"); playSound('bad'); lastRepTime = now; return; }
+            lastRepTime = now; reps++; updateHUD("GOED BEZIG!"); playSound('rep'); showFloatingText("+15 XP");
+            circuit[cIdx].focus.forEach(muscle => {
+                user.stats[muscle].xp += 15; let target = Math.round(100 * Math.pow(1.75, user.stats[muscle].lvl - 1));
+                if(user.stats[muscle].xp >= target) { user.stats[muscle].xp -= target; user.stats[muscle].lvl++; showLevelUp(muscle, user.stats[muscle].lvl); checkBadges(); }
             });
             save();
-
             if(reps >= user.reps) {
                 if(sets < 3) { sets++; reps=0; startRest(15, "SET VOLTOOID!"); }
-                else { 
-                    cIdx++; 
-                    if(cIdx < 6) { sets=1; reps=0; startRest(30, "VOLGENDE OEFENING"); } 
-                    else { finishWorkout(); } 
-                }
+                else { cIdx++; if(cIdx < 6) { sets=1; reps=0; startRest(30, "VOLGENDE OEFENING"); } else { finishWorkout(); } }
             }
         }
 
-        function finishWorkout() {
-            checkStreak();
-            checkBadges('finish');
-            user.history.push({date: new Date().toLocaleDateString(), cat: currentCat, reps: user.reps * 3 * 6});
-            save();
-            speak("Training voltooid. Goed gedaan!");
-            stopWorkout();
-        }
-
-        // --- 9. VISUALS & EFFECTS ---
-
-        function showFloatingText(txt) {
-            const el = document.createElement('div');
-            el.className = 'float-txt';
-            el.innerText = txt;
-            el.style.left = (Math.random() * 60 + 20) + '%';
-            el.style.top = '60%';
-            document.body.appendChild(el);
-            setTimeout(() => el.remove(), 1500);
-        }
-
-        function showLevelUp(muscle, lvl) {
-            const ov = document.getElementById('lvl-overlay');
-            document.getElementById('lvl-msg').innerText = `${muscle} is nu Level ${lvl}`;
-            ov.classList.add('active');
-            playSound('lvl');
-            speak("Level up! " + muscle);
-        }
+        function finishWorkout() { checkStreak(); checkBadges('finish'); user.history.push({date: new Date().toLocaleDateString(), cat: currentCat, reps: user.reps * 3 * 6}); save(); stopWorkout(); }
+        function showFloatingText(txt) { const el = document.createElement('div'); el.className = 'float-txt'; el.innerText = txt; el.style.left = (Math.random() * 60 + 20) + '%'; el.style.top = '60%'; document.body.appendChild(el); setTimeout(() => el.remove(), 1500); }
+        function showLevelUp(muscle, lvl) { const ov = document.getElementById('lvl-overlay'); document.getElementById('lvl-msg').innerText = `${muscle} is nu Level ${lvl}`; ov.classList.add('active'); playSound('lvl'); }
         function closeLvl() { document.getElementById('lvl-overlay').classList.remove('active'); }
+        function calcAngle(a,b,c) { const r = Math.atan2(c.y-b.y,c.x-b.x)-Math.atan2(a.y-b.y,a.x-b.x); let ang = Math.abs(r*180/Math.PI); return ang>180?360-ang:ang; }
 
-        // --- 10. BADGE LOGIC ---
         function checkBadges(trigger) {
-            let newBadge = false;
-            
-            // 1. First Workout
-            if(trigger === 'finish' && !user.badges.includes('b_start')) { user.badges.push('b_start'); newBadge=true; }
-            
-            // 2. Week Streak
-            if(user.streak >= 7 && !user.badges.includes('b_wk1')) { user.badges.push('b_wk1'); newBadge=true; }
-            
-            // 3. Early Bird
-            if(trigger === 'finish') {
-                const hour = new Date().getHours();
-                if(hour < 8 && !user.badges.includes('b_early')) { user.badges.push('b_early'); newBadge=true; }
-            }
-
-            // 4. Level Checks
-            if(user.stats['Borst'].lvl >= 5 && !user.badges.includes('b_push')) { user.badges.push('b_push'); newBadge=true; }
-            if(user.stats['Benen'].lvl >= 5 && !user.badges.includes('b_legs')) { user.badges.push('b_legs'); newBadge=true; }
-            
-            // 5. Total Level
-            let totalLvl = Object.values(user.stats).reduce((a,b) => a + b.lvl, 0);
-            if(totalLvl >= 50 && !user.badges.includes('b_elite')) { user.badges.push('b_elite'); newBadge=true; }
-
-            if(newBadge) {
-                save();
-                showFloatingText("🏆 NIEUWE BADGE!");
-                speak("Gefeliciteerd, nieuwe badge ontgrendeld!");
-            }
+            let changed = false;
+            if(trigger === 'finish' && !user.badges.includes('b_start')) { user.badges.push('b_start'); changed = true; }
+            if(user.streak >= 7 && !user.badges.includes('b_wk1')) { user.badges.push('b_wk1'); changed = true; }
+            if(user.stats.Borst.lvl >= 5 && !user.badges.includes('b_push')) { user.badges.push('b_push'); changed = true; }
+            if(user.stats.Benen.lvl >= 5 && !user.badges.includes('b_legs')) { user.badges.push('b_legs'); changed = true; }
+            if(changed) save();
         }
 
-        // Math & Init
-        function calcAngle(a,b,c) { const r = Math.atan2(c.y-b.y,c.x-b.x)-Math.atan2(a.y-b.y,a.x-b.x); let ang = Math.abs(r*180/Math.PI); return ang>180?360-ang:ang; }
-        function speak(t) { const m = new SpeechSynthesisUtterance(t); m.lang='nl-NL'; window.speechSynthesis.speak(m); }
-        
         function startAI() {
-            const pose = new Pose({locateFile: (f) => `https://cdn.jsdelivr.net/npm/@mediapipe/pose/${f}`});
-            pose.setOptions({modelComplexity:1, minDetectionConfidence:0.5, minTrackingConfidence:0.5});
+            const pose = new Pose({locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/pose/${file}`});
+            pose.setOptions({modelComplexity: 1, smoothLandmarks: true, minDetectionConfidence: 0.5, minTrackingConfidence: 0.5});
             pose.onResults(onResults);
-            camera = new Camera(videoElement, {
-                onFrame: async() => { 
-                    canvasElement.width = videoElement.videoWidth;
-                    canvasElement.height = videoElement.videoHeight;
-                    await pose.send({image:videoElement}); 
-                }
-            });
+            camera = new Camera(videoElement, { onFrame: async () => { 
+                canvasElement.width = videoElement.videoWidth; canvasElement.height = videoElement.videoHeight;
+                await pose.send({image: videoElement}); 
+            }, width: 640, height: 480 });
             camera.start();
         }
 
