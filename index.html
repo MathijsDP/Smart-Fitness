@@ -14,20 +14,24 @@
         /* --- CORE STYLING --- */
         :root { --bg: #050505; --surface: #121212; --surface-2: #1e1e1e; --accent: #fff; --sub: #888; --blue: #007aff; --orange: #ff9500; --green: #34c759; --red: #ff3b30; --gold: #ffd700; }
         
-        body { 
-    margin: 0; 
+    html, body {
+    margin: 0;
+    padding: 0;
+    height: 100%;
+}
+
+body { 
     font-family: 'Inter', sans-serif; 
     background: var(--bg); 
     color: var(--accent); 
     overflow-x: hidden;   /* alleen horizontaal blokkeren */
-    overflow-y: auto;     /* verticaal scrollen toestaan */
-    min-height: 100vh; 
     user-select: none; 
     -webkit-user-select: none; 
 }
 
+
         
-        .screen { position: absolute; inset: 0; padding: 30px 20px 110px; display: flex; flex-direction: column; overflow-y: auto; transition: opacity 0.3s ease, transform 0.3s ease; opacity: 1; transform: scale(1); }
+        .screen { position: absolute; top: 0;left: 0;right: 0;bottom: 0; padding: 30px 20px 110px; display: flex; flex-direction: column; overflow-y: auto; transition: opacity 0.3s ease, transform 0.3s ease; opacity: 1; transform: scale(1); }
         .hidden { display: none !important; opacity: 0; pointer-events: none; }
         
         h1 { font-family: 'Montserrat'; font-size: 26px; font-weight: 900; text-transform: uppercase; margin: 0 0 5px; letter-spacing: -0.5px; }
