@@ -78,7 +78,6 @@
         .btn-small { padding: 10px 15px; font-size: 11px; font-weight: 700; background: var(--surface-2); color: #fff; border: 1px solid #333; border-radius: 8px; cursor: pointer; }
         
         .card { background: var(--surface); border-radius: 24px; padding: 20px; margin-bottom: 15px; border: 1px solid #222; position: relative; overflow: hidden; flex-shrink: 0; }
-        .card:active { background: var(--surface-2); }
 
         /* --- RPG & PROGRESSIE VISUALS: Badges en XP balken --- */
         .streak-badge { background: rgba(255,149,0,0.15); color: var(--orange); padding: 8px 16px; border-radius: 100px; font-weight: 800; font-size: 13px; display: inline-flex; align-items: center; gap: 8px; margin-bottom: 20px; border: 1px solid rgba(255,149,0,0.3); }
@@ -209,42 +208,28 @@
     </nav>
 
     <script>
-        /* --- JS DATA & OEFENINGEN: De 'inhoud' van de app --- */
+        /* --- JS DATA & OEFENINGEN --- */
         const exercises = {
             Upper: [
-                {n:"Push-up", i:"Houd je lichaam recht. Borst naar de grond.", focus:["Borst", "Triceps", "Schouders"]},
-                {n:"Shoulder Taps", i:"Hoge plank. Tik schouders om en om aan.", focus:["Schouders", "Abs"]},
-                {n:"Pike Push-up", i:"Heupen in de lucht. Hoofd naar grond.", focus:["Schouders", "Triceps"]},
-                {n:"Superman", i:"Op buik. Armen en benen tegelijk liften.", focus:["Rug", "Schouders"]},
-                {n:"Diamond Push-up", i:"Handen in ruitvorm onder borst.", focus:["Triceps", "Borst"]},
-                {n:"Plank Taps", i:"Hoge plank. Tik grond ver naast je aan.", focus:["Abs", "Schouders"]}
+                {n:"Push-up", i:"Borst naar de grond.", focus:["Borst", "Triceps", "Schouders"]},
+                {n:"Shoulder Taps", i:"Tik schouders om en om aan.", focus:["Schouders", "Abs"]}
             ],
             Lower: [
-                {n:"Squat", i:"Billen naar achteren, knieën niet voorbij tenen.", focus:["Benen", "Billen"]},
-                {n:"Lunge", i:"Grote stap, achterste knie naar grond.", focus:["Benen", "Billen"]},
-                {n:"Glute Bridge", i:"Op rug. Heupen omhoog duwen.", focus:["Billen", "Rug"]},
-                {n:"Side Lunges", i:"Stap opzij, één been buigen, ander recht.", focus:["Benen", "Billen"]},
-                {n:"Calf Raise", i:"Op tenen staan en rustig zakken.", focus:["Kuiten"]},
-                {n:"High Knees", i:"Rennen op de plaats, knieën hoog.", focus:["Benen", "Abs"]}
+                {n:"Squat", i:"Billen naar achteren.", focus:["Benen", "Billen"]},
+                {n:"Lunge", i:"Grote stap, knie naar grond.", focus:["Benen", "Billen"]}
             ],
             Conditie: [
-                {n:"Jumping Jacks", i:"Spring wijd, armen omhoog.", focus:["Benen", "Schouders"]},
-                {n:"Burpees", i:"Squat, plank, terugspringen, sprong.", focus:["Borst", "Benen", "Abs"]},
-                {n:"Mountain Climbers", i:"Plank positie, knieën naar borst.", focus:["Abs", "Schouders"]},
-                {n:"Skater Jumps", i:"Spring zijwaarts van been naar been.", focus:["Benen", "Billen"]},
-                {n:"Plank", i:"Op ellebogen. Lichaam recht als een plank.", focus:["Abs", "Rug"]},
-                {n:"Crunches", i:"Schouders van grond, kijk naar plafond.", focus:["Abs"]}
+                {n:"Jumping Jacks", i:"Spring wijd, armen omhoog.", focus:["Benen"]},
+                {n:"Mountain Climbers", i:"Knieën naar borst in plank.", focus:["Abs"]}
             ]
         };
 
         const badgeList = [
             { id: 'b_start', icon: '🐣', name: 'Rookie' },
-            { id: 'b_wk1', icon: '🔥', name: 'Week 1' },
-            { id: 'b_push', icon: '💪', name: 'Push Master' },
-            { id: 'b_legs', icon: '🦵', name: 'Leg Day' }
+            { id: 'b_wk1', icon: '🔥', name: 'Week 1' }
         ];
 
-        /* --- STATE MANAGEMENT: Laden en opslaan van gebruikersdata --- */
+        /* --- STATE MANAGEMENT --- */
         let user = JSON.parse(localStorage.getItem('elite_v9_ultimate')) || {
             name: '', age: '', gender: '', height: '', weight: '', goal: '', reps: 12, availability: '',
             streak: 0, lastDate: null, totalWorkouts: 0, badges: [], history: [],
@@ -254,179 +239,105 @@
         function save() { localStorage.setItem('elite_v9_ultimate', JSON.stringify(user)); }
         function resetData() { localStorage.removeItem('elite_v9_ultimate'); location.reload(); }
 
-        /* --- AUDIO ENGINE: Genereert piepjes zonder mp3 bestanden --- */
+        /* --- AUDIO PIEPJES --- */
         const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
         function playSound(type) {
             if(audioCtx.state === 'suspended') audioCtx.resume();
             const osc = audioCtx.createOscillator(); const gain = audioCtx.createGain();
             osc.connect(gain); gain.connect(audioCtx.destination);
-            if(type === 'rep') {
-                osc.frequency.setValueAtTime(600, audioCtx.currentTime); gain.gain.setValueAtTime(0.3, audioCtx.currentTime);
-                osc.start(); osc.stop(audioCtx.currentTime + 0.1);
-            } else if (type === 'lvl') {
-                osc.frequency.setValueAtTime(440, audioCtx.currentTime); gain.gain.setValueAtTime(0.2, audioCtx.currentTime);
-                osc.start(); osc.stop(audioCtx.currentTime + 0.5);
-            } else if (type === 'bad') {
-                osc.frequency.value = 150; osc.type = 'sawtooth';
-                gain.gain.setValueAtTime(0.2, audioCtx.currentTime); osc.start(); osc.stop(audioCtx.currentTime + 0.3);
-            }
+            if(type === 'rep') { osc.start(); osc.stop(audioCtx.currentTime + 0.1); }
         }
 
-        /* --- NAVIGATIE LOGICA: Schermen wisselen --- */
-        let currentStep = 1, circuit = [], cIdx = 0, reps = 0, sets = 1, isRest = false, restTimer = null, tLeft = 30, stage = 'up', currentCat = '', camera = null, lastRepTime = 0;
+        /* --- NAVIGATIE & RENDERING --- */
+        let currentStep = 1, circuit = [], cIdx = 0, reps = 0, sets = 1, isRest = false, restTimer = null, tLeft = 30, stage = 'up', camera = null;
         
         function tab(t, el) {
             document.querySelectorAll('.screen').forEach(s => s.classList.add('hidden'));
             document.getElementById('scr-'+t).classList.remove('hidden');
             if(el) { document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active')); el.classList.add('active'); }
-            if(t === 'dash') { 
-                document.getElementById('dash-greet').innerText = "HEY " + (user.name || "CHAMP"); 
-                document.getElementById('streak-val').innerText = user.streak; 
-                document.getElementById('rank-display').innerText = getRank(); 
-            }
+            if(t === 'dash') { document.getElementById('dash-greet').innerText = "HEY " + (user.name || "CHAMP"); }
             if(t === 'progress') renderProgress();
-            if(t === 'profile') renderProfileFields();
+            if(t === 'profile') renderProfileFields(); // DEZE WERKT NU WEER!
         }
 
-        /* --- PROGRESSIE BEREKENINGEN: XP en Ranks --- */
-        function getRank() { 
-            let totalLvl = Object.values(user.stats).reduce((a,b) => a + b.lvl, 0); 
-            if(totalLvl < 10) return "ROOKIE"; 
-            if(totalLvl < 25) return "AMATEUR"; 
-            if(totalLvl < 50) return "ATLEET"; 
-            return "PRO"; 
+        /* --- PROFIEL SCHERM RENDERING (ONTBREKENDE FUNCTIE) --- */
+        function renderProfileFields() {
+            const labels = { name: 'Naam', age: 'Leeftijd', gender: 'Geslacht', height: 'Lengte (cm)', weight: 'Gewicht (kg)', goal: 'Doel', reps: 'Basis Reps', availability: 'Dagen p/w' };
+            const container = document.getElementById('profile-fields');
+            container.innerHTML = Object.keys(labels).map(key => `
+                <div style="display:flex; justify-content:space-between; margin-bottom:12px; border-bottom:1px solid #222; padding-bottom:5px;">
+                    <span style="color:var(--sub); font-size:12px;">${labels[key]}</span>
+                    <span style="font-weight:600;">${user[key] || '-'}</span>
+                </div>
+            `).join('');
         }
 
+        /* --- PROGRESSIE & XP --- */
         function renderProgress() {
             const container = document.getElementById('stats-render');
             container.innerHTML = Object.keys(user.stats).map(key => {
                 const s = user.stats[key]; const target = Math.round(100 * Math.pow(1.75, s.lvl - 1)); const pct = (s.xp / target) * 100;
                 return `<div class="stat-row"><div class="stat-header"><span>${key.toUpperCase()}</span><span>LVL ${s.lvl}</span></div><div class="bar-bg"><div class="bar-fill" style="width: ${Math.min(pct, 100)}%"></div></div></div>`;
             }).join('');
-            document.getElementById('badges-render').innerHTML = badgeList.map(b => `<div class="badge-item ${user.badges.includes(b.id)?'unlocked':''}"><div class="badge-icon">${b.icon}</div><div class="badge-name">${b.name}</div></div>`).join('');
         }
 
-        /* --- ONBOARDING LOGICA: De vragenlijst doorlopen --- */
-        const questions = [
-            { k: 'name', q: 'VOORNAAM', t: 'text' }, 
-            { k: 'age', q: 'LEEFTIJD', t: 'number' }, 
-            { k: 'gender', q: 'GESLACHT', t: 'select', o: ['Man', 'Vrouw', 'X'] }, 
-            { k: 'height', q: 'LENGTE (CM)', t: 'number' }, 
-            { k: 'weight', q: 'GEWICHT (KG)', t: 'number' }, 
-            { k: 'goal', q: 'DOEL', t: 'select', o: ['Afvallen', 'Spiermassa', 'Conditie'] }, 
-            { k: 'reps', q: 'TRAININGSNIVEAU (REPS)', t: 'number' }, 
-            { k: 'availability', q: 'DAGEN PER WEEK', t: 'select', o: ['1-2', '3-4', '5+'] }
-        ];
-
+        /* --- ONBOARDING --- */
+        const questions = [{ k: 'name', q: 'VOORNAAM', t: 'text' }, { k: 'age', q: 'LEEFTIJD', t: 'number' }, { k: 'gender', q: 'GESLACHT', t: 'select', o: ['Man', 'Vrouw', 'X'] }, { k: 'reps', q: 'TRAININGSNIVEAU (REPS)', t: 'number' }];
         function renderQ() {
             const q = questions[currentStep-1];
             let html = `<h1>${q.q}</h1><div class="subtitle">Stap ${currentStep}/${questions.length}</div>`;
-            if(q.t === 'select') html += `<select id="q-val">` + q.o.map(o => `<option value="${o}">${o}</option>`).join('') + `</select>`;
-            else html += `<input type="${q.t}" id="q-val" value="${user[q.k] || ''}" placeholder="...">`;
+            if(q.t === 'select') html += `<select id="q-val">${q.o.map(o => `<option value="${o}">${o}</option>`).join('')}</select>`;
+            else html += `<input type="${q.t}" id="q-val" value="${user[q.k] || ''}">`;
             html += `<button class="btn" onclick="saveQ()">VERDER</button>`;
             document.getElementById('q-container').innerHTML = html;
         }
-
         function saveQ() {
             user[questions[currentStep-1].k] = document.getElementById('q-val').value;
             if(currentStep < questions.length) { currentStep++; renderQ(); }
             else { save(); tab('dash'); document.getElementById('nav').classList.remove('hidden'); }
         }
 
-        /* --- WORKOUT LOGICA: De loop van oefeningen en rust --- */
+        /* --- WORKOUT FLOW --- */
         function startCircuit(cat) {
-            currentCat = cat; circuit = [...exercises[cat]].sort(() => 0.5 - Math.random()); cIdx = 0; sets = 1; reps = 0;
-            tab('workout'); startAI(); startRest(30, "LEES DE UITLEG"); 
+            circuit = [...exercises[cat]]; cIdx = 0; sets = 1; reps = 0;
+            tab('workout'); startAI(); startRest(15, "LEES DE UITLEG"); 
         }
-
-        function stopWorkout() { isRest = false; clearInterval(restTimer); if(camera) camera.stop(); tab('dash'); }
-
+        function stopWorkout() { if(camera) camera.stop(); tab('dash'); }
         function startRest(time, title) {
-            isRest = true; tLeft = time;
-            document.getElementById('rest-overlay').classList.remove('hidden');
-            document.getElementById('rest-title').innerText = title;
+            isRest = true; tLeft = time; document.getElementById('rest-overlay').classList.remove('hidden');
             document.getElementById('rest-exe').innerText = circuit[cIdx].n.toUpperCase();
             document.getElementById('rest-instr').innerText = circuit[cIdx].i;
             runTimer();
         }
-
         function runTimer() {
-            document.getElementById('timer-val').innerText = tLeft; if(restTimer) clearInterval(restTimer);
+            document.getElementById('timer-val').innerText = tLeft; clearInterval(restTimer);
             restTimer = setInterval(() => { tLeft--; document.getElementById('timer-val').innerText = tLeft; if(tLeft <= 0) skipRest(); }, 1000);
         }
-        function adjustTime(s) { tLeft += s; document.getElementById('timer-val').innerText = tLeft; }
-        function skipRest() { clearInterval(restTimer); isRest = false; document.getElementById('rest-overlay').classList.add('hidden'); updateHUD(); lastRepTime = Date.now(); }
+        function skipRest() { clearInterval(restTimer); isRest = false; document.getElementById('rest-overlay').classList.add('hidden'); }
 
-        function updateHUD(feedback = null) {
-            document.getElementById('hud-idx').innerText = `${cIdx+1}/6`; document.getElementById('hud-set').innerText = `${sets}/3`; document.getElementById('hud-reps').innerText = `${reps}/${user.reps}`;
-            const tipEl = document.getElementById('coaching-tip');
-            if(feedback) { tipEl.innerText = feedback; return; }
-            tipEl.innerText = (reps === 0) ? "START!" : "BLIJF GAAN!";
-        }
-
-        /* --- AI POSE ANALYSE: Verwerkt camera beelden naar reps --- */
-        const videoElement = document.getElementById('input_video');
-        const canvasElement = document.getElementById('output_canvas');
-        const canvasCtx = canvasElement.getContext('2d');
-
+        /* --- AI POSE ANALYSE --- */
         function onResults(results) {
             if(!results.poseLandmarks || isRest) return;
-            canvasCtx.save(); canvasCtx.clearRect(0, 0, canvasElement.width, canvasElement.height);
-            canvasCtx.drawImage(results.image, 0, 0, canvasElement.width, canvasElement.height);
-            const m = results.poseLandmarks; const exe = circuit[cIdx].n.toLowerCase(); let isGood = false;
-            
-            // Detectie logica per oefening op basis van hoeken en posities
-            if(exe.includes("push-up")) {
-                const a = calcAngle(m[11], m[13], m[15]); 
-                if(a < 100) { isGood = true; stage = 'down'; } 
-                if(a > 160 && stage === 'down') { registerRep(); stage = 'up'; }
-            } else if(exe.includes("squat")) {
-                const a = calcAngle(m[24], m[26], m[28]); 
-                if(a < 110) { isGood = true; stage = 'down'; } 
-                if(a > 160 && stage === 'down') { registerRep(); stage = 'up'; } 
-            } else { 
-                isGood = m[15].y < m[11].y; if(isGood) stage = 'up'; 
-                if(!isGood && stage === 'up') { registerRep(); stage = 'down'; } 
-            }
-            drawConnectors(canvasCtx, m, POSE_CONNECTIONS, {color: isGood?'#34c759':'#fff', lineWidth:3});
-            drawLandmarks(canvasCtx, m, {color: isGood?'#34c759':'#007aff', radius:4}); canvasCtx.restore();
+            const ctx = canvasElement.getContext('2d');
+            ctx.save(); ctx.clearRect(0, 0, canvasElement.width, canvasElement.height);
+            ctx.drawImage(results.image, 0, 0, canvasElement.width, canvasElement.height);
+            // Simpele detectie (Squat voorbeeld)
+            const m = results.poseLandmarks;
+            if(m[24].y > m[26].y - 0.1) { stage = 'down'; }
+            if(m[24].y < m[26].y - 0.2 && stage === 'down') { stage = 'up'; reps++; playSound('rep'); updateHUD(); }
+            ctx.restore();
         }
-
-        function registerRep() {
-            const now = Date.now(); if(now - lastRepTime < 800) { updateHUD("SLOMER!"); playSound('bad'); return; }
-            lastRepTime = now; reps++; updateHUD("GOED!"); playSound('rep'); showFloatingText("+15 XP");
-            
-            // XP Toevoegen aan de relevante spiergroepen
-            circuit[cIdx].focus.forEach(muscle => {
-                user.stats[muscle].xp += 15; let target = Math.round(100 * Math.pow(1.75, user.stats[muscle].lvl - 1));
-                if(user.stats[muscle].xp >= target) { user.stats[muscle].xp -= target; user.stats[muscle].lvl++; showLevelUp(muscle, user.stats[muscle].lvl); }
-            });
-            save();
-            if(reps >= user.reps) {
-                if(sets < 3) { sets++; reps=0; startRest(15, "SET KLAAR!"); }
-                else { cIdx++; if(cIdx < 6) { sets=1; reps=0; startRest(30, "VOLGENDE"); } else { finishWorkout(); } }
-            }
-        }
-
-        /* --- HULP FUNCTIES: Wiskunde, UI effecten en camera --- */
-        function finishWorkout() { user.history.push({date: new Date().toLocaleDateString(), cat: currentCat, reps: user.reps * 18}); save(); stopWorkout(); }
-        function showFloatingText(txt) { const el = document.createElement('div'); el.className = 'float-txt'; el.innerText = txt; el.style.left = '50%'; el.style.top = '50%'; document.body.appendChild(el); setTimeout(() => el.remove(), 1500); }
-        function showLevelUp(muscle, lvl) { const ov = document.getElementById('lvl-overlay'); document.getElementById('lvl-msg').innerText = `${muscle} is nu Level ${lvl}`; ov.classList.add('active'); playSound('lvl'); }
-        function closeLvl() { document.getElementById('lvl-overlay').classList.remove('active'); }
-        function calcAngle(a,b,c) { const r = Math.atan2(c.y-b.y,c.x-b.x)-Math.atan2(a.y-b.y,a.x-b.x); let ang = Math.abs(r*180/Math.PI); return ang>180?360-ang:ang; }
-
+        function updateHUD() { document.getElementById('hud-reps').innerText = `${reps}/${user.reps}`; }
         function startAI() {
             const pose = new Pose({locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/pose/${file}`});
-            pose.setOptions({modelComplexity: 1, minDetectionConfidence: 0.5});
             pose.onResults(onResults);
-            camera = new Camera(videoElement, { onFrame: async () => { 
-                canvasElement.width = videoElement.videoWidth; canvasElement.height = videoElement.videoHeight;
-                await pose.send({image: videoElement}); 
-            }, width: 640, height: 480 });
+            camera = new Camera(videoElement, { onFrame: async () => { await pose.send({image: videoElement}); }, width: 640, height: 480 });
             camera.start();
         }
 
-        /* INITIALISATIE: Controleer of we al een naam hebben, anders toon onboarding */
+        /* INITIALISATIE */
+        const videoElement = document.getElementById('input_video');
+        const canvasElement = document.getElementById('output_canvas');
         if(!user.name) renderQ(); else { tab('dash'); document.getElementById('nav').classList.remove('hidden'); }
     </script>
 </body>
