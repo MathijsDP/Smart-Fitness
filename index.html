@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Elite AI Coach v8.0</title>
+    <title>Elite AI Coach v9.0 - ULTIMATE</title>
     
     <script src="https://cdn.jsdelivr.net/npm/@mediapipe/pose"></script>
     <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils"></script>
@@ -11,62 +11,79 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&family=Montserrat:wght@700;900&display=swap" rel="stylesheet">
 
     <style>
-        /* Kleurpalet variabelen - makkelijk aan te passen */
-        :root { --bg: #000; --surface: #121212; --accent: #fff; --sub: #888; --blue: #007aff; --orange: #ff9500; --green: #34c759; }
+        /* --- CORE STYLING --- */
+        :root { --bg: #050505; --surface: #121212; --surface-2: #1e1e1e; --accent: #fff; --sub: #888; --blue: #007aff; --orange: #ff9500; --green: #34c759; --red: #ff3b30; --gold: #ffd700; }
         
-        /* Basis instellingen */
-        body { margin: 0; font-family: 'Inter', sans-serif; background: var(--bg); color: var(--accent); overflow: hidden; height: 100vh; }
+        body { margin: 0; font-family: 'Inter', sans-serif; background: var(--bg); color: var(--accent); overflow: hidden; height: 100vh; user-select: none; -webkit-user-select: none; }
         
-        /* .screen: Elk "scherm" (dashboard, profiel, etc.) is een laag over elkaar */
-        .screen { position: absolute; inset: 0; padding: 30px 20px 110px; display: flex; flex-direction: column; overflow-y: auto; transition: 0.3s; }
+        .screen { position: absolute; inset: 0; padding: 30px 20px 110px; display: flex; flex-direction: column; overflow-y: auto; transition: opacity 0.3s ease, transform 0.3s ease; opacity: 1; transform: scale(1); }
+        .hidden { display: none !important; opacity: 0; pointer-events: none; }
         
-        /* Hulpklasse om schermen te verbergen */
-        .hidden { display: none !important; }
+        h1 { font-family: 'Montserrat'; font-size: 26px; font-weight: 900; text-transform: uppercase; margin: 0 0 5px; letter-spacing: -0.5px; }
+        .subtitle { color: var(--sub); font-size: 11px; letter-spacing: 1.5px; text-transform: uppercase; margin-bottom: 25px; font-weight: 700; }
         
-        /* Typografie */
-        h1 { font-family: 'Montserrat'; font-size: 26px; font-weight: 900; text-transform: uppercase; margin-bottom: 5px; }
-        .subtitle { color: var(--sub); font-size: 11px; letter-spacing: 1.5px; text-transform: uppercase; margin-bottom: 25px; }
-        
-        /* Formulieren (Inputs en buttons) */
+        /* UI Components */
         .q-box { flex: 1; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; }
-        input, select { width: 100%; max-width: 320px; padding: 16px; border-radius: 12px; border: 1px solid #333; background: #1c1c1e; color: #fff; font-size: 16px; margin-bottom: 12px; outline: none; transition: 0.2s; }
-        input:focus { border-color: var(--blue); }
+        input, select { width: 100%; max-width: 320px; padding: 16px; border-radius: 12px; border: 1px solid #333; background: var(--surface-2); color: #fff; font-size: 16px; margin-bottom: 12px; outline: none; transition: 0.2s; }
+        input:focus { border-color: var(--blue); box-shadow: 0 0 15px rgba(0,122,255,0.3); }
         
-        .btn { background: var(--accent); color: #000; border: none; padding: 18px; border-radius: 14px; width: 100%; max-width: 320px; font-weight: 800; text-transform: uppercase; cursor: pointer; }
-        .btn-small { padding: 10px 15px; font-size: 12px; margin: 5px; width: auto; background: #222; color: #fff; border: 1px solid #444; border-radius: 8px; cursor: pointer; }
+        .btn { background: var(--accent); color: #000; border: none; padding: 18px; border-radius: 16px; width: 100%; max-width: 320px; font-weight: 800; text-transform: uppercase; cursor: pointer; transition: transform 0.1s; box-shadow: 0 4px 15px rgba(255,255,255,0.1); }
+        .btn:active { transform: scale(0.98); }
+        .btn-small { padding: 10px 15px; font-size: 11px; font-weight: 700; background: var(--surface-2); color: #fff; border: 1px solid #333; border-radius: 8px; cursor: pointer; }
         
-        /* Kaarten voor menu items */
-        .card { background: var(--surface); border-radius: 20px; padding: 20px; margin-bottom: 15px; border: 1px solid #222; }
+        .card { background: var(--surface); border-radius: 24px; padding: 20px; margin-bottom: 15px; border: 1px solid #222; position: relative; overflow: hidden; }
+        .card:active { background: var(--surface-2); }
 
-        /* Streak badge */
-        .streak-badge { background: rgba(255,149,0,0.1); color: var(--orange); padding: 8px 15px; border-radius: 20px; font-weight: 800; font-size: 14px; display: inline-flex; align-items: center; gap: 8px; margin-bottom: 20px; }
+        /* Dashboard Elements */
+        .streak-badge { background: rgba(255,149,0,0.15); color: var(--orange); padding: 8px 16px; border-radius: 100px; font-weight: 800; font-size: 13px; display: inline-flex; align-items: center; gap: 8px; margin-bottom: 20px; border: 1px solid rgba(255,149,0,0.3); }
+        .rank-badge { background: rgba(0,122,255,0.15); color: var(--blue); padding: 5px 10px; border-radius: 6px; font-size: 10px; font-weight: 800; text-transform: uppercase; margin-left: 10px; vertical-align: middle; }
+
+        /* Workout HUD */
+        .hud { position: absolute; top: 0; width: 100%; padding: 20px 20px 40px; display: flex; justify-content: space-between; background: linear-gradient(to bottom, rgba(0,0,0,0.9), transparent); z-index: 2001; pointer-events: none; }
+        .hud-val span { display: block; font-size: 9px; color: var(--sub); font-weight: 700; letter-spacing: 1px; }
+        .hud-val strong { font-size: 24px; font-family: 'Montserrat'; text-shadow: 0 2px 10px rgba(0,0,0,1); }
+
+        #coaching-tip { position: absolute; bottom: 130px; left: 0; width: 100%; text-align: center; color: var(--accent); font-weight: 900; font-size: 20px; text-shadow: 0 4px 12px rgba(0,0,0,1); z-index: 2002; pointer-events: none; transition: 0.2s; }
         
-        /* HUD (Heads Up Display) tijdens workout - toont reps/sets */
-        .hud { position: absolute; top: 0; width: 100%; padding: 20px; display: flex; justify-content: space-between; background: linear-gradient(to bottom, rgba(0,0,0,0.8), transparent); z-index: 2001; pointer-events: none; box-sizing: border-box; }
-        .hud-val { text-align: center; }
-        .hud-val span { display: block; font-size: 9px; color: var(--sub); font-weight: 700; }
-        .hud-val strong { font-size: 22px; font-family: 'Montserrat'; text-shadow: 0 2px 4px rgba(0,0,0,0.8); }
+        /* Overlays */
+        #rest-overlay { position: absolute; inset: 0; background: rgba(5,5,5,0.98); z-index: 3000; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 20px; backdrop-filter: blur(5px); }
+        .timer-txt { font-size: 90px; font-weight: 900; color: var(--blue); font-family: 'Montserrat'; margin: 10px 0; line-height: 1; letter-spacing: -3px; }
 
-        /* Coaching tip tekst onderin beeld */
-        #coaching-tip { position: absolute; bottom: 120px; left: 0; width: 100%; text-align: center; color: var(--accent); font-weight: 800; font-size: 18px; text-shadow: 2px 2px 10px rgba(0,0,0,1); z-index: 2002; pointer-events: none; }
-
-        /* Rust overlay (zwart scherm tussen oefeningen) */
-        #rest-overlay { position: absolute; inset: 0; background: rgba(0,0,0,0.96); z-index: 3000; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 20px; }
-        .timer-txt { font-size: 80px; font-weight: 900; color: var(--blue); font-family: 'Montserrat'; margin: 10px 0; }
-
-        /* Navigatie balk onderaan */
-        .navbar { position: fixed; bottom: 0; width: 100%; background: #0a0a0a; border-top: 1px solid #222; display: flex; justify-content: space-around; padding: 15px 0 35px; z-index: 1000; }
-        .nav-item { color: var(--sub); font-size: 10px; font-weight: 700; cursor: pointer; text-align: center; text-transform: uppercase; }
-        .nav-item.active { color: #fff; }
-
-        /* Canvas voor de camera output */
-        #output_canvas { width: 100%; height: 100%; object-fit: contain; transform: scaleX(-1); background: #000; }
+        /* Level Up Popups */
+        #lvl-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.9); z-index: 4000; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; pointer-events: none; opacity: 0; transition: 0.4s; }
+        #lvl-overlay.active { opacity: 1; pointer-events: auto; }
+        .lvl-anim { animation: popIn 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; }
+        @keyframes popIn { 0% { transform: scale(0.5); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
         
-        /* Stats (Level balkjes) */
-        .stat-row { margin-bottom: 15px; }
-        .stat-header { display: flex; justify-content: space-between; font-size: 12px; font-weight: 700; margin-bottom: 5px; }
-        .bar-bg { background: #222; height: 8px; border-radius: 4px; overflow: hidden; }
-        .bar-fill { height: 100%; background: var(--blue); transition: width 0.5s ease-out; }
+        /* Floating Text (XP) */
+        .float-txt { position: absolute; font-weight: 900; font-size: 16px; color: var(--gold); pointer-events: none; animation: floatUp 1.5s ease-out forwards; z-index: 2005; text-shadow: 0 2px 4px rgba(0,0,0,0.8); }
+        @keyframes floatUp { 0% { transform: translateY(0) scale(1); opacity: 1; } 100% { transform: translateY(-80px) scale(1.2); opacity: 0; } }
+
+        /* Navigation */
+        .navbar { position: fixed; bottom: 0; width: 100%; background: rgba(18,18,18,0.95); backdrop-filter: blur(10px); border-top: 1px solid #222; display: flex; justify-content: space-around; padding: 15px 0 35px; z-index: 1000; }
+        .nav-item { color: var(--sub); font-size: 9px; font-weight: 700; cursor: pointer; text-align: center; text-transform: uppercase; transition: 0.2s; }
+        .nav-item.active { color: var(--accent); transform: translateY(-2px); }
+        .nav-item i { display: block; font-size: 20px; margin-bottom: 4px; font-style: normal; }
+
+        /* Camera */
+        #output_canvas { width: 100%; height: 100%; object-fit: cover; transform: scaleX(-1); }
+
+        /* Stats & Badges */
+        .stat-row { margin-bottom: 12px; }
+        .stat-header { display: flex; justify-content: space-between; font-size: 11px; font-weight: 700; margin-bottom: 6px; }
+        .bar-bg { background: #222; height: 10px; border-radius: 5px; overflow: hidden; position: relative; }
+        .bar-fill { height: 100%; background: var(--blue); transition: width 0.6s cubic-bezier(0.22, 1, 0.36, 1); box-shadow: 0 0 10px rgba(0,122,255,0.5); }
+        
+        .badges-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-top: 15px; }
+        .badge-item { background: #1a1a1a; padding: 15px 5px; border-radius: 12px; text-align: center; opacity: 0.4; filter: grayscale(1); transition: 0.3s; border: 1px solid transparent; }
+        .badge-item.unlocked { opacity: 1; filter: grayscale(0); border-color: var(--gold); background: rgba(255, 215, 0, 0.05); }
+        .badge-icon { font-size: 24px; display: block; margin-bottom: 5px; }
+        .badge-name { font-size: 9px; font-weight: 700; text-transform: uppercase; }
+
+        /* Form Feedback Colors */
+        .feedback-good { color: var(--green); }
+        .feedback-bad { color: var(--red); }
+        .feedback-warn { color: var(--orange); }
     </style>
 </head>
 <body>
@@ -76,39 +93,79 @@
     </div>
 
     <div id="scr-dash" class="screen hidden">
-        <div class="streak-badge"><i>🔥</i> <span id="streak-val">0</span> DAGEN STREAK</div>
+        <div style="display:flex; justify-content:space-between; align-items:center;">
+            <div class="streak-badge"><i>🔥</i> <span id="streak-val">0</span> DAGEN</div>
+            <div id="rank-display" class="rank-badge">ROOKIE</div>
+        </div>
+        
         <h1 id="dash-greet">HEY!</h1>
-        <div class="subtitle">Klaar voor je sessie?</div>
-        <div class="card" onclick="startCircuit('Upper')"><strong>UPPER BODY</strong><p style="color:var(--sub);font-size:12px;">Borst, Armen & Schouders</p></div>
-        <div class="card" onclick="startCircuit('Lower')"><strong>LOWER BODY</strong><p style="color:var(--sub);font-size:12px;">Benen, Billen & Kuiten</p></div>
-        <div class="card" onclick="startCircuit('Conditie')"><strong>FULL BODY / CORE</strong><p style="color:var(--sub);font-size:12px;">Vetverbranding & Abs</p></div>
+        <div class="subtitle">Tijd om te knallen</div>
+        
+        <div class="card" onclick="startCircuit('Upper')">
+            <strong>UPPER BODY</strong>
+            <div style="color:var(--sub);font-size:11px; margin-top:5px;">Borst, Armen & Schouders</div>
+            <div style="margin-top:10px; font-size:10px; font-weight:700; color:var(--blue);">LVL AANBEVOLEN: 1+</div>
+        </div>
+        <div class="card" onclick="startCircuit('Lower')">
+            <strong>LOWER BODY</strong>
+            <div style="color:var(--sub);font-size:11px; margin-top:5px;">Benen, Billen & Kuiten</div>
+            <div style="margin-top:10px; font-size:10px; font-weight:700; color:var(--blue);">LVL AANBEVOLEN: 1+</div>
+        </div>
+        <div class="card" onclick="startCircuit('Conditie')">
+            <strong>FULL BODY / CORE</strong>
+            <div style="color:var(--sub);font-size:11px; margin-top:5px;">Vetverbranding & Abs</div>
+            <div style="margin-top:10px; font-size:10px; font-weight:700; color:var(--blue);">INTENSIEF</div>
+        </div>
     </div>
 
     <div id="scr-progress" class="screen hidden">
-        <h1>LICHAAMS STATS</h1>
-        <div class="subtitle">Level up per spiergroep</div>
-        <div id="stats-render" class="card"></div>
+        <h1>JOUW STATS</h1>
+        <div class="subtitle">RPG Progressie & Badges</div>
+        
+        <div class="card">
+            <h3 style="font-size:14px; margin:0 0 15px;">SPIER LEVELS</h3>
+            <div id="stats-render"></div>
+        </div>
+
+        <div class="card">
+            <h3 style="font-size:14px; margin:0 0 10px;">BADGE COLLECTIE</h3>
+            <div class="badges-grid" id="badges-render"></div>
+        </div>
+        
+        <div class="card">
+             <h3 style="font-size:14px; margin:0 0 10px;">RECENTE HISTORY</h3>
+             <div id="history-render" style="font-size:11px; color:var(--sub);">Nog geen workouts.</div>
+        </div>
     </div>
 
     <div id="scr-profile" class="screen hidden">
         <h1>PROFIEL</h1>
-        <div class="subtitle">Pas je gegevens aan</div>
-        <div class="card" id="profile-fields">
-            </div>
+        <div class="subtitle">Jouw gegevens</div>
+        <div class="card" id="profile-fields"></div>
+        <button class="btn-small" style="width:100%; padding:15px; margin:20px 0; background:#220000; border-color:#500; color:#f55;" onclick="resetData()">RESET ALLE DATA</button>
     </div>
 
-    <div id="scr-workout" class="screen hidden" style="padding:0; z-index: 2000;">
-        <video id="input_video" style="display:none"></video> <canvas id="output_canvas"></canvas> <div id="coaching-tip"></div>
+    <div id="scr-workout" class="screen hidden" style="padding:0; z-index: 2000; background:#000;">
+        <video id="input_video" style="display:none"></video> 
+        <canvas id="output_canvas"></canvas> 
         
+        <div id="coaching-tip">START POSITIE...</div>
+
         <div id="rest-overlay" class="hidden">
             <div id="rest-title" class="subtitle">RUST</div>
-            <div id="rest-exe" style="font-size:24px; font-weight:900;">OEFENING</div>
+            <div id="rest-exe" style="font-size:28px; font-weight:900; margin-bottom:5px;">OEFENING</div>
             <div class="timer-txt" id="timer-val">30</div>
-            <div style="display:flex; gap:10px;">
-                <button class="btn-small" onclick="adjustTime(5)">+5 SEC</button>
-                <button class="btn-small" style="background:var(--blue)" onclick="skipRest()">SLA OVER</button>
+            
+            <div style="display:flex; gap:10px; margin-top:10px;">
+                <button class="btn-small" onclick="adjustTime(10)">+10s</button>
+                <button class="btn-small" style="background:var(--blue); border-color:var(--blue);" onclick="skipRest()">START NU</button>
             </div>
-            <div id="rest-instr" style="color:var(--sub); font-size:14px; max-width:300px; margin-top:20px; line-height:1.5;"></div>
+            
+            <div id="rest-instr" style="color:#ccc; font-size:13px; max-width:300px; margin-top:25px; line-height:1.6; font-weight:400;"></div>
+            
+            <div style="position:absolute; bottom:40px; font-size:10px; color:var(--sub);">
+                💡 Tip: Zorg dat je volledig in beeld staat.
+            </div>
         </div>
 
         <div class="hud">
@@ -116,48 +173,70 @@
             <div class="hud-val"><span>SET</span><strong id="hud-set">1/3</strong></div>
             <div class="hud-val"><span>REPS</span><strong id="hud-reps">0/12</strong></div>
         </div>
-        <button class="btn" style="position:absolute; bottom:20px; left:50%; transform:translateX(-50%); width:80%; z-index:2001; background:rgba(255,59,48,0.95); color:#fff;" onclick="stopWorkout()">STOP TRAINING</button>
+
+        <button class="btn" style="position:absolute; bottom:30px; left:50%; transform:translateX(-50%); width:60%; height:50px; padding:0; z-index:2001; background:rgba(255,59,48,0.2); border:1px solid rgba(255,59,48,0.5); color:#fff; font-size:12px; backdrop-filter:blur(4px);" onclick="stopWorkout()">STOPPEN</button>
+    </div>
+
+    <div id="lvl-overlay">
+        <div class="lvl-anim">
+            <div style="font-size:60px; margin-bottom:10px;">🆙</div>
+            <h1 style="font-size:32px; color:var(--gold); text-shadow:0 0 20px rgba(255,215,0,0.5);">LEVEL UP!</h1>
+            <h2 id="lvl-msg" style="font-family:'Inter'; font-size:18px; color:#fff; margin-bottom:30px;">Je Borst is nu Level 5</h2>
+            <button class="btn" onclick="closeLvl()">DOORGAAN</button>
+        </div>
     </div>
 
     <nav class="navbar hidden" id="nav">
-        <div class="nav-item active" onclick="tab('dash', this)">DASHBOARD</div>
-        <div class="nav-item" onclick="tab('progress', this)">STATS</div>
-        <div class="nav-item" onclick="tab('profile', this)">PROFIEL</div>
+        <div class="nav-item active" onclick="tab('dash', this)"><i>🏠</i>Dashboard</div>
+        <div class="nav-item" onclick="tab('progress', this)"><i>📊</i>Stats</div>
+        <div class="nav-item" onclick="tab('profile', this)"><i>👤</i>Profiel</div>
     </nav>
 
     <script>
-        // --- DATA CONFIGURATIE ---
+        // --- 1. CONFIGURATION & DATA ---
+        
         const exercises = {
             Upper: [
-                {n:"Push-up", i:"Houd je lichaam recht, zak tot je borst bijna de grond raakt en duw jezelf omhoog.", focus:["Borst", "Triceps", "Schouders"]},
-                {n:"Shoulder Taps", i:"Blijf in plank en tik om de beurt je schouders aan zonder je heupen te draaien.", focus:["Schouders", "Abs"]},
-                {n:"Pike Push-up", i:"Duw je heupen omhoog in een V-vorm en laat je hoofd gecontroleerd naar de grond zakken.", focus:["Schouders", "Triceps"]},
-                {n:"Superman", i:"Lig op je buik en til tegelijk je armen en benen kort van de grond.", focus:["Rug", "Schouders"]},
-                {n:"Diamond Push-up", i:"Plaats je handen in een ruitvorm onder je borst en duw jezelf gecontroleerd omhoog.", focus:["Triceps", "Borst"]},
-                {n:"Plank Taps", i:"Ga in hoge plank en tik om de beurt zijwaarts de grond aan terwijl je stabiel blijft.", focus:["Abs", "Schouders"]}
+                {n:"Push-up", i:"Houd je lichaam recht. Borst naar de grond.", focus:["Borst", "Triceps", "Schouders"]},
+                {n:"Shoulder Taps", i:"Hoge plank. Tik schouders om en om aan.", focus:["Schouders", "Abs"]},
+                {n:"Pike Push-up", i:"Heupen in de lucht (V-vorm). Hoofd naar grond.", focus:["Schouders", "Triceps"]},
+                {n:"Superman", i:"Op buik. Armen en benen tegelijk liften.", focus:["Rug", "Schouders"]},
+                {n:"Diamond Push-up", i:"Handen in ruitvorm onder borst.", focus:["Triceps", "Borst"]},
+                {n:"Plank Taps", i:"Hoge plank. Tik grond ver naast je aan.", focus:["Abs", "Schouders"]}
             ],
             Lower: [
-                {n:"Squat", i:"Zak met rechte rug naar beneden alsof je op een stoel zit en duw via je hielen omhoog.", focus:["Benen", "Billen"]},
-                {n:"Lunge", i:"Stap naar voren en buig beide knieën tot 90 graden voordat je terugduwt.", focus:["Benen", "Billen"]},
-                {n:"Glute Bridge", i:"Lig op je rug en duw je heupen omhoog tot je lichaam een rechte lijn vormt.", focus:["Billen", "Rug"]},
-                {n:"Side Lunges", i:"Stap zijwaarts en buig het standbeen diep terwijl het andere been gestrekt blijft.", focus:["Benen", "Billen"]},
-                {n:"Calf Raise", i:"Duw jezelf zo hoog mogelijk op je tenen en laat je hielen langzaam zakken.", focus:["Kuiten"]},
-                {n:"High Knees", i:"Ren op de plaats en breng je knieën zo hoog mogelijk in een snel tempo.", focus:["Benen", "Abs"]}
+                {n:"Squat", i:"Billen naar achteren, knieën niet voorbij tenen.", focus:["Benen", "Billen"]},
+                {n:"Lunge", i:"Grote stap, achterste knie naar grond.", focus:["Benen", "Billen"]},
+                {n:"Glute Bridge", i:"Op rug. Heupen omhoog duwen.", focus:["Billen", "Rug"]},
+                {n:"Side Lunges", i:"Stap opzij, één been buigen, ander recht.", focus:["Benen", "Billen"]},
+                {n:"Calf Raise", i:"Op tenen staan en rustig zakken.", focus:["Kuiten"]},
+                {n:"High Knees", i:"Rennen op de plaats, knieën hoog.", focus:["Benen", "Abs"]}
             ],
             Conditie: [
-                {n:"Jumping Jacks", i:"Spring je benen uit elkaar terwijl je armen boven je hoofd samenkomen en keer terug.", focus:["Benen", "Schouders"]},
-                {n:"Burpees", i:"Ga van squat naar plank, spring terug naar voren en kom explosief omhoog.", focus:["Borst", "Benen", "Abs"]},
-                {n:"Mountain Climbers", i:"Blijf in plank en breng om de beurt snel je knieën richting je borst.", focus:["Abs", "Schouders"]},
-                {n:"Skater Jumps", i:"Spring zijwaarts van het ene been naar het andere en land gecontroleerd.", focus:["Benen", "Billen"]},
-                {n:"Plank", i:"Steun op onderarmen en tenen en houd je lichaam in een rechte lijn vast.", focus:["Abs", "Rug"]},
-                {n:"Crunches", i:"Lig op je rug en til je schouders gecontroleerd van de grond zonder aan je nek te trekken.", focus:["Abs"]}
+                {n:"Jumping Jacks", i:"Spring wijd, armen omhoog.", focus:["Benen", "Schouders"]},
+                {n:"Burpees", i:"Squat, plank, terugspringen, sprong.", focus:["Borst", "Benen", "Abs"]},
+                {n:"Mountain Climbers", i:"Plank positie, knieën snel naar borst.", focus:["Abs", "Schouders"]},
+                {n:"Skater Jumps", i:"Spring zijwaarts van been naar been.", focus:["Benen", "Billen"]},
+                {n:"Plank", i:"Op ellebogen. Lichaam recht als een plank.", focus:["Abs", "Rug"]},
+                {n:"Crunches", i:"Schouders van grond, kijk naar plafond.", focus:["Abs"]}
             ]
         };
 
-        // --- GEBRUIKERS DATA (LOCAL STORAGE) ---
-        let user = JSON.parse(localStorage.getItem('elite_v9')) || {
+        const badgeList = [
+            { id: 'b_start', icon: '🐣', name: 'Rookie', desc: 'Eerste workout voltooid' },
+            { id: 'b_wk1', icon: '🔥', name: 'Week 1', desc: '7 dagen streak gehaald' },
+            { id: 'b_push', icon: '💪', name: 'Push Master', desc: 'Borst Level 5 bereikt' },
+            { id: 'b_legs', icon: '🦵', name: 'Leg Day', desc: 'Benen Level 5 bereikt' },
+            { id: 'b_elite', icon: '🏆', name: 'Elite', desc: 'Totaal Level 50 bereikt' },
+            { id: 'b_early', icon: '🌅', name: 'Vroege Vogel', desc: 'Training voor 08:00u' }
+        ];
+
+        let user = JSON.parse(localStorage.getItem('elite_v9_ultimate')) || {
             name: '', age: '', gender: '', height: '', weight: '', goal: '', reps: 12, availability: '',
             streak: 0, lastDate: null,
+            totalWorkouts: 0,
+            badges: [],
+            history: [],
             stats: { 
                 Borst: {xp:0, lvl:1}, Schouders: {xp:0, lvl:1}, Triceps: {xp:0, lvl:1},
                 Abs: {xp:0, lvl:1}, Rug: {xp:0, lvl:1}, Benen: {xp:0, lvl:1},
@@ -165,11 +244,50 @@
             }
         };
 
+        // --- 2. AUDIO SYSTEM (Synthesizer - No files needed) ---
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        function playSound(type) {
+            if(audioCtx.state === 'suspended') audioCtx.resume();
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+            
+            if(type === 'rep') {
+                osc.frequency.setValueAtTime(600, audioCtx.currentTime);
+                osc.frequency.exponentialRampToValueAtTime(1200, audioCtx.currentTime + 0.1);
+                gain.gain.setValueAtTime(0.3, audioCtx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.1);
+                osc.start(); osc.stop(audioCtx.currentTime + 0.1);
+            } else if (type === 'lvl') {
+                // Fanfare chord
+                [440, 554, 659].forEach((f, i) => {
+                    const o = audioCtx.createOscillator();
+                    const g = audioCtx.createGain();
+                    o.connect(g); g.connect(audioCtx.destination);
+                    o.type = 'triangle';
+                    o.frequency.value = f;
+                    g.gain.setValueAtTime(0, audioCtx.currentTime);
+                    g.gain.linearRampToValueAtTime(0.2, audioCtx.currentTime + 0.1 + (i*0.05));
+                    g.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 1.5);
+                    o.start(); o.stop(audioCtx.currentTime + 1.5);
+                });
+            } else if (type === 'bad') {
+                osc.frequency.value = 150;
+                osc.type = 'sawtooth';
+                gain.gain.setValueAtTime(0.2, audioCtx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.3);
+                osc.start(); osc.stop(audioCtx.currentTime + 0.3);
+            }
+        }
+
+        // --- 3. STATE VARIABLES ---
         let currentStep = 1; 
         let circuit = [], cIdx = 0, reps = 0, sets = 1, isRest = false, restTimer = null, tLeft = 30;
         let stage = 'up'; 
         let currentCat = '';
         let camera = null;
+        let lastRepTime = 0; // Voor snelheid check
 
         const questions = [
             { k: 'name', q: 'VOORNAAM', t: 'text' },
@@ -182,10 +300,76 @@
             { k: 'availability', q: 'DAGEN PER WEEK', t: 'select', o: ['1-2', '3-4', '5+'] }
         ];
 
-        // --- ONBOARDING FUNCTIES ---
+        // --- 4. CORE FUNCTIONS ---
+
+        function save() { localStorage.setItem('elite_v9_ultimate', JSON.stringify(user)); }
+        function resetData() { localStorage.removeItem('elite_v9_ultimate'); location.reload(); }
+
+        // RANG BEREKENING
+        function getRank() {
+            let totalLvl = Object.values(user.stats).reduce((a,b) => a + b.lvl, 0);
+            if(totalLvl < 10) return "ROOKIE";
+            if(totalLvl < 25) return "AMATEUR";
+            if(totalLvl < 50) return "ATLEET";
+            if(totalLvl < 100) return "PRO";
+            return "ELITE";
+        }
+
+        // --- 5. UI & NAVIGATIE ---
+
+        function tab(t, el) {
+            document.querySelectorAll('.screen').forEach(s => s.classList.add('hidden'));
+            document.getElementById('scr-'+t).classList.remove('hidden');
+            if(el) { document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active')); el.classList.add('active'); }
+            
+            if(t === 'dash') { 
+                document.getElementById('dash-greet').innerText = "HEY " + (user.name || "CHAMP"); 
+                document.getElementById('streak-val').innerText = user.streak; 
+                document.getElementById('rank-display').innerText = getRank();
+            }
+            if(t === 'progress') renderProgress();
+            if(t === 'profile') renderProfileFields();
+        }
+
+        function renderProgress() {
+            // Stats Bars
+            const container = document.getElementById('stats-render');
+            container.innerHTML = Object.keys(user.stats).map(key => {
+                const s = user.stats[key];
+                const target = Math.round(100 * Math.pow(1.75, s.lvl - 1));
+                const pct = (s.xp / target) * 100;
+                return `
+                    <div class="stat-row">
+                        <div class="stat-header"><span>${key.toUpperCase()}</span><span>LVL ${s.lvl} <span style="color:var(--sub);font-weight:400;">(${Math.round(s.xp)}/${target})</span></span></div>
+                        <div class="bar-bg"><div class="bar-fill" style="width: ${Math.min(pct, 100)}%"></div></div>
+                    </div>`;
+            }).join('');
+
+            // Badges
+            const badgeCont = document.getElementById('badges-render');
+            badgeCont.innerHTML = badgeList.map(b => {
+                const unlocked = user.badges.includes(b.id);
+                return `<div class="badge-item ${unlocked?'unlocked':''}">
+                    <div class="badge-icon">${b.icon}</div>
+                    <div class="badge-name">${b.name}</div>
+                </div>`;
+            }).join('');
+
+            // History
+            const histCont = document.getElementById('history-render');
+            if(user.history.length > 0) {
+                histCont.innerHTML = user.history.slice().reverse().slice(0,5).map(h => 
+                    `<div style="display:flex; justify-content:space-between; padding:10px 0; border-bottom:1px solid #222;">
+                        <span>${h.date}</span> <span>${h.cat} (${h.reps} reps)</span>
+                    </div>`
+                ).join('');
+            }
+        }
+
+        // --- 6. ONBOARDING ---
         function renderQ() {
             const q = questions[currentStep-1];
-            let html = `<h1>${q.q}</h1><div class="subtitle">Vraag ${currentStep} van 8</div>`;
+            let html = `<h1>${q.q}</h1><div class="subtitle">Stap ${currentStep}/${questions.length}</div>`;
             if(q.t === 'select') {
                 html += `<select id="q-val">` + q.o.map(o => `<option value="${o}">${o}</option>`).join('') + `</select>`;
             } else {
@@ -198,25 +382,8 @@
         function saveQ() {
             const val = document.getElementById('q-val').value;
             user[questions[currentStep-1].k] = val;
-            if(currentStep < 8) { currentStep++; renderQ(); }
+            if(currentStep < questions.length) { currentStep++; renderQ(); }
             else { save(); checkStreak(); tab('dash'); document.getElementById('nav').classList.remove('hidden'); }
-        }
-
-        // --- UTILITEIT FUNCTIES ---
-        function save() { localStorage.setItem('elite_v9', JSON.stringify(user)); }
-        function updateUser(k, v) { user[k] = v; save(); }
-
-        // --- NAVIGATIE & UI ---
-        function tab(t, el) {
-            document.querySelectorAll('.screen').forEach(s => s.classList.add('hidden'));
-            document.getElementById('scr-'+t).classList.remove('hidden');
-            if(el) { document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active')); el.classList.add('active'); }
-            if(t === 'dash') { 
-                document.getElementById('dash-greet').innerText = "HEY " + (user.name || "CHAMP"); 
-                document.getElementById('streak-val').innerText = user.streak; 
-            }
-            if(t === 'progress') renderStats();
-            if(t === 'profile') renderProfileFields();
         }
 
         function renderProfileFields() {
@@ -229,22 +396,9 @@
                 }
             `).join('');
         }
+        function updateUser(k, v) { user[k] = v; save(); }
 
-        // AANGEPAST: XP balkjes met exponentiële groei (1.75x moeilijker per level)
-        function renderStats() {
-            const container = document.getElementById('stats-render');
-            container.innerHTML = Object.keys(user.stats).map(key => {
-                const s = user.stats[key];
-                const target = Math.round(100 * Math.pow(1.75, s.lvl - 1));
-                const pct = (s.xp / target) * 100;
-                return `
-                    <div class="stat-row">
-                        <div class="stat-header"><span>${key.toUpperCase()}</span><span>LVL ${s.lvl}</span></div>
-                        <div class="bar-bg"><div class="bar-fill" style="width: ${Math.min(pct, 100)}%"></div></div>
-                    </div>
-                `;
-            }).join('');
-        }
+        // --- 7. WORKOUT LOGIC ---
 
         function checkStreak() {
             const today = new Date().toDateString();
@@ -255,13 +409,6 @@
             user.lastDate = today; save();
         }
 
-        // --- WORKOUT LOGICA ---
-        function stopWorkout() {
-            isRest = false; clearInterval(restTimer);
-            if(camera) camera.stop(); 
-            tab('dash');
-        }
-
         function startCircuit(cat) {
             currentCat = cat;
             circuit = [...exercises[cat]].sort(() => 0.5 - Math.random()); 
@@ -269,6 +416,12 @@
             tab('workout'); 
             startAI(); 
             startRest(30, "LEES DE UITLEG"); 
+        }
+
+        function stopWorkout() {
+            isRest = false; clearInterval(restTimer);
+            if(camera) camera.stop(); 
+            tab('dash');
         }
 
         function startRest(time, title) {
@@ -288,69 +441,108 @@
                 if(tLeft <= 0) skipRest();
             }, 1000);
         }
-
-        function skipRest() { clearInterval(restTimer); isRest = false; document.getElementById('rest-overlay').classList.add('hidden'); updateHUD(); speak("Start " + circuit[cIdx].n); }
         function adjustTime(s) { tLeft += s; document.getElementById('timer-val').innerText = tLeft; }
+        function skipRest() { clearInterval(restTimer); isRest = false; document.getElementById('rest-overlay').classList.add('hidden'); updateHUD(); speak("Start " + circuit[cIdx].n); lastRepTime = Date.now(); }
 
-        function updateHUD() {
+        function updateHUD(feedback = null) {
             document.getElementById('hud-idx').innerText = `${cIdx+1}/6`;
             document.getElementById('hud-set').innerText = `${sets}/3`;
             document.getElementById('hud-reps').innerText = `${reps}/${user.reps}`;
             
             const tipEl = document.getElementById('coaching-tip');
+            
+            // Prioriteit aan feedback (bijv. "Te snel!")
+            if(feedback) {
+                tipEl.innerText = feedback;
+                tipEl.className = feedback.includes('GOED') ? 'feedback-good' : 'feedback-warn';
+                return;
+            }
+
             const rem = user.reps - reps;
-            if (rem <= 3 && rem > 0) tipEl.innerText = "LAATSTE " + rem + "!";
-            else if (reps > 0) tipEl.innerText = "GOED ZO! DIEPER!";
-            else tipEl.innerText = "LET'S GO!";
+            tipEl.className = '';
+            if (rem <= 3 && rem > 0) tipEl.innerText = "NOG " + rem + "...";
+            else if (reps > 0) tipEl.innerText = "BLIJF GAAN!";
+            else tipEl.innerText = "START!";
         }
 
-        // --- AI & CAMERA SETUP ---
+        // --- 8. AI & COMPUTER VISION ---
         const videoElement = document.getElementById('input_video');
         const canvasElement = document.getElementById('output_canvas');
         const canvasCtx = canvasElement.getContext('2d');
 
         function onResults(results) {
             if(!results.poseLandmarks || isRest) return;
+            
             canvasCtx.save();
             canvasCtx.clearRect(0, 0, canvasElement.width, canvasElement.height);
             canvasCtx.drawImage(results.image, 0, 0, canvasElement.width, canvasElement.height);
+            
             const m = results.poseLandmarks;
             const exe = circuit[cIdx].n.toLowerCase();
             let isGood = false;
+            let feedback = null;
 
-            if(exe.includes("squat") || exe.includes("lunge") || exe.includes("sit")) {
+            // Form Correction Logic
+            if(exe.includes("squat")) {
                 const a = calcAngle(m[24], m[26], m[28]); 
+                // Check knees caving in (Valgus) - Simple heuristic: knee x should be close to hip x
+                if(Math.abs(m[26].x - m[24].x) < 0.05) feedback = "Knieën naar buiten!";
+                
                 if(a < 110) { isGood = true; stage = 'down'; } 
                 if(a > 160 && stage === 'down') { registerRep(); stage = 'up'; } 
+            
             } else if(exe.includes("push-up") || exe.includes("diamond")) {
                 const a = calcAngle(m[11], m[13], m[15]); 
+                // Check hip sag
+                if(m[23].y > m[27].y) feedback = "Heupen omhoog!";
+
                 if(a < 100) { isGood = true; stage = 'down'; }
-                if(a > 155 && stage === 'down') { registerRep(); stage = 'up'; }
+                if(a > 160 && stage === 'down') { registerRep(); stage = 'up'; }
+            
             } else {
-                isGood = m[15].y < m[11].y; 
+                // General movement
+                isGood = m[15].y < m[11].y; // Hands above shoulder
                 if(isGood) stage = 'up';
                 if(!isGood && stage === 'up') { registerRep(); stage = 'down'; }
             }
-            drawConnectors(canvasCtx, m, POSE_CONNECTIONS, {color: isGood?'#34c759':'#ff3b30', lineWidth:4});
+
+            if(feedback) updateHUD(feedback);
+            else if(stage === 'down') updateHUD("DUW OMHOOG!");
+
+            drawConnectors(canvasCtx, m, POSE_CONNECTIONS, {color: isGood?'#34c759':'#fff', lineWidth:3});
+            drawLandmarks(canvasCtx, m, {color: isGood?'#34c759':'#007aff', lineWidth:1, radius:4});
             canvasCtx.restore();
         }
 
-        // AANGEPAST: Level up logica met variabele drempel (1.75x)
         function registerRep() {
-            reps++; updateHUD(); speak(reps);
+            // Speed Check
+            const now = Date.now();
+            if(now - lastRepTime < 800) {
+                updateHUD("TE SNEL! SLOMER");
+                playSound('bad');
+                lastRepTime = now;
+                return; // Tel rep niet
+            }
+            lastRepTime = now;
+
+            reps++; 
+            updateHUD("GOED BEZIG!"); 
+            playSound('rep');
             
+            // Floating Text XP
+            showFloatingText("+15 XP");
+
+            // XP Logic
             const focus = circuit[cIdx].focus;
             focus.forEach(muscle => {
                 user.stats[muscle].xp += 15;
-                
-                // Bereken huidige target voor dit level
                 let currentTarget = Math.round(100 * Math.pow(1.75, user.stats[muscle].lvl - 1));
-
-                // Level Up check
+                
                 if(user.stats[muscle].xp >= currentTarget) {
-                    user.stats[muscle].xp -= currentTarget; // Behoud overschot XP
+                    user.stats[muscle].xp -= currentTarget;
                     user.stats[muscle].lvl++;
-                    speak("Level up voor " + muscle);
+                    showLevelUp(muscle, user.stats[muscle].lvl);
+                    checkBadges(); // Check badge on level up
                 }
             });
             save();
@@ -359,13 +551,76 @@
                 if(sets < 3) { sets++; reps=0; startRest(15, "SET VOLTOOID!"); }
                 else { 
                     cIdx++; 
-                    if(cIdx < 6) { sets=1; reps=0; startRest(30, "OEFENING VOLTOOID!"); } 
-                    else { checkStreak(); speak("Geweldig gedaan!"); stopWorkout(); } 
+                    if(cIdx < 6) { sets=1; reps=0; startRest(30, "VOLGENDE OEFENING"); } 
+                    else { finishWorkout(); } 
                 }
             }
         }
 
+        function finishWorkout() {
+            checkStreak();
+            checkBadges('finish');
+            user.history.push({date: new Date().toLocaleDateString(), cat: currentCat, reps: user.reps * 3 * 6});
+            save();
+            speak("Training voltooid. Goed gedaan!");
+            stopWorkout();
+        }
+
+        // --- 9. VISUALS & EFFECTS ---
+
+        function showFloatingText(txt) {
+            const el = document.createElement('div');
+            el.className = 'float-txt';
+            el.innerText = txt;
+            el.style.left = (Math.random() * 60 + 20) + '%';
+            el.style.top = '60%';
+            document.body.appendChild(el);
+            setTimeout(() => el.remove(), 1500);
+        }
+
+        function showLevelUp(muscle, lvl) {
+            const ov = document.getElementById('lvl-overlay');
+            document.getElementById('lvl-msg').innerText = `${muscle} is nu Level ${lvl}`;
+            ov.classList.add('active');
+            playSound('lvl');
+            speak("Level up! " + muscle);
+        }
+        function closeLvl() { document.getElementById('lvl-overlay').classList.remove('active'); }
+
+        // --- 10. BADGE LOGIC ---
+        function checkBadges(trigger) {
+            let newBadge = false;
+            
+            // 1. First Workout
+            if(trigger === 'finish' && !user.badges.includes('b_start')) { user.badges.push('b_start'); newBadge=true; }
+            
+            // 2. Week Streak
+            if(user.streak >= 7 && !user.badges.includes('b_wk1')) { user.badges.push('b_wk1'); newBadge=true; }
+            
+            // 3. Early Bird
+            if(trigger === 'finish') {
+                const hour = new Date().getHours();
+                if(hour < 8 && !user.badges.includes('b_early')) { user.badges.push('b_early'); newBadge=true; }
+            }
+
+            // 4. Level Checks
+            if(user.stats['Borst'].lvl >= 5 && !user.badges.includes('b_push')) { user.badges.push('b_push'); newBadge=true; }
+            if(user.stats['Benen'].lvl >= 5 && !user.badges.includes('b_legs')) { user.badges.push('b_legs'); newBadge=true; }
+            
+            // 5. Total Level
+            let totalLvl = Object.values(user.stats).reduce((a,b) => a + b.lvl, 0);
+            if(totalLvl >= 50 && !user.badges.includes('b_elite')) { user.badges.push('b_elite'); newBadge=true; }
+
+            if(newBadge) {
+                save();
+                showFloatingText("🏆 NIEUWE BADGE!");
+                speak("Gefeliciteerd, nieuwe badge ontgrendeld!");
+            }
+        }
+
+        // Math & Init
         function calcAngle(a,b,c) { const r = Math.atan2(c.y-b.y,c.x-b.x)-Math.atan2(a.y-b.y,a.x-b.x); let ang = Math.abs(r*180/Math.PI); return ang>180?360-ang:ang; }
+        function speak(t) { const m = new SpeechSynthesisUtterance(t); m.lang='nl-NL'; window.speechSynthesis.speak(m); }
         
         function startAI() {
             const pose = new Pose({locateFile: (f) => `https://cdn.jsdelivr.net/npm/@mediapipe/pose/${f}`});
@@ -380,8 +635,6 @@
             });
             camera.start();
         }
-        
-        function speak(t) { const m = new SpeechSynthesisUtterance(t); m.lang='nl-NL'; window.speechSynthesis.speak(m); }
 
         if(!user.name) renderQ(); else { tab('dash'); document.getElementById('nav').classList.remove('hidden'); }
     </script>
