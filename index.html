@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Elite AI Coach v9.0 - ULTIMATE</title>
+    <title>Elite AI Coach v9.0 - ULTIMATE (Editable)</title>
     
     <script src="https://cdn.jsdelivr.net/npm/@mediapipe/pose"></script>
     <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils"></script>
@@ -11,112 +11,75 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&family=Montserrat:wght@700;900&display=swap" rel="stylesheet">
 
     <style>
-        /* --- CSS VARIABELEN: Centraal beheer van kleuren en thema's --- */
+        /* --- 1. THEMA VARIABELEN --- */
         :root { 
-            --bg: #050505; 
-            --surface: #121212; 
-            --surface-2: #1e1e1e; 
-            --accent: #fff; 
-            --sub: #888; 
-            --blue: #007aff; 
-            --orange: #ff9500; 
-            --green: #34c759; 
-            --red: #ff3b30; 
-            --gold: #ffd700; 
+            --bg: #050505; --surface: #121212; --surface-2: #1e1e1e; 
+            --accent: #fff; --sub: #888; --blue: #007aff; --orange: #ff9500; 
+            --green: #34c759; --red: #ff3b30; --gold: #ffd700; 
         }
         
-        /* --- BASIS STYLING: Zorgt voor de 'app' look op mobiel en desktop --- */
+        /* --- 2. BASIS LAYOUT --- */
         body { 
-            margin: 0; 
-            font-family: 'Inter', sans-serif; 
-            background: var(--bg); 
-            color: var(--accent); 
-            overflow: hidden; 
-            height: 100vh; 
-            width: 100vw; 
-            user-select: none; 
-            -webkit-user-select: none; 
+            margin: 0; font-family: 'Inter', sans-serif; background: var(--bg); 
+            color: var(--accent); overflow: hidden; height: 100vh; width: 100vw; 
+            user-select: none; -webkit-user-select: none; 
         }
         
-        /* --- SCHERM MANAGEMENT: Regelt hoe de verschillende pagina's over elkaar liggen --- */
         .screen { 
-            position: absolute; 
-            inset: 0; 
-            padding: 30px 20px 120px; 
-            display: flex; 
-            flex-direction: column; 
-            overflow-y: auto; 
-            -webkit-overflow-scrolling: touch;
-            height: 100%;
-            box-sizing: border-box;
-            transition: opacity 0.3s ease, transform 0.3s ease; 
-            opacity: 1; 
-            transform: scale(1); 
+            position: absolute; inset: 0; padding: 30px 20px 120px; 
+            display: flex; flex-direction: column; overflow-y: auto; 
+            -webkit-overflow-scrolling: touch; height: 100%; box-sizing: border-box;
+            transition: opacity 0.3s ease, transform 0.3s ease; opacity: 1; transform: scale(1); 
         }
         .hidden { display: none !important; opacity: 0; pointer-events: none; }
         
-        /* --- TYPOGRAFIE: Titels en subteksten --- */
+        /* --- 3. TYPOGRAFIE --- */
         h1 { font-family: 'Montserrat'; font-size: 26px; font-weight: 900; text-transform: uppercase; margin: 0 0 5px; letter-spacing: -0.5px; }
         .subtitle { color: var(--sub); font-size: 11px; letter-spacing: 1.5px; text-transform: uppercase; margin-bottom: 25px; font-weight: 700; }
         
-        /* --- INTERACTIEVE ELEMENTEN: Inputs, knoppen en kaarten --- */
+        /* --- 4. FORMULIER ELEMENTEN --- */
         .q-box { flex: 1; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; min-height: min-content; }
+        
+        /* Styling voor inputs in de lijst */
+        .profile-input {
+            background: transparent; border: none; color: #fff; text-align: right;
+            font-family: 'Inter'; font-size: 14px; font-weight: 600; outline: none; width: 50%;
+        }
+        .profile-input:focus { color: var(--blue); }
+
         input, select { 
             width: 100%; max-width: 320px; padding: 16px; border-radius: 12px; 
             border: 1px solid #333; background: var(--surface-2); color: #fff; 
             font-size: 16px; margin-bottom: 12px; outline: none; transition: 0.2s; box-sizing: border-box; 
         }
-        input:focus { border-color: var(--blue); box-shadow: 0 0 15px rgba(0,122,255,0.3); }
         
         .btn { 
-            background: var(--accent); color: #000; border: none; padding: 18px; 
-            border-radius: 16px; width: 100%; max-width: 320px; font-weight: 800; 
-            text-transform: uppercase; cursor: pointer; transition: transform 0.1s; 
-            box-shadow: 0 4px 15px rgba(255,255,255,0.1); flex-shrink: 0; 
+            background: var(--accent); color: #000; border: none; padding: 18px; border-radius: 16px; 
+            width: 100%; max-width: 320px; font-weight: 800; text-transform: uppercase; 
+            cursor: pointer; transition: transform 0.1s; box-shadow: 0 4px 15px rgba(255,255,255,0.1); flex-shrink: 0; 
         }
         .btn:active { transform: scale(0.98); }
         .btn-small { padding: 10px 15px; font-size: 11px; font-weight: 700; background: var(--surface-2); color: #fff; border: 1px solid #333; border-radius: 8px; cursor: pointer; }
         
+        /* --- 5. DASHBOARD CARDS --- */
         .card { background: var(--surface); border-radius: 24px; padding: 20px; margin-bottom: 15px; border: 1px solid #222; position: relative; overflow: hidden; flex-shrink: 0; }
-
-        /* --- RPG & PROGRESSIE VISUALS: Badges en XP balken --- */
         .streak-badge { background: rgba(255,149,0,0.15); color: var(--orange); padding: 8px 16px; border-radius: 100px; font-weight: 800; font-size: 13px; display: inline-flex; align-items: center; gap: 8px; margin-bottom: 20px; border: 1px solid rgba(255,149,0,0.3); }
-        .rank-badge { background: rgba(0,122,255,0.15); color: var(--blue); padding: 5px 10px; border-radius: 6px; font-size: 10px; font-weight: 800; text-transform: uppercase; margin-left: 10px; vertical-align: middle; }
 
-        .stat-row { margin-bottom: 12px; flex-shrink: 0; }
-        .stat-header { display: flex; justify-content: space-between; font-size: 11px; font-weight: 700; margin-bottom: 6px; }
-        .bar-bg { background: #222; height: 10px; border-radius: 5px; overflow: hidden; position: relative; }
-        .bar-fill { height: 100%; background: var(--blue); transition: width 0.6s cubic-bezier(0.22, 1, 0.36, 1); box-shadow: 0 0 10px rgba(0,122,255,0.5); }
-        
-        .badges-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-top: 15px; }
-        .badge-item { background: #1a1a1a; padding: 15px 5px; border-radius: 12px; text-align: center; opacity: 0.4; filter: grayscale(1); transition: 0.3s; border: 1px solid transparent; }
-        .badge-item.unlocked { opacity: 1; filter: grayscale(0); border-color: var(--gold); background: rgba(255, 215, 0, 0.05); }
+        /* --- 6. RPG PROGRESSIE --- */
+        .stat-row { margin-bottom: 12px; }
+        .bar-bg { background: #222; height: 10px; border-radius: 5px; overflow: hidden; }
+        .bar-fill { height: 100%; background: var(--blue); transition: width 0.6s ease; }
 
-        /* --- WORKOUT UI: De HUD die over de camera heen ligt --- */
-        .hud { position: absolute; top: 0; width: 100%; padding: 20px 20px 40px; display: flex; justify-content: space-between; background: linear-gradient(to bottom, rgba(0,0,0,0.9), transparent); z-index: 2001; pointer-events: none; box-sizing: border-box; }
-        .hud-val span { display: block; font-size: 9px; color: var(--sub); font-weight: 700; letter-spacing: 1px; }
-        .hud-val strong { font-size: 24px; font-family: 'Montserrat'; text-shadow: 0 2px 10px rgba(0,0,0,1); }
+        /* --- 7. WORKOUT HUD --- */
+        .hud { position: absolute; top: 0; width: 100%; padding: 20px; display: flex; justify-content: space-between; z-index: 2001; box-sizing: border-box; background: linear-gradient(to bottom, rgba(0,0,0,0.8), transparent); }
+        #coaching-tip { position: absolute; bottom: 130px; width: 100%; text-align: center; font-weight: 900; font-size: 20px; z-index: 2002; }
 
-        #coaching-tip { position: absolute; bottom: 130px; left: 0; width: 100%; text-align: center; color: var(--accent); font-weight: 900; font-size: 20px; text-shadow: 0 4px 12px rgba(0,0,0,1); z-index: 2002; pointer-events: none; transition: 0.2s; }
-        
-        /* --- OVERLAYS: Rustscherm en Level Up schermen --- */
-        #rest-overlay { position: absolute; inset: 0; background: rgba(5,5,5,0.98); z-index: 3000; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 20px; backdrop-filter: blur(5px); }
-        .timer-txt { font-size: 90px; font-weight: 900; color: var(--blue); font-family: 'Montserrat'; margin: 10px 0; line-height: 1; letter-spacing: -3px; }
-
-        #lvl-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.9); z-index: 4000; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; pointer-events: none; opacity: 0; transition: 0.4s; }
-        #lvl-overlay.active { opacity: 1; pointer-events: auto; }
-        
-        /* --- NAVBAR: De navigatie onderaan --- */
-        .navbar { position: fixed; bottom: 0; width: 100%; background: rgba(18,18,18,0.95); backdrop-filter: blur(10px); border-top: 1px solid #222; display: flex; justify-content: space-around; padding: 15px 0 35px; z-index: 1000; box-sizing: border-box; }
-        .nav-item { color: var(--sub); font-size: 9px; font-weight: 700; cursor: pointer; text-align: center; text-transform: uppercase; transition: 0.2s; flex: 1; }
-        .nav-item.active { color: var(--accent); transform: translateY(-2px); }
-        .nav-item i { display: block; font-size: 20px; margin-bottom: 4px; font-style: normal; }
+        /* --- 8. NAVBAR --- */
+        .navbar { position: fixed; bottom: 0; width: 100%; background: #121212; border-top: 1px solid #222; display: flex; padding: 15px 0 35px; z-index: 1000; }
+        .nav-item { color: var(--sub); font-size: 10px; flex: 1; text-align: center; cursor: pointer; text-transform: uppercase; font-weight: 700; }
+        .nav-item.active { color: #fff; }
 
         #output_canvas { width: 100%; height: 100%; object-fit: contain; transform: scaleX(-1); background: #000; }
-        
-        /* Zwevende XP tekst animatie */
-        @keyframes floatUp { 0% { opacity:0; transform:translateY(0); } 20% { opacity:1; } 100% { opacity:0; transform:translateY(-100px); } }
-        .float-txt { position: fixed; color: var(--gold); font-weight: 900; pointer-events: none; z-index: 5000; animation: floatUp 1.5s forwards; font-size: 24px; }
     </style>
 </head>
 <body>
@@ -126,208 +89,158 @@
     </div>
 
     <div id="scr-dash" class="screen hidden">
-        <div style="display:flex; justify-content:space-between; align-items:center;">
-            <div class="streak-badge"><i>🔥</i> <span id="streak-val">0</span> DAGEN</div>
-            <div id="rank-display" class="rank-badge">ROOKIE</div>
-        </div>
-        <h1 id="dash-greet">HEY!</h1>
-        <div class="subtitle">Tijd om te knallen</div>
-        
-        <div class="card" onclick="startCircuit('Upper')">
-            <strong>UPPER BODY</strong>
-            <div style="color:var(--sub);font-size:11px; margin-top:5px;">Borst, Armen & Schouders</div>
-        </div>
-        <div class="card" onclick="startCircuit('Lower')">
-            <strong>LOWER BODY</strong>
-            <div style="color:var(--sub);font-size:11px; margin-top:5px;">Benen, Billen & Kuiten</div>
-        </div>
-        <div class="card" onclick="startCircuit('Conditie')">
-            <strong>FULL BODY / CORE</strong>
-            <div style="color:var(--sub);font-size:11px; margin-top:5px;">Vetverbranding & Abs</div>
-        </div>
+        <div class="streak-badge"><i>🔥</i> <span id="streak-val">0</span> DAGEN STREAK</div>
+        <h1 id="dash-greet">LAAD GEGEVENS...</h1>
+        <div class="subtitle">Kies je sessie</div>
+        <div class="card" onclick="startCircuit('Upper')"><strong>UPPER BODY</strong></div>
+        <div class="card" onclick="startCircuit('Lower')"><strong>LOWER BODY</strong></div>
+        <div class="card" onclick="startCircuit('Conditie')"><strong>FULL BODY / CORE</strong></div>
     </div>
 
     <div id="scr-progress" class="screen hidden">
         <h1>JOUW STATS</h1>
-        <div class="subtitle">RPG Progressie & Badges</div>
-        <div class="card">
-            <h3 style="font-size:14px; margin:0 0 15px;">SPIER LEVELS</h3>
-            <div id="stats-render"></div>
-        </div>
-        <div class="card">
-            <h3 style="font-size:14px; margin:0 0 10px;">BADGE COLLECTIE</h3>
-            <div class="badges-grid" id="badges-render"></div>
-        </div>
+        <div class="subtitle">Voortgang per spiergroep</div>
+        <div class="card" id="stats-render"></div>
     </div>
 
     <div id="scr-profile" class="screen hidden">
         <h1>PROFIEL</h1>
-        <div class="subtitle">Jouw gegevens</div>
-        <div class="card" id="profile-fields"></div>
-        <button class="btn-small" style="width:100%; padding:15px; margin:20px 0; background:#220000; border-color:#500; color:#f55;" onclick="resetData()">RESET ALLE DATA</button>
+        <div class="subtitle">Pas hier je gegevens aan</div>
+        
+        <div class="card">
+            <div id="profile-fields-list">
+                </div>
+        </div>
+
+        <button class="btn" style="background: var(--blue); color: white; margin-bottom: 10px;" onclick="saveProfileChanges()">GEGEVENS OPSLAAN</button>
+        <button class="btn-small" style="background:#220000; color:#f55;" onclick="resetData()">RESET ALLE DATA</button>
     </div>
 
-    <div id="scr-workout" class="screen hidden" style="padding:0; z-index: 2000; background:#000;">
+    <div id="scr-workout" class="screen hidden" style="padding:0; background:#000;">
         <video id="input_video" style="display:none"></video> 
         <canvas id="output_canvas"></canvas> 
-        <div id="coaching-tip">START POSITIE...</div>
-
-        <div id="rest-overlay" class="hidden">
-            <div id="rest-title" class="subtitle">RUST</div>
-            <div id="rest-exe" style="font-size:28px; font-weight:900; margin-bottom:5px;">OEFENING</div>
-            <div class="timer-txt" id="timer-val">30</div>
-            <div style="display:flex; gap:10px; margin-top:10px;">
-                <button class="btn-small" onclick="adjustTime(10)">+10s</button>
-                <button class="btn-small" style="background:var(--blue); border-color:var(--blue);" onclick="skipRest()">START NU</button>
-            </div>
-            <div id="rest-instr" style="color:#ccc; font-size:13px; max-width:300px; margin-top:25px;"></div>
-        </div>
-
+        <div id="coaching-tip">FOCUS!</div>
         <div class="hud">
-            <div class="hud-val"><span>OEFENING</span><strong id="hud-idx">1/6</strong></div>
-            <div class="hud-val"><span>SET</span><strong id="hud-set">1/3</strong></div>
-            <div class="hud-val"><span>REPS</span><strong id="hud-reps">0/12</strong></div>
+            <div><small>REPS</small><br><strong id="hud-reps" style="font-size:24px;">0</strong></div>
+            <div><small>OEFENING</small><br><strong id="hud-name">STARTEN...</strong></div>
         </div>
-
-        <button class="btn" style="position:absolute; bottom:30px; left:50%; transform:translateX(-50%); width:60%; height:50px; padding:0; z-index:2001; background:rgba(255,59,48,0.2); border:1px solid rgba(255,59,48,0.5); color:#fff; font-size:12px; backdrop-filter:blur(4px);" onclick="stopWorkout()">STOPPEN</button>
-    </div>
-
-    <div id="lvl-overlay">
-        <div style="text-align:center;">
-            <div style="font-size:60px; margin-bottom:10px;">🆙</div>
-            <h1 style="font-size:32px; color:var(--gold);">LEVEL UP!</h1>
-            <h2 id="lvl-msg" style="font-family:'Inter'; font-size:18px;"></h2>
-            <button class="btn" onclick="closeLvl()">DOORGAAN</button>
-        </div>
+        <button class="btn" style="position:absolute; bottom:30px; left:10%; width:80%; background:var(--red); color:#fff;" onclick="stopWorkout()">STOPPEN</button>
     </div>
 
     <nav class="navbar hidden" id="nav">
-        <div class="nav-item active" onclick="tab('dash', this)"><i>🏠</i>Dashboard</div>
-        <div class="nav-item" onclick="tab('progress', this)"><i>📊</i>Stats</div>
-        <div class="nav-item" onclick="tab('profile', this)"><i>👤</i>Profiel</div>
+        <div class="nav-item active" onclick="tab('dash', this)">Dashboard</div>
+        <div class="nav-item" onclick="tab('progress', this)">Stats</div>
+        <div class="nav-item" onclick="tab('profile', this)">Profiel</div>
     </nav>
 
     <script>
-        /* --- JS DATA & OEFENINGEN --- */
-        const exercises = {
-            Upper: [
-                {n:"Push-up", i:"Borst naar de grond.", focus:["Borst", "Triceps", "Schouders"]},
-                {n:"Shoulder Taps", i:"Tik schouders om en om aan.", focus:["Schouders", "Abs"]}
-            ],
-            Lower: [
-                {n:"Squat", i:"Billen naar achteren.", focus:["Benen", "Billen"]},
-                {n:"Lunge", i:"Grote stap, knie naar grond.", focus:["Benen", "Billen"]}
-            ],
-            Conditie: [
-                {n:"Jumping Jacks", i:"Spring wijd, armen omhoog.", focus:["Benen"]},
-                {n:"Mountain Climbers", i:"Knieën naar borst in plank.", focus:["Abs"]}
-            ]
+        /* --- DATA & CONFIGURATIE --- */
+        let user = JSON.parse(localStorage.getItem('elite_v9_ultimate')) || {
+            name: '', age: '', gender: 'Man', height: '', weight: '', goal: 'Spiermassa', reps: 12, availability: '3-4',
+            streak: 0, stats: { Borst: {xp:0, lvl:1}, Rug: {xp:0, lvl:1}, Benen: {xp:0, lvl:1}, Abs: {xp:0, lvl:1} }
         };
 
-        const badgeList = [
-            { id: 'b_start', icon: '🐣', name: 'Rookie' },
-            { id: 'b_wk1', icon: '🔥', name: 'Week 1' }
-        ];
-
-        /* --- STATE MANAGEMENT --- */
-        let user = JSON.parse(localStorage.getItem('elite_v9_ultimate')) || {
-            name: '', age: '', gender: '', height: '', weight: '', goal: '', reps: 12, availability: '',
-            streak: 0, lastDate: null, totalWorkouts: 0, badges: [], history: [],
-            stats: { Borst: {xp:0, lvl:1}, Schouders: {xp:0, lvl:1}, Triceps: {xp:0, lvl:1}, Abs: {xp:0, lvl:1}, Rug: {xp:0, lvl:1}, Benen: {xp:0, lvl:1}, Billen: {xp:0, lvl:1}, Kuiten: {xp:0, lvl:1} }
+        const exercises = {
+            Upper: [{n:"Push-up", focus:["Borst"]}, {n:"Shoulder Taps", focus:["Rug"]}],
+            Lower: [{n:"Squat", focus:["Benen"]}, {n:"Lunge", focus:["Benen"]}],
+            Conditie: [{n:"Crunches", focus:["Abs"]}, {n:"Burpees", focus:["Abs"]}]
         };
 
         function save() { localStorage.setItem('elite_v9_ultimate', JSON.stringify(user)); }
-        function resetData() { localStorage.removeItem('elite_v9_ultimate'); location.reload(); }
+        function resetData() { if(confirm("Zeker weten? Alle progressie gaat verloren.")) { localStorage.removeItem('elite_v9_ultimate'); location.reload(); } }
 
-        /* --- AUDIO PIEPJES --- */
-        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-        function playSound(type) {
-            if(audioCtx.state === 'suspended') audioCtx.resume();
-            const osc = audioCtx.createOscillator(); const gain = audioCtx.createGain();
-            osc.connect(gain); gain.connect(audioCtx.destination);
-            if(type === 'rep') { osc.start(); osc.stop(audioCtx.currentTime + 0.1); }
+        /* --- PROFIEL BEWERKEN LOGICA --- */
+        function renderProfileFields() {
+            const labels = { name: 'Naam', age: 'Leeftijd', height: 'Lengte (cm)', weight: 'Gewicht (kg)', reps: 'Doel Reps' };
+            const container = document.getElementById('profile-fields-list');
+            
+            // Genereer de lijst met inputs
+            let html = '';
+            for (let key in labels) {
+                html += `
+                <div style="display:flex; justify-content:space-between; align-items:center; padding: 12px 0; border-bottom: 1px solid #222;">
+                    <span style="color:var(--sub); font-size: 13px;">${labels[key]}</span>
+                    <input type="text" class="profile-input" id="edit-${key}" value="${user[key]}">
+                </div>`;
+            }
+
+            // Speciale dropdowns voor doelen en geslacht
+            html += `
+            <div style="display:flex; justify-content:space-between; align-items:center; padding: 12px 0;">
+                <span style="color:var(--sub); font-size: 13px;">Doel</span>
+                <select id="edit-goal" class="profile-input" style="width: auto; padding: 0; margin: 0; background: transparent; border: none;">
+                    <option value="Afvallen" ${user.goal === 'Afvallen' ? 'selected' : ''}>Afvallen</option>
+                    <option value="Spiermassa" ${user.goal === 'Spiermassa' ? 'selected' : ''}>Spiermassa</option>
+                    <option value="Conditie" ${user.goal === 'Conditie' ? 'selected' : ''}>Conditie</option>
+                </select>
+            </div>`;
+
+            container.innerHTML = html;
         }
 
-        /* --- NAVIGATIE & RENDERING --- */
-        let currentStep = 1, circuit = [], cIdx = 0, reps = 0, sets = 1, isRest = false, restTimer = null, tLeft = 30, stage = 'up', camera = null;
-        
+        function saveProfileChanges() {
+            // Haal alle waarden uit de inputs en stop ze in het user object
+            user.name = document.getElementById('edit-name').value;
+            user.age = document.getElementById('edit-age').value;
+            user.height = document.getElementById('edit-height').value;
+            user.weight = document.getElementById('edit-weight').value;
+            user.reps = parseInt(document.getElementById('edit-reps').value) || 12;
+            user.goal = document.getElementById('edit-goal').value;
+
+            save();
+            alert("Profiel succesvol bijgewerkt!");
+            tab('dash');
+        }
+
+        /* --- NAVIGATION --- */
         function tab(t, el) {
             document.querySelectorAll('.screen').forEach(s => s.classList.add('hidden'));
             document.getElementById('scr-'+t).classList.remove('hidden');
             if(el) { document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active')); el.classList.add('active'); }
-            if(t === 'dash') { document.getElementById('dash-greet').innerText = "HEY " + (user.name || "CHAMP"); }
+            
+            if(t === 'dash') document.getElementById('dash-greet').innerText = "HAVE A KILLER WORKOUT, " + user.name.toUpperCase();
+            if(t === 'profile') renderProfileFields();
             if(t === 'progress') renderProgress();
-            if(t === 'profile') renderProfileFields(); // DEZE WERKT NU WEER!
         }
 
-        /* --- PROFIEL SCHERM RENDERING (ONTBREKENDE FUNCTIE) --- */
-        function renderProfileFields() {
-            const labels = { name: 'Naam', age: 'Leeftijd', gender: 'Geslacht', height: 'Lengte (cm)', weight: 'Gewicht (kg)', goal: 'Doel', reps: 'Basis Reps', availability: 'Dagen p/w' };
-            const container = document.getElementById('profile-fields');
-            container.innerHTML = Object.keys(labels).map(key => `
-                <div style="display:flex; justify-content:space-between; margin-bottom:12px; border-bottom:1px solid #222; padding-bottom:5px;">
-                    <span style="color:var(--sub); font-size:12px;">${labels[key]}</span>
-                    <span style="font-weight:600;">${user[key] || '-'}</span>
-                </div>
-            `).join('');
-        }
-
-        /* --- PROGRESSIE & XP --- */
         function renderProgress() {
             const container = document.getElementById('stats-render');
-            container.innerHTML = Object.keys(user.stats).map(key => {
-                const s = user.stats[key]; const target = Math.round(100 * Math.pow(1.75, s.lvl - 1)); const pct = (s.xp / target) * 100;
-                return `<div class="stat-row"><div class="stat-header"><span>${key.toUpperCase()}</span><span>LVL ${s.lvl}</span></div><div class="bar-bg"><div class="bar-fill" style="width: ${Math.min(pct, 100)}%"></div></div></div>`;
+            container.innerHTML = Object.keys(user.stats).map(m => {
+                const s = user.stats[m]; const pct = (s.xp % 100);
+                return `<strong>${m}</strong> (Level ${s.lvl})<div class="bar-bg"><div class="bar-fill" style="width:${pct}%"></div></div><br>`;
             }).join('');
         }
 
-        /* --- ONBOARDING --- */
-        const questions = [{ k: 'name', q: 'VOORNAAM', t: 'text' }, { k: 'age', q: 'LEEFTIJD', t: 'number' }, { k: 'gender', q: 'GESLACHT', t: 'select', o: ['Man', 'Vrouw', 'X'] }, { k: 'reps', q: 'TRAININGSNIVEAU (REPS)', t: 'number' }];
-        function renderQ() {
-            const q = questions[currentStep-1];
-            let html = `<h1>${q.q}</h1><div class="subtitle">Stap ${currentStep}/${questions.length}</div>`;
-            if(q.t === 'select') html += `<select id="q-val">${q.o.map(o => `<option value="${o}">${o}</option>`).join('')}</select>`;
-            else html += `<input type="${q.t}" id="q-val" value="${user[q.k] || ''}">`;
-            html += `<button class="btn" onclick="saveQ()">VERDER</button>`;
-            document.getElementById('q-container').innerHTML = html;
-        }
-        function saveQ() {
-            user[questions[currentStep-1].k] = document.getElementById('q-val').value;
-            if(currentStep < questions.length) { currentStep++; renderQ(); }
-            else { save(); tab('dash'); document.getElementById('nav').classList.remove('hidden'); }
-        }
+        /* --- WORKOUT ENGINE --- */
+        let circuit = [], cIdx = 0, reps = 0, stage = 'up', camera = null;
 
-        /* --- WORKOUT FLOW --- */
         function startCircuit(cat) {
-            circuit = [...exercises[cat]]; cIdx = 0; sets = 1; reps = 0;
-            tab('workout'); startAI(); startRest(15, "LEES DE UITLEG"); 
+            circuit = exercises[cat]; cIdx = 0; reps = 0;
+            tab('workout'); startAI();
+            document.getElementById('hud-name').innerText = circuit[cIdx].n;
         }
-        function stopWorkout() { if(camera) camera.stop(); tab('dash'); }
-        function startRest(time, title) {
-            isRest = true; tLeft = time; document.getElementById('rest-overlay').classList.remove('hidden');
-            document.getElementById('rest-exe').innerText = circuit[cIdx].n.toUpperCase();
-            document.getElementById('rest-instr').innerText = circuit[cIdx].i;
-            runTimer();
-        }
-        function runTimer() {
-            document.getElementById('timer-val').innerText = tLeft; clearInterval(restTimer);
-            restTimer = setInterval(() => { tLeft--; document.getElementById('timer-val').innerText = tLeft; if(tLeft <= 0) skipRest(); }, 1000);
-        }
-        function skipRest() { clearInterval(restTimer); isRest = false; document.getElementById('rest-overlay').classList.add('hidden'); }
 
-        /* --- AI POSE ANALYSE --- */
+        function stopWorkout() { if(camera) camera.stop(); tab('dash'); }
+
         function onResults(results) {
-            if(!results.poseLandmarks || isRest) return;
+            if(!results.poseLandmarks) return;
             const ctx = canvasElement.getContext('2d');
             ctx.save(); ctx.clearRect(0, 0, canvasElement.width, canvasElement.height);
             ctx.drawImage(results.image, 0, 0, canvasElement.width, canvasElement.height);
-            // Simpele detectie (Squat voorbeeld)
+            
             const m = results.poseLandmarks;
-            if(m[24].y > m[26].y - 0.1) { stage = 'down'; }
-            if(m[24].y < m[26].y - 0.2 && stage === 'down') { stage = 'up'; reps++; playSound('rep'); updateHUD(); }
+            // Zeer simpele Squat detectie (Heup vs Knie)
+            if(m[24].y > m[26].y - 0.1) stage = 'down';
+            if(m[24].y < m[26].y - 0.2 && stage === 'down') {
+                stage = 'up'; reps++;
+                document.getElementById('hud-reps').innerText = reps;
+                user.stats[circuit[cIdx].focus[0]].xp += 20;
+                if(user.stats[circuit[cIdx].focus[0]].xp >= 100) { user.stats[circuit[cIdx].focus[0]].lvl++; user.stats[circuit[cIdx].focus[0]].xp = 0; }
+                save();
+            }
             ctx.restore();
         }
-        function updateHUD() { document.getElementById('hud-reps').innerText = `${reps}/${user.reps}`; }
+
         function startAI() {
             const pose = new Pose({locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/pose/${file}`});
             pose.onResults(onResults);
@@ -335,10 +248,18 @@
             camera.start();
         }
 
-        /* INITIALISATIE */
+        /* --- INITIALISATIE --- */
         const videoElement = document.getElementById('input_video');
         const canvasElement = document.getElementById('output_canvas');
-        if(!user.name) renderQ(); else { tab('dash'); document.getElementById('nav').classList.remove('hidden'); }
+
+        if(!user.name) {
+            // Simpele setup voor de eerste keer
+            let n = prompt("Welkom! Wat is je naam?");
+            if(n) { user.name = n; save(); tab('dash'); document.getElementById('nav').classList.remove('hidden'); }
+        } else {
+            tab('dash');
+            document.getElementById('nav').classList.remove('hidden');
+        }
     </script>
 </body>
 </html>
