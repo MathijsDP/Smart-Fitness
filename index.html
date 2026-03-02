@@ -347,18 +347,29 @@ body {
         }
 
         function renderProgress() {
-            // Stats Bars
-            const container = document.getElementById('stats-render');
-            container.innerHTML = Object.keys(user.stats).map(key => {
-                const s = user.stats[key];
-                const target = Math.round(100 * Math.pow(1.75, s.lvl - 1));
-                const pct = (s.xp / target) * 100;
-                return `
-                    <div class="stat-row">
-                        <div class="stat-header"><span>${key.toUpperCase()}</span><span>LVL ${s.lvl} <span style="color:var(--sub);font-weight:400;">(${Math.round(s.xp)}/${target})</span></span></div>
-                        <div class="bar-bg"><div class="bar-fill" style="width: ${Math.min(pct, 100)}%"></div></div>
-                    </div>`;
-            }).join('');
+    const container = document.getElementById('stats-render');
+    
+    container.innerHTML = Object.keys(user.stats).map(key => {
+        const s = user.stats[key];
+        const target = Math.round(100 * Math.pow(1.75, s.lvl - 1));
+        const pct = Math.min((s.xp / target) * 100, 100);
+        
+        const radius = 30;
+        const circum = 2 * Math.PI * radius;
+        const offset = circum - (pct / 100) * circum;
+
+        return `
+            <div class="muscle-card">
+                <svg width="80" height="80" class="ring-svg">
+                    <circle class="ring-bg" cx="40" cy="40" r="${radius}"/>
+                    <circle class="ring-bar" cx="40" cy="40" r="${radius}" 
+                        style="stroke-dasharray: ${circum}; stroke-dashoffset: ${offset}"/>
+                </svg>
+                <div style="font-size: 11px; font-weight: 800; letter-spacing: 0.5px;">${key.toUpperCase()}</div>
+                <div style="font-size: 10px; color: var(--sub); margin-top: 2px;">LVL ${s.lvl}</div>
+            </div>`;
+    }).join('');
+}
 
             // Badges
             const badgeCont = document.getElementById('badges-render');
@@ -485,49 +496,77 @@ body {
         const canvasElement = document.getElementById('output_canvas');
         const canvasCtx = canvasElement.getContext('2d');
 
-        function onResults(results) {
-            if(!results.poseLandmarks || isRest) return;
-            
-            canvasCtx.save();
-            canvasCtx.clearRect(0, 0, canvasElement.width, canvasElement.height);
-            canvasCtx.drawImage(results.image, 0, 0, canvasElement.width, canvasElement.height);
-            
-            const m = results.poseLandmarks;
-            const exe = circuit[cIdx].n.toLowerCase();
-            let isGood = false;
-            let feedback = null;
+// VOEG DEZE TWEE VARIABELEN TOE BOVENAAN JE SCRIPT
+let hasReachedBottom = false; 
+let lastAngle = 180;
 
-            // Form Correction Logic
-            if(exe.includes("squat")) {
-                const a = calcAngle(m[24], m[26], m[28]); 
-                // Check knees caving in (Valgus) - Simple heuristic: knee x should be close to hip x
-                if(Math.abs(m[26].x - m[24].x) < 0.05) feedback = "Knieën naar buiten!";
-                
-                if(a < 110) { isGood = true; stage = 'down'; } 
-                if(a > 160 && stage === 'down') { registerRep(); stage = 'up'; } 
-            
-            } else if(exe.includes("push-up") || exe.includes("diamond")) {
-                const a = calcAngle(m[11], m[13], m[15]); 
-                // Check hip sag
-                if(m[23].y > m[27].y) feedback = "Heupen omhoog!";
+// VERVANG JE HUIDIGE onResults FUNCTIE:
+function onResults(results) {
+    if(!results.poseLandmarks || isRest) return;
+    
+    canvasCtx.save();
+    canvasCtx.clearRect(0, 0, canvasElement.width, canvasElement.height);
+    canvasCtx.drawImage(results.image, 0, 0, canvasElement.width, canvasElement.height);
+    
+    const m = results.poseLandmarks;
+    const exe = circuit[cIdx].n.toLowerCase();
+    let feedback = null;
+    let currentAngle = 180;
 
-                if(a < 100) { isGood = true; stage = 'down'; }
-                if(a > 160 && stage === 'down') { registerRep(); stage = 'up'; }
-            
-            } else {
-                // General movement
-                isGood = m[15].y < m[11].y; // Hands above shoulder
-                if(isGood) stage = 'up';
-                if(!isGood && stage === 'up') { registerRep(); stage = 'down'; }
-            }
+    // --- FORM LOGIC PER OEFENING ---
+    if(exe.includes("squat")) {
+        currentAngle = calcAngle(m[24], m[26], m[28]); // Heup-Knie-Enkel
+        
+        // Anti-glitch: negeer bizarre sprongen in hoek
+        if (Math.abs(currentAngle - lastAngle) > 40) return; 
 
-            if(feedback) updateHUD(feedback);
-            else if(stage === 'down') updateHUD("DUW OMHOOG!");
-
-            drawConnectors(canvasCtx, m, POSE_CONNECTIONS, {color: isGood?'#34c759':'#fff', lineWidth:3});
-            drawLandmarks(canvasCtx, m, {color: isGood?'#34c759':'#007aff', lineWidth:1, radius:4});
-            canvasCtx.restore();
+        if(currentAngle < 100) { 
+            hasReachedBottom = true; 
+            feedback = "GOED ZO, NU OMHOOG!"; 
         }
+        if(currentAngle > 160 && hasReachedBottom) { 
+            registerRep(); 
+            hasReachedBottom = false; 
+        }
+    } 
+    else if(exe.includes("push-up") || exe.includes("diamond")) {
+        currentAngle = calcAngle(m[12], m[14], m[16]); // Schouder-Elleboog-Pols
+        
+        if(currentAngle < 90) { 
+            hasReachedBottom = true; 
+            feedback = "DUW JEZELF OP!"; 
+        }
+        if(currentAngle > 150 && hasReachedBottom) { 
+            registerRep(); 
+            hasReachedBottom = false; 
+        }
+    } 
+    else {
+        // Algemene oefeningen (bijv. jumping jacks)
+        let isUp = m[15].y < m[11].y; 
+        if(isUp) hasReachedBottom = true;
+        if(!isUp && hasReachedBottom) { 
+            registerRep(); 
+            hasReachedBottom = false; 
+        }
+    }
+
+    lastAngle = currentAngle;
+    if(feedback) updateHUD(feedback);
+
+    // Teken de lijnen (Groen als je 'onderin' bent, anders Blauw)
+    drawConnectors(canvasCtx, m, POSE_CONNECTIONS, {color: hasReachedBottom ? '#34c759' : '#007aff', lineWidth:3});
+    drawLandmarks(canvasCtx, m, {color: '#fff', lineWidth:1, radius:3});
+    canvasCtx.restore();
+}
+
+// VERVANG OF VOEG TOE: DE HOEKBEREKENING
+function calcAngle(p1, p2, p3) {
+    let radians = Math.atan2(p3.y - p2.y, p3.x - p2.x) - Math.atan2(p1.y - p2.y, p1.x - p2.x);
+    let angle = Math.abs(radians * 180.0 / Math.PI);
+    if (angle > 180.0) angle = 360 - angle;
+    return angle;
+}
 
         function registerRep() {
             // Speed Check
