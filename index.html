@@ -35,6 +35,7 @@ body {
     overflow-y: auto;
     -webkit-overflow-scrolling: touch;
     transition: opacity 0.3s ease, transform 0.3s ease;
+            touch-action: pan-y;
 }
         .hidden { display: none !important; opacity: 0; pointer-events: none; }
         
@@ -656,6 +657,42 @@ body {
         }
 
         if(!user.name) renderQ(); else { tab('dash'); document.getElementById('nav').classList.remove('hidden'); }
+
+        // --- HORIZONTALE SWIPE NAVIGATIE ---
+let touchStartX = 0;
+let touchEndX = 0;
+
+const screens = ['dash','progress','profile']; // volgorde van je tabs
+
+document.addEventListener('touchstart', e => {
+    touchStartX = e.changedTouches[0].screenX;
+}, {passive:true});
+
+document.addEventListener('touchend', e => {
+    touchEndX = e.changedTouches[0].screenX;
+    handleSwipe();
+}, {passive:true});
+
+function handleSwipe() {
+    let activeIdx = screens.findIndex(t => !document.getElementById('scr-'+t).classList.contains('hidden'));
+    if(activeIdx === -1) return;
+
+    const deltaX = touchEndX - touchStartX;
+
+    if(Math.abs(deltaX) < 50) return; // minimale swipe afstand
+
+    if(deltaX < 0 && activeIdx < screens.length-1) {
+        // swipe naar links → volgende tab
+        const nextTab = screens[activeIdx+1];
+        const el = document.querySelector(`.nav-item[onclick^="tab('${nextTab}'`);
+        if(el) tab(nextTab, el);
+    } else if(deltaX > 0 && activeIdx > 0) {
+        // swipe naar rechts → vorige tab
+        const prevTab = screens[activeIdx-1];
+        const el = document.querySelector(`.nav-item[onclick^="tab('${prevTab}'`);
+        if(el) tab(prevTab, el);
+    }
+}
     </script>
 </body>
 </html>
