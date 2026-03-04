@@ -598,13 +598,19 @@ body {
             setTimeout(() => el.remove(), 1500);
         }
 
-        function showLevelUp(muscle, lvl) {
-            const ov = document.getElementById('lvl-overlay');
-            document.getElementById('lvl-msg').innerText = `${muscle} is nu Level ${lvl}`;
-            ov.classList.add('active');
-            playSound('lvl');
-            speak("Level up! " + muscle);
-        }
+function showLevelUp(muscle, lvl) {
+    const ov = document.getElementById('lvl-overlay');
+    const msgEl = document.getElementById('lvl-msg');
+    msgEl.innerText = `${muscle} is nu Level ${lvl}`;
+    ov.classList.add('active');  // overlay tonen
+    playSound('lvl');
+    speak("Level up! " + muscle);
+
+    // AUTOMATISCH SLUITEN NA 2.5 SEC
+    setTimeout(() => {
+        ov.classList.remove('active');
+    }, 2000);
+}
         function closeLvl() { document.getElementById('lvl-overlay').classList.remove('active'); }
 
         // --- 10. BADGE LOGIC ---
