@@ -338,18 +338,8 @@ body {
         // --- 5. UI & NAVIGATIE ---
 
         function tab(t, el) {
-            const screens = document.querySelectorAll('.screen');
-screens.forEach(s => {
-    s.style.transition = 'transform 0.3s ease, opacity 0.3s ease';
-    s.style.transform = 'translateX(100%)';  // scherm schuift naar rechts
-    s.style.opacity = 0;
-});
-const activeScreen = document.getElementById('scr-' + t);
-activeScreen.classList.remove('hidden');
-setTimeout(() => {
-    activeScreen.style.transform = 'translateX(0)'; // schuift terug
-    activeScreen.style.opacity = 1;
-}, 20);
+            document.querySelectorAll('.screen').forEach(s => s.classList.add('hidden'));
+document.getElementById('scr-'+t).classList.remove('hidden');
             if(el) { document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active')); el.classList.add('active'); }
             
             if(t === 'dash') { 
