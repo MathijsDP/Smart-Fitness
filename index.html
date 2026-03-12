@@ -310,7 +310,7 @@ body {
         let lastRepTime = 0; // Voor snelheid check
 
         const questions = [
-            { k: 'gender', q: '⚠️ Deze app is nog in ontwikkeling, er kunnen nog fouten voorkomen. Als je een oefening start: zet de camera op de grond en ga 2 stappen achteruit voor het beste resultaat.', t: 'select', o: ['OK'] },
+            { k: 'warning', q: '⚠️ Deze app is nog in ontwikkeling, er kunnen nog fouten voorkomen. Als je een oefening start: zet de camera op de grond en ga 2 stappen achteruit voor het beste resultaat.', t: 'select', o: ['OK'] },
             { k: 'name', q: 'VOORNAAM', t: 'text' },
             { k: 'age', q: 'LEEFTIJD', t: 'number' },
             { k: 'gender', q: 'GESLACHT', t: 'select', o: ['Man', 'Vrouw', 'X'] },
@@ -343,14 +343,12 @@ body {
 document.getElementById('scr-'+t).classList.remove('hidden');
             if(el) { document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active')); el.classList.add('active'); }
             
-            if(t === 'dash') { 
-                document.getElementById('dash-greet').innerText = "HEY " + (user.name || "CHAMP"); 
-                document.getElementById('streak-val').innerText = user.streak; 
-                document.getElementById('rank-display').innerText = getRank();
-            }
-            if(t === 'progress') renderProgress();
-            if(t === 'profile') renderProfileFields();
-        }
+           if(t === 'dash') { 
+    document.getElementById('dash-greet').innerText = "HEY " + (user.name || "CHAMP"); 
+    document.getElementById('streak-val').innerText = user.streak; 
+    document.getElementById('rank-display').innerText = getRank();
+    document.getElementById('allround-level').innerText = getAllroundLevel();
+}
 
         function renderProgress() {
             // Stats Bars
@@ -380,9 +378,15 @@ document.getElementById('scr-'+t).classList.remove('hidden');
             const histCont = document.getElementById('history-render');
             if(user.history.length > 0) {
                 histCont.innerHTML = user.history.slice().reverse().slice(0,5).map(h => 
-                    `<div style="display:flex; justify-content:space-between; padding:10px 0; border-bottom:1px solid #222;">
-                        <span>${h.date}</span> <span>${h.cat} (${h.reps} reps)</span>
-                    </div>`
+                    `<div style="display:flex; justify-content:space-between; align-items:center;">
+    <div class="streak-badge"><i>🔥</i> <span id="streak-val">0</span> DAGEN</div>
+
+    <div class="streak-badge">
+        ⭐ LVL <span id="allround-level">1</span>
+    </div>
+
+    <div id="rank-display" class="rank-badge">ROOKIE</div>
+</div>`
                 ).join('');
             }
         }
