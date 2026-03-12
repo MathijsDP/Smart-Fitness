@@ -367,7 +367,7 @@ body {
 
     }
 
-}}
+}
 
         function renderProgress() {
             // Stats Bars
@@ -719,7 +719,7 @@ function handleSwipe() {
     } else if(deltaX > 0 && activeIdx > 0) {
         // swipe naar rechts → vorige tab
         const prevTab = screens[activeIdx-1];
-        const el = document.querySelector(`.nav-item[onclick^="tab('${prevTab}'`);
+        const el = document.querySelector(`.nav-item[onclick^="tab('${prevTab}')"]`);
         if(el) tab(prevTab, el);
     }
 }
