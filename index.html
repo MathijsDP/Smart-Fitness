@@ -364,10 +364,13 @@ body {
         if(streak) streak.innerText = user.streak;
         if(rank) rank.innerText = getRank();
         if(lvl) lvl.innerText = getAllroundLevel();
+        if(t === 'progress') {
+        renderProgress();
+    }
 
     }
 
-}
+
 
         function renderProgress() {
             // Stats Bars
