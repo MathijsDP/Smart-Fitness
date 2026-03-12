@@ -338,18 +338,36 @@ body {
 
         // --- 5. UI & NAVIGATIE ---
 
-        function tab(t, el) {
-            document.querySelectorAll('.screen').forEach(s => s.classList.add('hidden'));
-document.getElementById('scr-'+t).classList.remove('hidden');
-            if(el) { document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active')); el.classList.add('active'); }
-            
-           if(t === 'dash') { 
-    document.getElementById('dash-greet').innerText = "HEY " + (user.name || "CHAMP"); 
-    document.getElementById('streak-val').innerText = user.streak; 
-    document.getElementById('rank-display').innerText = getRank();
-    document.getElementById('allround-level').innerText = getAllroundLevel();
-           }
-}
+        function tab(t, el){
+
+    document.querySelectorAll('.screen')
+        .forEach(s => s.classList.add('hidden'));
+
+    const screen = document.getElementById('scr-'+t);
+    if(screen) screen.classList.remove('hidden');
+
+    if(el){
+        document.querySelectorAll('.nav-item')
+            .forEach(b => b.classList.remove('active'));
+
+        el.classList.add('active');
+    }
+
+    if(t === 'dash'){
+
+        const greet = document.getElementById('dash-greet');
+        const streak = document.getElementById('streak-val');
+        const rank = document.getElementById('rank-display');
+        const lvl = document.getElementById('allround-level');
+
+        if(greet) greet.innerText = "HEY " + (user.name || "CHAMP");
+        if(streak) streak.innerText = user.streak;
+        if(rank) rank.innerText = getRank();
+        if(lvl) lvl.innerText = getAllroundLevel();
+
+    }
+
+}}
 
         function renderProgress() {
             // Stats Bars
