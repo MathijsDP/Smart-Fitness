@@ -11,8 +11,7 @@
   <script src="https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils"></script>
 
   <script>
-const POSE_CONNECTIONS = window.POSE_CONNECTIONS;
-</script>
+const POSE_CONNECTIONS = Pose.POSE_CONNECTIONS;</script>
 
   <!-- Fonts -->
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&family=Montserrat:wght@700;900&display=swap" rel="stylesheet">
@@ -618,8 +617,8 @@ const POSE_CONNECTIONS = window.POSE_CONNECTIONS;
   function onResults(results) {
     if(!results.poseLandmarks || isRest) return;
     canvasCtx.save();
-    canvasCtx.clearRect(0, 0, canvasElement.width, canvasElement.height);
-    canvasCtx.drawImage(results.image, 0, 0, canvasElement.width, canvasElement.height);
+canvasCtx.clearRect(0, 0, canvasElement.width, canvasElement.height);
+canvasCtx.drawImage(results.image, 0, 0, canvasElement.width, canvasElement.height);
     const m = results.poseLandmarks;
     const exe = circuit[cIdx].n.toLowerCase();
     let isGood = false;
@@ -748,11 +747,13 @@ const POSE_CONNECTIONS = window.POSE_CONNECTIONS;
     const pose = new Pose({locateFile: (f) => `https://cdn.jsdelivr.net/npm/@mediapipe/pose/${f}`});
     pose.setOptions({modelComplexity:1, minDetectionConfidence:0.5, minTrackingConfidence:0.5});
     pose.onResults(onResults);
-    camera = new Camera(videoElement, { onFrame: async() => {
-      canvasElement.width = videoElement.videoWidth;
-      canvasElement.height = videoElement.videoHeight;
-      await pose.send({image:videoElement});
-    }});
+   camera = new Camera(videoElement, {
+  onFrame: async () => {
+    await pose.send({image: videoElement});
+  },
+  width: 640,
+  height: 480
+});
     camera.start();
   }
 
