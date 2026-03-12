@@ -348,6 +348,7 @@ document.getElementById('scr-'+t).classList.remove('hidden');
     document.getElementById('streak-val').innerText = user.streak; 
     document.getElementById('rank-display').innerText = getRank();
     document.getElementById('allround-level').innerText = getAllroundLevel();
+           }
 }
 
         function renderProgress() {
@@ -695,7 +696,7 @@ function handleSwipe() {
     if(deltaX < 0 && activeIdx < screens.length-1) {
         // swipe naar links → volgende tab
         const nextTab = screens[activeIdx+1];
-        const el = document.querySelector(`.nav-item[onclick^="tab('${nextTab}'`);
+        const el = document.querySelector(`.nav-item[onclick^="tab('${nextTab}')"]`);
         if(el) tab(nextTab, el);
     } else if(deltaX > 0 && activeIdx > 0) {
         // swipe naar rechts → vorige tab
