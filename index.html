@@ -10,10 +10,38 @@
   <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils"></script>
   <script src="https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils"></script>
 
+  <script>
+const POSE_CONNECTIONS = window.POSE_CONNECTIONS;
+</script>
+
   <!-- Fonts -->
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&family=Montserrat:wght@700;900&display=swap" rel="stylesheet">
 
   <style>
+    #coaching-tip {
+  position: absolute;
+  top: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 18px;
+  font-weight: 700;
+  z-index: 2001;
+  color: var(--accent);
+}
+
+#rest-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0,0,0,0.85);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  z-index: 2002;
+}
     /* --- CORE STYLING --- */
     :root {
       --bg: #050505;
@@ -228,8 +256,8 @@
 </div>
 
 <div id="scr-workout" class="screen hidden" style="padding:0; z-index: 2000; background:#000;">
-  <video id="input_video" style="display:none"></video>
-  <canvas id="output_canvas"></canvas>
+  <video id="input_video" width="640" height="480" style="display:none"></video>
+<canvas id="output_canvas" width="640" height="480"></canvas>
   <div id="coaching-tip">START POSITIE...</div>
 
   <div id="rest-overlay" class="hidden">
@@ -619,6 +647,8 @@
     if(feedback) updateHUD(feedback);
     else if(stage === 'down') updateHUD("DUW OMHOOG!");
 
+    
+
     drawConnectors(canvasCtx, m, POSE_CONNECTIONS, {color: isGood?'#34c759':'#fff', lineWidth:3});
     drawLandmarks(canvasCtx, m, {color: isGood?'#34c759':'#007aff', lineWidth:1, radius:4});
     canvasCtx.restore();
@@ -744,8 +774,7 @@
 
     if(deltaX < 0 && activeIdx < screens.length-1) {
       const nextTab = screens[activeIdx+1];
-      const el = document.querySelector(`.nav-item[onclick^="tab('${nextTab}')"]`);
-      if(el) tab(nextTab, el);
+const el = document.querySelector(`.nav-item[onclick^="tab('${nextTab}')"]`);      if(el) tab(nextTab, el);
     } else if(deltaX > 0 && activeIdx > 0) {
       const prevTab = screens[activeIdx-1];
       const el = document.querySelector(`.nav-item[onclick^="tab('${prevTab}')"]`);
