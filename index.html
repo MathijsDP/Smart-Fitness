@@ -10,6 +10,10 @@
     <script src="https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&family=Montserrat:wght@700;900&display=swap" rel="stylesheet">
 
+    <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-firestore-compat.js"></script>
+
     <style>
         /* --- CORE STYLING --- */
         :root { --bg: #050505; --surface: #121212; --surface-2: #1e1e1e; --accent: #fff; --sub: #888; --blue: #007aff; --orange: #ff9500; --green: #34c759; --red: #ff3b30; --gold: #ffd700; }
@@ -111,6 +115,17 @@ body {
     <div id="scr-onboarding" class="screen">
         <div class="q-box" id="q-container"></div>
     </div>
+
+    <div id="scr-auth" class="screen">
+    <div class="q-box">
+        <h1>ELITE COACH</h1>
+        <p class="subtitle">LOG IN OM JE XP OP TE SLAAN</p>
+        <input type="email" id="auth-email" placeholder="E-mail">
+        <input type="password" id="auth-pass" placeholder="Wachtwoord">
+        <button class="btn" onclick="authAction('login')">INLOGGEN</button>
+        <button class="btn-small" onclick="authAction('signup')" style="margin-top:10px; background:transparent; border:none; color:#888;">Nieuw account maken</button>
+    </div>
+</div>
 
     <div id="scr-dash" class="screen hidden">
         <div style="display:flex; justify-content:space-between; align-items:center;">
@@ -216,6 +231,60 @@ body {
     <script>
         // --- 1. CONFIGURATION & DATA ---
 
+        // --- FIREBASE CONFIGURATIE ---
+const firebaseConfig = {
+    apiKey: "AIzaSyBvkD1TvkjjMci5Re2uzY61yqJI_FcthnU",
+    authDomain: "smart-fitness-mathijs.firebaseapp.com",
+    projectId: "smart-fitness-mathijs",
+    storageBucket: "smart-fitness-mathijs.firebasestorage.app",
+    messagingSenderId: "123911579168",
+    appId: "1:123911579168:web:c6fcb8a2f380157b0fbe45"
+};
+
+// Start de verbinding
+firebase.initializeApp(firebaseConfig);
+const auth = firebase.auth();
+const db = firebase.firestore();
+
+// --- DEEL A: DE LOGIN LOGICA (Zorgt dat de knoppen werken) ---
+async function authAction(type) {
+    const email = document.getElementById('auth-email').value;
+    const pass = document.getElementById('auth-pass').value;
+    if (!email || !pass) return alert("Vul e-mail en wachtwoord in!");
+
+    try {
+        if (type === 'login') {
+            await auth.signInWithEmailAndPassword(email, pass);
+        } else {
+            // Maak account en sla eerste user-data op
+            const res = await auth.createUserWithEmailAndPassword(email, pass);
+            await db.collection('users').doc(res.user.uid).set(user);
+            tab('onboarding');
+        }
+    } catch (e) { alert("Fout: " + e.message); }
+}
+
+// --- DEEL B: AUTOMATISCH CHECKEN (Dit draait zodra de app opstart) ---
+auth.onAuthStateChanged(async (fbUser) => {
+    if (fbUser) {
+        // Gebruiker is herkend, haal stats op uit de database
+        const doc = await db.collection('users').doc(fbUser.uid).get();
+        if (doc.exists) { 
+            user = doc.data(); 
+            tab('dash'); 
+            document.getElementById('nav').classList.remove('hidden');
+        } else { 
+            tab('onboarding'); 
+        }
+    } else {
+        // Niemand ingelogd? Toon het inlogscherm
+        tab('auth'); 
+        document.getElementById('nav').classList.add('hidden');
+    }
+});
+
+// --- HIERONDER GAAT JE OUDE CODE VERDER (Exercises, user object, etc.) ---
+
         const exercises = {
             Upper: [
                 {n:"Push-up", i:"Houd je lichaam recht. Borst naar de grond.", focus:["Borst", "Triceps", "Schouders"]},
@@ -311,7 +380,6 @@ body {
         let lastRepTime = 0; // Voor snelheid check
 
         const questions = [
-            { k: 'gender', q: '⚠️ Deze app is nog in ontwikkeling, er kunnen nog fouten voorkomen. Als je een oefening start: zet de camera op de grond en ga 2 stappen achteruit voor het beste resultaat.', t: 'select', o: ['OK'] },
             { k: 'name', q: 'VOORNAAM', t: 'text' },
             { k: 'age', q: 'LEEFTIJD', t: 'number' },
             { k: 'gender', q: 'GESLACHT', t: 'select', o: ['Man', 'Vrouw', 'X'] },
