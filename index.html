@@ -139,30 +139,30 @@ body {
     </div>
 
     <div id="scr-progress" class="screen hidden">
-        <h1>JOUW STATS</h1>
+        <h1>Jouw statistieken</h1>
         <div class="subtitle">RPG Progressie & Badges</div>
 
         <div class="card">
-            <h3 style="font-size:14px; margin:0 0 15px;">SPIER LEVELS</h3>
+            <h3 style="font-size:14px; margin:0 0 15px;">Spier levels</h3>
             <div id="stats-render"></div>
         </div>
 
         <div class="card">
-            <h3 style="font-size:14px; margin:0 0 10px;">BADGE COLLECTIE</h3>
+            <h3 style="font-size:14px; margin:0 0 10px;">Badge collecties</h3>
             <div class="badges-grid" id="badges-render"></div>
         </div>
 
         <div class="card">
-             <h3 style="font-size:14px; margin:0 0 10px;">RECENTE HISTORY</h3>
+             <h3 style="font-size:14px; margin:0 0 10px;">Recente trainingen</h3>
              <div id="history-render" style="font-size:11px; color:var(--sub);">Nog geen workouts.</div>
         </div>
     </div>
 
     <div id="scr-profile" class="screen hidden">
-        <h1>PROFIEL</h1>
+        <h1>Profiel</h1>
         <div class="subtitle">Jouw gegevens</div>
         <div class="card" id="profile-fields"></div>
-        <button class="btn-small" style="width:100%; padding:15px; margin:20px 0; background:#220000; border-color:#500; color:#f55;" onclick="resetData()">Reset alle data</button>
+        <button class="btn-small" style="width:100%; padding:15px; margin:20px 0; background:#220000; border-color:#500; color:#f55;" onclick="resetData()">Begin opnieuw</button>
     </div>
 
     <div id="scr-workout" class="screen hidden" style="padding:0; z-index: 2000; background:#000;">
@@ -330,10 +330,10 @@ body {
         // RANG BEREKENING
         function getRank() {
             let totalLvl = Object.values(user.stats).reduce((a,b) => a + b.lvl, 0);
-            if(totalLvl < 10) return "ROOKIE";
-            if(totalLvl < 25) return "AMATEUR";
-            if(totalLvl < 50) return "ATLEET";
-            if(totalLvl < 100) return "PRO";
+            if(totalLvl < 5) return "Beginner";
+            if(totalLvl < 10) return "Amateur";
+            if(totalLvl < 25) return "Atleet";
+            if(totalLvl < 50) return "Pro";
             return "ELITE";
         }
 
@@ -557,8 +557,8 @@ document.getElementById('scr-'+t).classList.remove('hidden');
             // XP Logic
             const focus = circuit[cIdx].focus;
             focus.forEach(muscle => {
-                user.stats[muscle].xp += 15;
-                let currentTarget = Math.round(100 * Math.pow(1.75, user.stats[muscle].lvl - 1));
+                user.stats[muscle].xp += 10;
+                let currentTarget = Math.round(100 * Math.pow(1.5, user.stats[muscle].lvl - 1));
 
                 if(user.stats[muscle].xp >= currentTarget) {
                     user.stats[muscle].xp -= currentTarget;
@@ -608,7 +608,7 @@ function showLevelUp(muscle, lvl) {
     playSound('lvl');
     speak("Level up! " + muscle);
 
-    // AUTOMATISCH SLUITEN NA 2.5 SEC
+    // AUTOMATISCH SLUITEN NA 2 SEC
     setTimeout(() => {
         ov.classList.remove('active');
     }, 2000);
