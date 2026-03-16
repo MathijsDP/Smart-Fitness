@@ -492,48 +492,67 @@ document.getElementById('scr-'+t).classList.remove('hidden');
         const canvasElement = document.getElementById('output_canvas');
         const canvasCtx = canvasElement.getContext('2d');
 
-        function onResults(results) {
+        function onResults(results) function onResults(results) {
             if(!results.poseLandmarks || isRest) return;
-
             canvasCtx.save();
             canvasCtx.clearRect(0, 0, canvasElement.width, canvasElement.height);
             canvasCtx.drawImage(results.image, 0, 0, canvasElement.width, canvasElement.height);
-
+            
             const m = results.poseLandmarks;
             const exe = circuit[cIdx].n.toLowerCase();
             let isGood = false;
             let feedback = null;
 
-            // Form Correction Logic
+            // --- UITGEBREIDE FORM LOGIC ---
+
             if(exe.includes("squat")) {
-                const a = calcAngle(m[24], m[26], m[28]); 
-                // Check knees caving in (Valgus) - Simple heuristic: knee x should be close to hip x
-                if(Math.abs(m[26].x - m[24].x) < 0.05) feedback = "Knieën naar buiten!";
+                const kneeAngle = calcAngle(m[24], m[26], m[28]); // Heup-Knie-Enkel
+                const hipAngle = calcAngle(m[12], m[24], m[26]);  // Schouder-Heup-Knie
+                
+                if(hipAngle < 70) feedback = "BORST OMHOOG"; 
+                if(kneeAngle < 100) { isGood = true; stage = 'down'; } 
+                if(kneeAngle > 160 && stage === 'down') { registerRep(); stage = 'up'; }
 
-                if(a < 110) { isGood = true; stage = 'down'; } 
-                if(a > 160 && stage === 'down') { registerRep(); stage = 'up'; } 
+            } else if(exe.includes("push-up") || exe.includes("plank")) {
+                const elbowAngle = calcAngle(m[11], m[13], m[15]); // Schouder-Elleboog-Pols
+                const bodyLine = calcAngle(m[11], m[23], m[27]);  // Schouder-Heup-Knie (voor rechte rug)
 
-            } else if(exe.includes("push-up") || exe.includes("diamond")) {
-                const a = calcAngle(m[11], m[13], m[15]); 
-                // Check hip sag
-                if(m[23].y > m[27].y) feedback = "Heupen omhoog!";
+                if(bodyLine < 150) feedback = "HEUPEN OMHOOG";
+                if(exe.includes("push-up")) {
+                    if(elbowAngle < 90) { isGood = true; stage = 'down'; }
+                    if(elbowAngle > 155 && stage === 'down') { registerRep(); stage = 'up'; }
+                }
 
-                if(a < 100) { isGood = true; stage = 'down'; }
-                if(a > 160 && stage === 'down') { registerRep(); stage = 'up'; }
+            } else if(exe.includes("jumping jacks")) {
+                const handDistance = Math.abs(m[15].x - m[16].x);
+                const legDistance = Math.abs(m[27].x - m[28].x);
 
-            } else {
-                // General movement
-                isGood = m[15].y < m[11].y; // Hands above shoulder
-                if(isGood) stage = 'up';
-                if(!isGood && stage === 'up') { registerRep(); stage = 'down'; }
+                if(handDistance < 0.2 && m[15].y < m[11].y) { isGood = true; stage = 'up'; }
+                if(handDistance > 0.5 && stage === 'up') { registerRep(); stage = 'down'; }
+
+            } else if(exe.includes("mountain climbers")) {
+                const kneeToChest = Math.min(
+                    calcDistance(m[25], m[11]), // Linkerknie naar schouder
+                    calcDistance(m[26], m[12])  // Rechterknie naar schouder
+                );
+                if(kneeToChest < 0.4) { isGood = true; stage = 'action'; }
+                if(kneeToChest > 0.6 && stage === 'action') { registerRep(); stage = 'rest'; }
             }
 
+            // --- VISUELE FEEDBACK ---
+            // Kleur het skelet groen als de vorm goed is, wit als het neutraal is, en rood bij feedback
+            let color = isGood ? '#34c759' : (feedback ? '#ff3b30' : '#ffffff');
+            
+            drawConnectors(canvasCtx, m, POSE_CONNECTIONS, {color: color, lineWidth: 4});
+            drawLandmarks(canvasCtx, m, {color: color, lineWidth: 2, radius: 3});
+            
             if(feedback) updateHUD(feedback);
-            else if(stage === 'down') updateHUD("DUW OMHOOG!");
-
-            drawConnectors(canvasCtx, m, POSE_CONNECTIONS, {color: isGood?'#34c759':'#fff', lineWidth:3});
-            drawLandmarks(canvasCtx, m, {color: isGood?'#34c759':'#007aff', lineWidth:1, radius:4});
             canvasCtx.restore();
+        }
+
+        // Hulpfunctie voor afstandsberekening (nodig voor mountain climbers/jacks)
+        function calcDistance(p1, p2) {
+            return Math.sqrt(Math.pow(p1.x - p2.x, 2) + Math.pow(p1.y - p2.y, 2));
         }
 
         function registerRep() {
