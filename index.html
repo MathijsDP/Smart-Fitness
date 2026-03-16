@@ -114,27 +114,27 @@ body {
 
     <div id="scr-dash" class="screen hidden">
         <div style="display:flex; justify-content:space-between; align-items:center;">
-            <div class="streak-badge"><i>🔥</i> <span id="streak-val">0</span> DAGEN</div>
+            <div class="streak-badge"><i>🔥</i> <span id="streak-val">0</span> DAG</div>
             <div id="rank-display" class="rank-badge">ROOKIE</div>
         </div>
 
         <h1 id="dash-greet">HEY!</h1>
-        <div class="subtitle">Tijd om te knallen</div>
+        <div class="subtitle">Tijd om te beginnen!</div>
 
         <div class="card" onclick="startCircuit('Upper')">
             <strong>UPPER BODY</strong>
             <div style="color:var(--sub);font-size:11px; margin-top:5px;">Borst, Armen & Schouders</div>
-            <div style="margin-top:10px; font-size:10px; font-weight:700; color:var(--blue);">LVL AANBEVOLEN: 1+</div>
+            <div style="margin-top:10px; font-size:10px; font-weight:700; color:var(--blue);">Krachttraining</div>
         </div>
         <div class="card" onclick="startCircuit('Lower')">
             <strong>LOWER BODY</strong>
             <div style="color:var(--sub);font-size:11px; margin-top:5px;">Benen, Billen & Kuiten</div>
-            <div style="margin-top:10px; font-size:10px; font-weight:700; color:var(--blue);">LVL AANBEVOLEN: 1+</div>
+            <div style="margin-top:10px; font-size:10px; font-weight:700; color:var(--blue);">Krachttraining</div>
         </div>
         <div class="card" onclick="startCircuit('Conditie')">
             <strong>FULL BODY / CORE</strong>
             <div style="color:var(--sub);font-size:11px; margin-top:5px;">Vetverbranding & Abs</div>
-            <div style="margin-top:10px; font-size:10px; font-weight:700; color:var(--blue);">INTENSIEF</div>
+            <div style="margin-top:10px; font-size:10px; font-weight:700; color:var(--blue);">Vetverbranding + core</div>
         </div>
     </div>
 
@@ -189,9 +189,9 @@ body {
         </div>
 
         <div class="hud">
-            <div class="hud-val"><span>OEFENING</span><strong id="hud-idx">1/6</strong></div>
-            <div class="hud-val"><span>SET</span><strong id="hud-set">1/3</strong></div>
-            <div class="hud-val"><span>REPS</span><strong id="hud-reps">0/12</strong></div>
+            <div class="hud-val"><span>Oefening</span><strong id="hud-idx">1/6</strong></div>
+            <div class="hud-val"><span>Set</span><strong id="hud-set">1/3</strong></div>
+            <div class="hud-val"><span>Reps</span><strong id="hud-reps">0/12</strong></div>
         </div>
 
         <button class="btn" style="position:absolute; bottom:30px; left:50%; transform:translateX(-50%); width:60%; height:50px; padding:0; z-index:2001; background:rgba(255,59,48,0.2); border:1px solid rgba(255,59,48,0.5); color:#fff; font-size:12px; backdrop-filter:blur(4px);" onclick="stopWorkout()">STOPPEN</button>
@@ -207,8 +207,8 @@ body {
     </div>
 
     <nav class="navbar hidden" id="nav">
-        <div class="nav-item active" onclick="tab('dash', this)"><i>🏠</i>Dashboard</div>
-        <div class="nav-item" onclick="tab('progress', this)"><i>📊</i>Stats</div>
+        <div class="nav-item active" onclick="tab('dash', this)"><i>🏠</i>Training</div>
+        <div class="nav-item" onclick="tab('progress', this)"><i>📊</i>Statistieken</div>
         <div class="nav-item" onclick="tab('profile', this)"><i>👤</i>Profiel</div>
     </nav>
 
@@ -219,15 +219,15 @@ body {
             Upper: [
                 {n:"Push-up", i:"Houd je lichaam recht. Borst naar de grond.", focus:["Borst", "Triceps", "Schouders"]},
                 {n:"Shoulder Taps", i:"Hoge plank. Tik schouders om en om aan.", focus:["Schouders", "Abs"]},
-                {n:"Pike Push-up", i:"Heupen in de lucht (V-vorm). Hoofd naar grond.", focus:["Schouders", "Triceps"]},
-                {n:"Superman", i:"Op buik. Armen en benen tegelijk liften.", focus:["Rug", "Schouders"]},
-                {n:"Diamond Push-up", i:"Handen in ruitvorm onder borst.", focus:["Triceps", "Borst"]},
-                {n:"Plank Taps", i:"Hoge plank. Tik grond ver naast je aan.", focus:["Abs", "Schouders"]}
+                {n:"Pike Push-up", i:"Buig je armen terwijl je in een omgekeerde V-positie staat.", focus:["Schouders", "Triceps"]},
+                {n:"Superman", i:"Til je armen en benen tegelijk van de grond terwijl je op je buik ligt.", focus:["Rug", "Schouders"]},
+                {n:"Diamond Push-up", i:"Doe een push-up met je handen dicht bij elkaar.", focus:["Triceps", "Borst"]},
+                {n:"Plank", i:"Houd je lichaam recht op je onderarmen.", focus:["Abs", "Schouders"]}
             ],
             Lower: [
                 {n:"Squat", i:"Billen naar achteren, knieën niet voorbij tenen.", focus:["Benen", "Billen"]},
-                {n:"Lunge", i:"Grote stap, achterste knie naar grond.", focus:["Benen", "Billen"]},
-                {n:"Glute Bridge", i:"Op rug. Heupen omhoog duwen.", focus:["Billen", "Rug"]},
+                {n:"Lunge", i:"Stap naar voren en zak door je knieën.", focus:["Benen", "Billen"]},
+                {n:"Bulgarian Split Squat", i:"Bulgarian Split Squat.", focus:["Billen", "Rug"]},
                 {n:"Side Lunges", i:"Stap opzij, één been buigen, ander recht.", focus:["Benen", "Billen"]},
                 {n:"Calf Raise", i:"Op tenen staan en rustig zakken.", focus:["Kuiten"]},
                 {n:"High Knees", i:"Rennen op de plaats, knieën hoog.", focus:["Benen", "Abs"]}
