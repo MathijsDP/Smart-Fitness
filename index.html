@@ -492,7 +492,7 @@ document.getElementById('scr-'+t).classList.remove('hidden');
         const canvasElement = document.getElementById('output_canvas');
         const canvasCtx = canvasElement.getContext('2d');
 
-        function onResults(results) function onResults(results) {
+        function onResults(results) {
             if(!results.poseLandmarks || isRest) return;
             canvasCtx.save();
             canvasCtx.clearRect(0, 0, canvasElement.width, canvasElement.height);
