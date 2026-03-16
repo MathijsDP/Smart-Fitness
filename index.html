@@ -329,6 +329,28 @@ body {
 
         function generatePersonalPlan(){
 
+            function generateAIWorkout(type){
+    const exercises = {
+        Upper: ["Push-ups","Pull-ups","Shoulder Press","Bicep Curl","Tricep Dips"],
+        Lower: ["Squats","Lunges","Deadlift","Leg Press","Calf Raises"],
+        Conditie: ["Jumping Jacks","Burpees","Mountain Climbers","Sprint","High Knees"]
+    };
+
+                function estimateCalories(type){
+    if(type === "Upper") return Math.floor(Math.random()*150 + 100);
+    if(type === "Lower") return Math.floor(Math.random()*200 + 150);
+    if(type === "Conditie") return Math.floor(Math.random()*250 + 200);
+}
+
+    // kies 3 random oefeningen
+    let chosen = [];
+    while(chosen.length < 3){
+        const rand = exercises[type][Math.floor(Math.random()*exercises[type].length)];
+        if(!chosen.includes(rand)) chosen.push(rand);
+    }
+    return chosen;
+}
+
     let plan = [];
 
     // doel bepalen
