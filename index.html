@@ -120,10 +120,6 @@ body {
 
         <h1 id="dash-greet">HEY!</h1>
         <div class="subtitle">Tijd om te beginnen!</div>
-        <div class="card">
-<strong>JOUW WEEKPLAN</strong>
-<div id="plan-render" style="margin-top:10px;font-size:12px;color:#ccc;"></div>
-</div>
 
         <div class="card" onclick="startCircuit('Upper')">
             <strong>Boven lichaam</strong>
@@ -327,78 +323,6 @@ body {
 
         // --- 4. CORE FUNCTIONS ---
 
-        function generatePersonalPlan(){
-
-            function generateAIWorkout(type){
-    const exercises = {
-        Upper: ["Push-ups","Pull-ups","Shoulder Press","Bicep Curl","Tricep Dips"],
-        Lower: ["Squats","Lunges","Deadlift","Leg Press","Calf Raises"],
-        Conditie: ["Jumping Jacks","Burpees","Mountain Climbers","Sprint","High Knees"]
-    };
-
-                function estimateCalories(type){
-    if(type === "Upper") return Math.floor(Math.random()*150 + 100);
-    if(type === "Lower") return Math.floor(Math.random()*200 + 150);
-    if(type === "Conditie") return Math.floor(Math.random()*250 + 200);
-}
-
-    // kies 3 random oefeningen
-    let chosen = [];
-    while(chosen.length < 3){
-        const rand = exercises[type][Math.floor(Math.random()*exercises[type].length)];
-        if(!chosen.includes(rand)) chosen.push(rand);
-    }
-    return chosen;
-}
-
-    let plan = [];
-
-    // doel bepalen
-    if(user.goal === "Afvallen"){
-        plan = ["Conditie","Lower","Conditie","Upper"];
-    }
-
-    if(user.goal === "Spiermassa"){
-        plan = ["Upper","Lower","Upper","Lower"];
-    }
-
-    if(user.goal === "Conditie"){
-        plan = ["Conditie","Upper","Lower","Conditie"];
-    }
-
-    // trainingsdagen aanpassen
-    if(user.availability === "1-2"){
-        plan = plan.slice(0,2);
-    }
-
-    if(user.availability === "3-4"){
-        plan = plan.slice(0,4);
-    }
-
-    if(user.availability === "5+"){
-        plan = ["Upper","Lower","Conditie","Upper","Lower"];
-    }
-
-    return plan;
-}
-
-        function renderPlan(){
-
-    const plan = generatePersonalPlan();
-
-    const days = ["Maandag","Dinsdag","Woensdag","Donderdag","Vrijdag","Zaterdag","Zondag"];
-
-    const html = plan.map((p,i)=>`
-        <div style="display:flex;justify-content:space-between;padding:10px 0;border-bottom:1px solid #222;">
-            <span>${days[i]}</span>
-            <strong>${p}</strong>
-        </div>
-    `).join("");
-
-    document.getElementById("plan-render").innerHTML = html;
-
-}
-
         function save() { localStorage.setItem('elite_v9_ultimate', JSON.stringify(user)); }
         function resetData() { localStorage.removeItem('elite_v9_ultimate'); location.reload(); }
 
@@ -420,11 +344,10 @@ document.getElementById('scr-'+t).classList.remove('hidden');
             if(el) { document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active')); el.classList.add('active'); }
 
             if(t === 'dash') { 
-    document.getElementById('dash-greet').innerText = "HEY " + (user.name || "CHAMP"); 
-    document.getElementById('streak-val').innerText = user.streak; 
-    document.getElementById('rank-display').innerText = getRank();
-    renderPlan();
-}
+                document.getElementById('dash-greet').innerText = "HEY " + (user.name || "CHAMP"); 
+                document.getElementById('streak-val').innerText = user.streak; 
+                document.getElementById('rank-display').innerText = getRank();
+            }
             if(t === 'progress') renderProgress();
             if(t === 'profile') renderProfileFields();
         }
