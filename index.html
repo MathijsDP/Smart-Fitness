@@ -230,7 +230,6 @@ body {
 
     <script>
         // --- 1. CONFIGURATION & DATA ---
-
         // --- FIREBASE CONFIGURATIE ---
 const firebaseConfig = {
     apiKey: "AIzaSyBvkD1TvkjjMci5Re2uzY61yqJI_FcthnU",
@@ -321,18 +320,36 @@ auth.onAuthStateChanged(async (fbUser) => {
             { id: 'b_early', icon: '🌅', name: 'Vroege Vogel', desc: 'Training voor 08:00u' }
         ];
 
-        let user = JSON.parse(localStorage.getItem('elite_v9_ultimate')) || {
-            name: '', age: '', gender: '', height: '', weight: '', goal: '', reps: 12, availability: '',
-            streak: 0, lastDate: null,
-            totalWorkouts: 0,
-            badges: [],
-            history: [],
-            stats: { 
-                Borst: {xp:0, lvl:1}, Schouders: {xp:0, lvl:1}, Triceps: {xp:0, lvl:1},
-                Abs: {xp:0, lvl:1}, Rug: {xp:0, lvl:1}, Benen: {xp:0, lvl:1},
-                Billen: {xp:0, lvl:1}, Kuiten: {xp:0, lvl:1}
-            }
-        };
+       // Begin met een leeg object. De data komt uit Firebase.
+// --- 1. DE NIEUWE USER STRUCTUUR ---
+// We beginnen met een 'leeg' object. Firebase vult dit in zodra je inlogt.
+let user = {
+    name: '', age: '', gender: '', height: '', weight: '', goal: '', reps: 12, availability: '',
+    streak: 0, lastDate: null,
+    totalWorkouts: 0,
+    badges: [],
+    history: [],
+    stats: { 
+        Borst: {xp:0, lvl:1}, Schouders: {xp:0, lvl:1}, Triceps: {xp:0, lvl:1},
+        Abs: {xp:0, lvl:1}, Rug: {xp:0, lvl:1}, Benen: {xp:0, lvl:1},
+        Billen: {xp:0, lvl:1}, Kuiten: {xp:0, lvl:1}
+    }
+};
+
+// --- 2. DE UPGRADED SAVE FUNCTIE ---
+// Deze overschrijft jouw oude save() functie.
+function save() { 
+    // Sla lokaal op als backup
+    localStorage.setItem('elite_v9_ultimate', JSON.stringify(user)); 
+    
+    // Sla op in de Cloud (Firebase)
+    const currentUser = auth.currentUser;
+    if (currentUser) {
+        db.collection('users').doc(currentUser.uid).set(user)
+          .then(() => console.log("Cloud sync: OK"))
+          .catch(e => console.error("Cloud sync error:", e));
+    }
+}
 
         // --- 2. AUDIO SYSTEM (Synthesizer - No files needed) ---
         const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
@@ -469,12 +486,18 @@ document.getElementById('scr-'+t).classList.remove('hidden');
             document.getElementById('q-container').innerHTML = html;
         }
 
-        function saveQ() {
-            const val = document.getElementById('q-val').value;
-            user[questions[currentStep-1].k] = val;
-            if(currentStep < questions.length) { currentStep++; renderQ(); }
-            else { save(); checkStreak(); tab('dash'); document.getElementById('nav').classList.remove('hidden'); }
-        }
+        function save() { 
+    // Sla lokaal op (als backup)
+    localStorage.setItem('elite_v9_ultimate', JSON.stringify(user)); 
+    
+    // Sla op in Firebase (de cloud)
+    const currentUser = auth.currentUser;
+    if (currentUser) {
+        db.collection('users').doc(currentUser.uid).set(user)
+        .then(() => console.log("Cloud Save Succesful"))
+        .catch(e => console.error("Cloud Save Error", e));
+    }
+}
 
         function renderProfileFields() {
             const container = document.getElementById('profile-fields');
