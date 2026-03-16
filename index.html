@@ -120,6 +120,10 @@ body {
 
         <h1 id="dash-greet">HEY!</h1>
         <div class="subtitle">Tijd om te beginnen!</div>
+        <div class="card">
+<strong>JOUW WEEKPLAN</strong>
+<div id="plan-render" style="margin-top:10px;font-size:12px;color:#ccc;"></div>
+</div>
 
         <div class="card" onclick="startCircuit('Upper')">
             <strong>Boven lichaam</strong>
@@ -323,6 +327,56 @@ body {
 
         // --- 4. CORE FUNCTIONS ---
 
+        function generatePersonalPlan(){
+
+    let plan = [];
+
+    // doel bepalen
+    if(user.goal === "Afvallen"){
+        plan = ["Conditie","Lower","Conditie","Upper"];
+    }
+
+    if(user.goal === "Spiermassa"){
+        plan = ["Upper","Lower","Upper","Lower"];
+    }
+
+    if(user.goal === "Conditie"){
+        plan = ["Conditie","Upper","Lower","Conditie"];
+    }
+
+    // trainingsdagen aanpassen
+    if(user.availability === "1-2"){
+        plan = plan.slice(0,2);
+    }
+
+    if(user.availability === "3-4"){
+        plan = plan.slice(0,4);
+    }
+
+    if(user.availability === "5+"){
+        plan = ["Upper","Lower","Conditie","Upper","Lower"];
+    }
+
+    return plan;
+}
+
+        function renderPlan(){
+
+    const plan = generatePersonalPlan();
+
+    const days = ["Maandag","Dinsdag","Woensdag","Donderdag","Vrijdag","Zaterdag","Zondag"];
+
+    const html = plan.map((p,i)=>`
+        <div style="display:flex;justify-content:space-between;padding:10px 0;border-bottom:1px solid #222;">
+            <span>${days[i]}</span>
+            <strong>${p}</strong>
+        </div>
+    `).join("");
+
+    document.getElementById("plan-render").innerHTML = html;
+
+}
+
         function save() { localStorage.setItem('elite_v9_ultimate', JSON.stringify(user)); }
         function resetData() { localStorage.removeItem('elite_v9_ultimate'); location.reload(); }
 
@@ -344,10 +398,11 @@ document.getElementById('scr-'+t).classList.remove('hidden');
             if(el) { document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active')); el.classList.add('active'); }
 
             if(t === 'dash') { 
-                document.getElementById('dash-greet').innerText = "HEY " + (user.name || "CHAMP"); 
-                document.getElementById('streak-val').innerText = user.streak; 
-                document.getElementById('rank-display').innerText = getRank();
-            }
+    document.getElementById('dash-greet').innerText = "HEY " + (user.name || "CHAMP"); 
+    document.getElementById('streak-val').innerText = user.streak; 
+    document.getElementById('rank-display').innerText = getRank();
+    renderPlan();
+}
             if(t === 'progress') renderProgress();
             if(t === 'profile') renderProfileFields();
         }
