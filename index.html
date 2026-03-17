@@ -960,10 +960,14 @@ function closeReport() {
     document.getElementById('report-overlay').classList.add('hidden');
 }
 
-        async function createGroup() {
+async function createGroup() {
     const name = document.getElementById('group-name').value;
-    if(!name) return alert("Vul een groepsnaam in!");
     
+    if(!name) {
+        alert("Vul eerst een groepsnaam in!");
+        return;
+    }
+
     const currentUser = auth.currentUser;
     const groupId = name.toLowerCase().replace(/\s+/g, '-');
 
@@ -972,16 +976,19 @@ function closeReport() {
             groupName: name,
             members: [currentUser.uid],
             scores: {
-  [currentUser.uid]: {
-    name: user.name,
-    score: calculateMainScore()
-  }
-}
+                [currentUser.uid]: {
+                    name: user.name,
+                    score: calculateMainScore()
                 }
-        alert("Groep aangemaakt!");
+            }
+        });
+        
+        user.currentGroupId = groupId;
+        save();
         loadLeaderboard(groupId);
+
     } catch (e) {
-        alert("Fout bij aanmaken: " + e.message);
+        alert("Fout: " + e.message);
     }
 }
 
