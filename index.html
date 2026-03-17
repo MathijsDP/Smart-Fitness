@@ -293,40 +293,70 @@ body {
         // --- 1. CONFIGURATION & DATA ---
         // --- FIREBASE CONFIGURATIE ---
 
-        function calculateMainScore() {
-    const stats = user.stats;
-    const keys = Object.keys(stats);
-    // Tel alle levels bij elkaar op
-    let totalLevel = keys.reduce((sum, key) => sum + stats[key].lvl, 0);
-    // Pak het gemiddelde (Main Score)
-    let average = totalLevel / keys.length;
-    
-    // We doen dit maal 10 voor een mooie score (bijv. 4.5 wordt een 45)
-    return Math.round(average * 10);
+        // Deze functie rekent je gemiddelde uit van al je spier-levels
+function calculateMainScore() {
+    let stats = user.stats;
+    let sum = 0;
+    let count = 0;
+    for(let spier in stats) {
+        sum += stats[spier].lvl;
+        count++;
+    }
+    return Math.round((sum / count) * 10); // Maakt van bijv. 3.2 een score van 32
 }
 
-        async function joinGroup() {
-    const name = document.getElementById('group-name').value;
-    if(!name) return alert("Typ de groepsnaam!");
-    
-    const currentUser = auth.currentUser;
-    const groupId = name.toLowerCase().replace(/\s+/g, '-');
-    const myMainScore = calculateMainScore(); // Jouw gemiddelde score
+// Deze functie haalt de namen en scores op en zet ze op je scherm
+async function loadLeaderboard(groupId) {
+    if(!groupId) return;
+    const doc = await db.collection('groups').doc(groupId).get();
+    if(!doc.exists) return;
 
-    try {
-        const groupRef = db.collection('groups').doc(groupId);
-        await groupRef.update({
-            members: firebase.firestore.FieldValue.arrayUnion(currentUser.uid),
-            // We slaan je individuele naam en score op in de lijst
-            [`scores.${currentUser.uid}`]: {
-                name: user.name || "Anoniem",
-                score: myMainScore
-            }
+    const data = doc.data();
+    const scoresMap = data.scores;
+    let spelersLijst = [];
+
+    // We lopen door alle mensen in de groep heen
+    for (let uid in scoresMap) {
+        let info = scoresMap[uid];
+        spelersLijst.push({
+            name: info.name || "Atleet " + uid.substring(0,3), // Gebruik naam of kort ID
+            score: info.score || 0,
+            isMe: uid === auth.currentUser.uid
         });
-        user.currentGroupId = groupId;
-        save();
-        loadLeaderboard(groupId);
-    } catch (e) { alert("Groep niet gevonden of fout."); }
+    }
+
+    // Sorteer van hoogste score naar laagste
+    spelersLijst.sort((a, b) => b.score - a.score);
+
+    let html = `<h3 style="margin:20px 0 10px; font-family:Montserrat;">🏆 CLASH: ${data.groupName}</h3>`;
+    spelersLijst.forEach((speler, i) => {
+        html += `
+            <div class="card" style="display:flex; justify-content:space-between; align-items:center; border-left: 4px solid ${speler.isMe ? 'var(--blue)' : '#333'};">
+                <span><strong>${i+1}.</strong> ${speler.name} ${speler.isMe ? '(JIJ)' : ''}</span>
+                <span style="font-weight:900; color:var(--blue); font-size:20px;">${speler.score}</span>
+            </div>`;
+    });
+    document.getElementById('group-content').innerHTML = html;
+}
+
+       async function joinGroup() {
+    const gName = document.getElementById('group-name').value;
+    if(!gName) return alert("Typ de naam van de groep!");
+
+    const groupId = gName.toLowerCase().replace(/\s+/g, '-');
+    const myScore = calculateMainScore();
+    const myName = user.name || "Onbekend"; // Zorg dat 'user.name' gevuld is!
+
+    await db.collection('groups').doc(groupId).update({
+        [`scores.${auth.currentUser.uid}`]: {
+            name: myName,
+            score: myScore
+        }
+    });
+    
+    user.currentGroupId = groupId;
+    save();
+    loadLeaderboard(groupId);
 }
 const firebaseConfig = {
     apiKey: "AIzaSyBvkD1TvkjjMci5Re2uzY61yqJI_FcthnU",
