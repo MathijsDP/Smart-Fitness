@@ -293,36 +293,40 @@ body {
         // --- 1. CONFIGURATION & DATA ---
         // --- FIREBASE CONFIGURATIE ---
 
+        function calculateMainScore() {
+    const stats = user.stats;
+    const keys = Object.keys(stats);
+    // Tel alle levels bij elkaar op
+    let totalLevel = keys.reduce((sum, key) => sum + stats[key].lvl, 0);
+    // Pak het gemiddelde (Main Score)
+    let average = totalLevel / keys.length;
+    
+    // We doen dit maal 10 voor een mooie score (bijv. 4.5 wordt een 45)
+    return Math.round(average * 10);
+}
+
         async function joinGroup() {
     const name = document.getElementById('group-name').value;
-    if(!name) return alert("Typ de groepsnaam die je vriend heeft gemaakt!");
+    if(!name) return alert("Typ de groepsnaam!");
     
     const currentUser = auth.currentUser;
     const groupId = name.toLowerCase().replace(/\s+/g, '-');
+    const myMainScore = calculateMainScore(); // Jouw gemiddelde score
 
     try {
         const groupRef = db.collection('groups').doc(groupId);
-        const doc = await groupRef.get();
-
-        if (!doc.exists) {
-            return alert("Deze groep bestaat niet. Check de spelling of maak hem zelf aan!");
-        }
-
-        // We voegen de huidige gebruiker toe aan de groep
         await groupRef.update({
             members: firebase.firestore.FieldValue.arrayUnion(currentUser.uid),
-            // We zetten zijn huidige aantal workouts ook in de groepsscore
-            [`scores.${currentUser.uid}`]: user.totalWorkouts || 0
+            // We slaan je individuele naam en score op in de lijst
+            [`scores.${currentUser.uid}`]: {
+                name: user.name || "Anoniem",
+                score: myMainScore
+            }
         });
-
-        user.currentGroupId = groupId; // Sla op in lokaal user object
-        save(); // Sla op in Firebase user doc
-        
-        alert("Je zit nu in de groep: " + name);
+        user.currentGroupId = groupId;
+        save();
         loadLeaderboard(groupId);
-    } catch (e) {
-        alert("Fout bij joinen: " + e.message);
-    }
+    } catch (e) { alert("Groep niet gevonden of fout."); }
 }
 const firebaseConfig = {
     apiKey: "AIzaSyBvkD1TvkjjMci5Re2uzY61yqJI_FcthnU",
@@ -538,6 +542,9 @@ document.getElementById('scr-'+t).classList.remove('hidden');
             if(t === 'analyse') renderanalyse();
             if(t === 'progress') renderProgress();
             if(t === 'profile') renderProfileFields();
+            if(t === 'social' && user.currentGroupId) {
+    loadLeaderboard(user.currentGroupId);
+}
         }
 
         function renderProgress() {
@@ -646,9 +653,23 @@ function stopWorkout() {
         save(); // Sla op in Firebase/LocalStorage
     }
 
-    sessionScores = []; // Reset voor de volgende keer
-    tab('dash'); // Ga gewoon terug naar het dashboard
+    // --- DIT IS STAP 4: UPDATE DE SCORE IN DE GROEP ---
+    if (user.currentGroupId) {
+        const myNewScore = calculateMainScore(); // Bereken je nieuwe gemiddelde
+        
+        db.collection('groups').doc(user.currentGroupId).update({
+            [`scores.${auth.currentUser.uid}.score`]: myNewScore,
+            [`scores.${auth.currentUser.uid}.name`]: user.name || "Anoniem"
+        }).then(() => {
+            console.log("Groepsscore bijgewerkt!");
+        });
+    }
+    // ------------------------------------------------
+
+    sessionScores = []; 
+    tab('dash'); 
 }
+
 
 function closeReport() {
     // Maak de lijst met scores leeg voor de volgende workout
@@ -1131,6 +1152,48 @@ async function viewFriend(friendId) {
         });
     }
     document.getElementById('friend-stats-render').innerHTML = statsHtml;
+
+    // --- STAP 3: HET LEADERBOARD & DE BATTLE LOGICA ---
+
+// 1. Bereken het gemiddelde van al je stats
+function calculateMainScore() {
+    const stats = user.stats;
+    const keys = Object.keys(stats);
+    let totalLevel = keys.reduce((sum, key) => sum + stats[key].lvl, 0);
+    let average = totalLevel / keys.length;
+    return Math.round(average * 10); // Maakt van bijv. 4.2 een score van 42
+}
+
+// 2. De ranglijst ophalen uit de cloud en laten zien
+async function loadLeaderboard(groupId) {
+    if(!groupId) return;
+    
+    const doc = await db.collection('groups').doc(groupId).get();
+    if(!doc.exists) return;
+
+    const data = doc.data();
+    // Verander de database-objecten in een lijst die we kunnen sorteren op score
+    const players = Object.values(data.scores).sort((a, b) => b.score - a.score);
+
+    let html = `<h3 style="margin-top:20px; color:var(--blue); font-family:Montserrat;">🏆 RANGORDE: ${data.groupName}</h3>`;
+    
+    players.forEach((player, index) => {
+        let isFirst = index === 0;
+        html += `
+            <div class="card" style="display:flex; justify-content:space-between; align-items:center; border-left: 4px solid ${isFirst ? 'var(--gold)' : '#333'};">
+                <div>
+                    <span style="font-weight:900; margin-right:10px; color:${isFirst ? 'var(--gold)' : 'white'};">${index + 1}.</span>
+                    <span style="text-transform:uppercase; font-size:12px; font-weight:700;">${player.name}</span>
+                </div>
+                <div style="text-align:right;">
+                    <div style="font-size:20px; font-weight:900; color:var(--blue);">${player.score}</div>
+                    <div style="font-size:7px; color:var(--sub); letter-spacing:1px;">POWER SCORE</div>
+                </div>
+            </div>`;
+    });
+
+    document.getElementById('group-content').innerHTML = html;
+}
 }
     </script>
 
