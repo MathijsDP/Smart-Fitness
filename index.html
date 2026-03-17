@@ -234,6 +234,28 @@ body {
         </div>
     </div>
 
+    <div id="report-overlay" class="screen hidden" style="position:fixed; inset:0; background: rgba(5,5,5,0.98); z-index: 5000; display:none; flex-direction: column; align-items: center; justify-content: center; backdrop-filter: blur(10px);">
+    <div class="card" style="width: 85%; max-width: 400px; text-align: center; border: 1px solid var(--blue); box-shadow: 0 0 30px rgba(0,122,255,0.2);">
+        <h1 style="color: var(--blue); font-size: 20px;">TRAININGS RAPPORT</h1>
+        <div class="subtitle" id="report-date">NET VOLTOOID</div>
+        
+        <div id="report-score" style="font-size: 64px; font-weight: 900; margin: 10px 0; font-family: 'Montserrat';">0%</div>
+        <div style="font-size: 11px; text-transform: uppercase; letter-spacing: 2px; color: var(--sub); margin-bottom: 20px;">Houding Score</div>
+
+        <div style="text-align: left; background: rgba(255,255,255,0.03); padding: 15px; border-radius: 12px; margin-bottom: 20px;">
+            <strong style="font-size: 12px; color: var(--blue); display: block; margin-bottom: 5px;">COACH FEEDBACK:</strong>
+            <p id="report-feedback-text" style="font-size: 13px; line-height: 1.5; color: #eee; margin: 0;"></p>
+        </div>
+
+        <div class="stat-row">
+            <div class="stat-header"><span>PRECISIE</span><span id="precision-val">0%</span></div>
+            <div class="bar-bg"><div id="precision-bar" class="bar-fill" style="width: 0%"></div></div>
+        </div>
+
+        <button class="btn" onclick="closeReport()" style="margin-top: 25px; background: var(--blue); color: white;">DOORGAAN</button>
+    </div>
+</div>
+
     <nav class="navbar hidden" id="nav">
         <div class="nav-item active" onclick="tab('dash', this)"><i>🏠</i>Training</div>
         <div class="nav-item" onclick="tab('analyse', this)"><i>📈</i>Analyse</div>
@@ -410,6 +432,7 @@ function save() {
         // --- 3. STATE VARIABLES ---
         let currentStep = 1; 
         let circuit = [], cIdx = 0, reps = 0, sets = 1, isRest = false, restTimer = null, tLeft = 30;
+        let sessionScores = [];
         let stage = 'up'; 
         let currentCat = '';
         let camera = null;
@@ -552,11 +575,49 @@ document.getElementById('scr-'+t).classList.remove('hidden');
             startRest(30, "LEES DE UITLEG"); 
         }
 
-        function stopWorkout() {
-            isRest = false; clearInterval(restTimer);
-            if(camera) camera.stop(); 
-            tab('dash');
-        }
+       function stopWorkout() {
+    // 1. Camera uitzetten
+    if (camera) camera.stop();
+    
+    // 2. Bereken het gemiddelde van alle opgeslagen rep-scores
+    let totalScore = 0;
+    if (sessionScores.length > 0) {
+        let som = sessionScores.reduce((a, b) => a + b, 0);
+        totalScore = Math.round(som / sessionScores.length);
+    }
+
+    // 3. Maak het rapport-scherm zichtbaar
+    const reportOverlay = document.getElementById('report-overlay');
+    reportOverlay.style.display = 'flex';
+    reportOverlay.classList.remove('hidden');
+    
+    // 4. Vul de cijfers in het rapport in
+    document.getElementById('report-score').innerText = totalScore + "%";
+    document.getElementById('precision-val').innerText = totalScore + "%";
+    document.getElementById('precision-bar').style.width = totalScore + "%";
+
+    // 5. De tekstuele feedback kiezen
+    let feedback = "";
+    if (totalScore >= 85) {
+        feedback = "Uitstekend! Je techniek is zeer stabiel. Je spieren worden op de juiste manier belast.";
+    } else if (totalScore >= 65) {
+        feedback = "Lekker bezig. Probeer bij de volgende training nog iets dieper te zakken voor meer resultaat.";
+    } else if (sessionScores.length === 0) {
+        feedback = "De camera kon geen volledige bewegingen zien. Sta de volgende keer iets verder naar achteren.";
+    } else {
+        feedback = "Focus op je vorm. Ga minder snel en probeer de beweging heel gecontroleerd uit te voeren.";
+    }
+    document.getElementById('report-feedback-text').innerText = feedback;
+}
+
+function closeReport() {
+    // Maak de lijst met scores leeg voor de volgende workout
+    sessionScores = [];
+    // Verberg het rapport en ga naar het dashboard
+    document.getElementById('report-overlay').style.display = 'none';
+    document.getElementById('report-overlay').classList.add('hidden');
+    tab('dash');
+}
 
         function startRest(time, title) {
             isRest = true; tLeft = time;
@@ -604,49 +665,47 @@ document.getElementById('scr-'+t).classList.remove('hidden');
         const canvasElement = document.getElementById('output_canvas');
         const canvasCtx = canvasElement.getContext('2d');
 
-        function onResults(results) {
-            if(!results.poseLandmarks || isRest) return;
+function onResults(results) {
+    if(!results.poseLandmarks || isRest) return;
 
-            canvasCtx.save();
-            canvasCtx.clearRect(0, 0, canvasElement.width, canvasElement.height);
-            canvasCtx.drawImage(results.image, 0, 0, canvasElement.width, canvasElement.height);
+    canvasCtx.save();
+    canvasCtx.clearRect(0, 0, canvasElement.width, canvasElement.height);
+    canvasCtx.drawImage(results.image, 0, 0, canvasElement.width, canvasElement.height);
 
-            const m = results.poseLandmarks;
-            const exe = circuit[cIdx].n.toLowerCase();
-            let isGood = false;
-            let feedback = null;
+    const m = results.poseLandmarks;
+    const exe = circuit[cIdx].n.toLowerCase();
 
-            // Form Correction Logic
-            if(exe.includes("squat")) {
-                const a = calcAngle(m[24], m[26], m[28]); 
-                // Check knees caving in (Valgus) - Simple heuristic: knee x should be close to hip x
-                if(Math.abs(m[26].x - m[24].x) < 0.05) feedback = "Knieën naar buiten!";
+    // --- DE LOGICA VOOR SQUATS ---
+    if(exe.includes("squat")) {
+        let currentAngle = calcAngle(m[24], m[26], m[28]); // Heup-Knie-Enkel
+        
+        if (currentAngle > 160) stage = 'up';
+        
+        if (currentAngle < 100 && stage === 'up') {
+            // KWALITEIT BEREKENEN: 90 graden is perfect (100%)
+            let repQuality = Math.max(0, 100 - Math.abs(90 - currentAngle));
+            sessionScores.push(repQuality); 
+            
+            stage = 'down';
+            reps++;
+            
+            // Gebruik je bestaande functies voor audio en HUD
+            playSound('rep');
+            updateHUD();
 
-                if(a < 110) { isGood = true; stage = 'down'; } 
-                if(a > 160 && stage === 'down') { registerRep(); stage = 'up'; } 
-
-            } else if(exe.includes("push-up") || exe.includes("diamond")) {
-                const a = calcAngle(m[11], m[13], m[15]); 
-                // Check hip sag
-                if(m[23].y > m[27].y) feedback = "Heupen omhoog!";
-
-                if(a < 100) { isGood = true; stage = 'down'; }
-                if(a > 160 && stage === 'down') { registerRep(); stage = 'up'; }
-
-            } else {
-                // General movement
-                isGood = m[15].y < m[11].y; // Hands above shoulder
-                if(isGood) stage = 'up';
-                if(!isGood && stage === 'up') { registerRep(); stage = 'down'; }
+            // Check of de set klaar is
+            if (reps >= user.reps) {
+                if (sets < 3) {
+                    sets++; reps = 0;
+                    startRest(30, "GOED GEDAAN! RUST EVEN.");
+                } else {
+                    stopWorkout(); // Dit roept nu het rapport op
+                }
             }
-
-            if(feedback) updateHUD(feedback);
-            else if(stage === 'down') updateHUD("DUW OMHOOG!");
-
-            drawConnectors(canvasCtx, m, POSE_CONNECTIONS, {color: isGood?'#34c759':'#fff', lineWidth:3});
-            drawLandmarks(canvasCtx, m, {color: isGood?'#34c759':'#007aff', lineWidth:1, radius:4});
-            canvasCtx.restore();
         }
+    }
+    canvasCtx.restore();
+}
 
         function registerRep() {
             // Speed Check
