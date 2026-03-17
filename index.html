@@ -308,19 +308,7 @@ function calculateMainScore() {
 // Deze functie haalt de namen en scores op en zet ze op je scherm
 
 
-    // Sorteer van hoogste score naar laagste
-    spelersLijst.sort((a, b) => b.score - a.score);
-
-    let html = `<h3 style="margin:20px 0 10px; font-family:Montserrat;">🏆 CLASH: ${data.groupName}</h3>`;
-    spelersLijst.forEach((speler, i) => {
-        html += `
-            <div class="card" style="display:flex; justify-content:space-between; align-items:center; border-left: 4px solid ${speler.isMe ? 'var(--blue)' : '#333'};">
-                <span><strong>${i+1}.</strong> ${speler.name} ${speler.isMe ? '(JIJ)' : ''}</span>
-                <span style="font-weight:900; color:var(--blue); font-size:20px;">${speler.score}</span>
-            </div>`;
-    });
-    document.getElementById('group-content').innerHTML = html;
-}
+    
 
        async function joinGroup() {
     const gName = document.getElementById('group-name').value;
@@ -941,26 +929,7 @@ function handleSwipe() {
 
 
 // Functie om de ranglijst te laten zien
-async function loadLeaderboard(groupId) {
-    const doc = await db.collection('groups').doc(groupId).get();
-    if(!doc.exists) return;
 
-    const data = doc.data();
-    // Sorteer de scores van hoog naar laag
-    const sortedScores = Object.entries(data.scores).sort((a, b) => b[1] - a[1]);
-
-    let html = `<h3 style="margin-top:20px;">🏆 Ranglijst: ${data.groupName}</h3>`;
-    
-    sortedScores.forEach(([uid, score], index) => {
-        html += `
-            <div class="card" style="display:flex; justify-content:space-between; align-items:center; border-left: 3px solid ${index === 0 ? 'var(--gold)' : 'var(--blue)'};">
-                <span><strong>${index + 1}.</strong> Gebruiker ${uid.substring(0,4)}</span>
-                <span style="font-weight:800; color:var(--blue);">${score} PT</span>
-            </div>`;
-    });
-
-    document.getElementById('group-content').innerHTML = html;
-}
         function showAnalysisReport() {
     // Pak de score uit het user object (die wordt opgeslagen in stopWorkout)
     let score = user.lastAnalysisScore || 0;
@@ -1002,8 +971,12 @@ function closeReport() {
         await db.collection('groups').doc(groupId).set({
             groupName: name,
             members: [currentUser.uid],
-            scores: { [currentUser.uid]: user.totalWorkouts || 0 }
-        });
+            scores: {
+  [currentUser.uid]: {
+    name: user.name,
+    score: calculateMainScore()
+  }
+}
         alert("Groep aangemaakt!");
         loadLeaderboard(groupId);
     } catch (e) {
