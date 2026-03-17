@@ -382,12 +382,21 @@ async function authAction(type) {
         if (type === 'login') {
             await auth.signInWithEmailAndPassword(email, pass);
         } else {
-            // Maak account en sla eerste user-data op
+            // --- HIER PAS JE HET AAN VOOR HET MAKEN VAN EEN ACCOUNT ---
             const res = await auth.createUserWithEmailAndPassword(email, pass);
+            
+            // We voegen het emailadres toe aan het 'user' object voordat we het opslaan
+            user.email = email; 
+            user.name = user.name || "Nieuwe Atleet"; // Zorg dat er een naam is
+            
+            // Nu slaan we het op in Firestore (jouw database)
             await db.collection('users').doc(res.user.uid).set(user);
+            
             tab('onboarding');
         }
-    } catch (e) { alert("Fout: " + e.message); }
+    } catch (e) { 
+        alert("Fout: " + e.message); 
+    }
 }
 
 // --- DEEL B: AUTOMATISCH CHECKEN (Dit draait zodra de app opstart) ---
