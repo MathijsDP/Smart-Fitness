@@ -187,6 +187,22 @@ body {
     </div>
 
     <div id="scr-profile" class="screen hidden">
+        <div id="scr-social" class="screen hidden">
+    <h1>COMMUNITY</h1>
+    <div class="subtitle">Battle met je vrienden</div>
+
+    <div class="card">
+        <strong style="font-size: 14px; display:block; margin-bottom:10px;">MAAK EEN GROEP</strong>
+        <input type="text" id="group-name" placeholder="Naam van je groep of klas..." style="margin-bottom:10px;">
+        <button class="btn" onclick="createGroup()" style="height:45px; padding:0;">GROEP AANMAKEN</button>
+    </div>
+
+    <div id="group-content">
+        <p style="color:var(--sub); text-align:center; font-size:12px; margin-top:20px;">
+            Je zit nog niet in een groep. Maak er een aan om de battle te starten!
+        </p>
+    </div>
+</div>
         <h1>PROFIEL</h1>
         <div class="subtitle">Jouw gegevens</div>
         <div class="card" id="profile-fields"></div>
@@ -260,6 +276,7 @@ body {
         <div class="nav-item active" onclick="tab('dash', this)"><i>🏠</i>Training</div>
         <div class="nav-item" onclick="tab('analyse', this)"><i>📈</i>Analyse</div>
         <div class="nav-item" onclick="tab('progress', this)"><i>📊</i>Statistieken</div>
+        <div class="nav-item" onclick="tab('social', this)"><i>👥</i>Sociaal</div>
         <div class="nav-item" onclick="tab('profile', this)"><i>👤</i>Profiel</div>
     </nav>
 
@@ -885,6 +902,56 @@ function handleSwipe() {
     
     // Vul de tekst in het rapport
     document.getElementById('report-feedback-text').innerText = feedback;
+}
+
+        // Functie om een nieuwe groep te maken in de database
+async function createGroup() {
+    const name = document.getElementById('group-name').value;
+    if(!name) return alert("Vul eerst een groepsnaam in!");
+
+    const currentUser = auth.currentUser;
+    // We maken een unieke ID voor de groep op basis van de naam
+    const groupId = name.toLowerCase().replace(/\s+/g, '-');
+
+    try {
+        await db.collection('groups').doc(groupId).set({
+            groupName: name,
+            members: [currentUser.uid],
+            // We slaan de scores op per gebruiker ID
+            scores: {
+                [currentUser.uid]: user.totalWorkouts || 0
+            }
+        });
+        
+        user.currentGroupId = groupId; // Onthoud in welke groep de gebruiker zit
+        save(); // Sla dit op in het profiel van de gebruiker
+        alert("Groep " + name + " is aangemaakt!");
+        loadLeaderboard(groupId);
+    } catch (e) {
+        alert("Oeps, er ging iets mis: " + e.message);
+    }
+}
+
+// Functie om de ranglijst te laten zien
+async function loadLeaderboard(groupId) {
+    const doc = await db.collection('groups').doc(groupId).get();
+    if(!doc.exists) return;
+
+    const data = doc.data();
+    // Sorteer de scores van hoog naar laag
+    const sortedScores = Object.entries(data.scores).sort((a, b) => b[1] - a[1]);
+
+    let html = `<h3 style="margin-top:20px;">🏆 Ranglijst: ${data.groupName}</h3>`;
+    
+    sortedScores.forEach(([uid, score], index) => {
+        html += `
+            <div class="card" style="display:flex; justify-content:space-between; align-items:center; border-left: 3px solid ${index === 0 ? 'var(--gold)' : 'var(--blue)'};">
+                <span><strong>${index + 1}.</strong> Gebruiker ${uid.substring(0,4)}</span>
+                <span style="font-weight:800; color:var(--blue);">${score} PT</span>
+            </div>`;
+    });
+
+    document.getElementById('group-content').innerHTML = html;
 }
     </script>
 </body>
