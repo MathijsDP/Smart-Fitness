@@ -186,29 +186,27 @@ body {
         </div>
     </div>
 
+    <div id="scr-social" class="screen hidden">
+        <h1>COMMUNITY</h1>
+        <div class="subtitle">Battle met je vrienden</div>
+        <div class="card">
+            <strong style="font-size: 14px; display:block; margin-bottom:10px;">MAAK EEN GROEP</strong>
+            <input type="text" id="group-name" placeholder="Naam van je groep of klas..." style="margin-bottom:10px;">
+            <button class="btn" onclick="createGroup()" style="height:45px; padding:0; background:var(--blue); color:white;">GROEP AANMAKEN</button>
+        </div>
+        <div id="group-content">
+            <p style="color:var(--sub); text-align:center; font-size:12px; margin-top:20px;">
+                Je zit nog niet in een groep. Maak er een aan!
+            </p>
+        </div>
+    </div>
+
     <div id="scr-profile" class="screen hidden">
-        <div id="scr-social" class="screen hidden">
-    <h1>COMMUNITY</h1>
-    <div class="subtitle">Battle met je vrienden</div>
-
-    <div class="card">
-        <strong style="font-size: 14px; display:block; margin-bottom:10px;">MAAK EEN GROEP</strong>
-        <input type="text" id="group-name" placeholder="Naam van je groep of klas..." style="margin-bottom:10px;">
-        <button class="btn" onclick="createGroup()" style="height:45px; padding:0;">GROEP AANMAKEN</button>
-    </div>
-
-    <div id="group-content">
-        <p style="color:var(--sub); text-align:center; font-size:12px; margin-top:20px;">
-            Je zit nog niet in een groep. Maak er een aan om de battle te starten!
-        </p>
-    </div>
-</div>
         <h1>PROFIEL</h1>
         <div class="subtitle">Jouw gegevens</div>
         <div class="card" id="profile-fields"></div>
         <button class="btn-small" style="width:100%; padding:15px; margin:20px 0; background:#220000; border-color:#500; color:#f55;" onclick="resetData()">Reset alle data</button>
     </div>
-
     <div id="scr-workout" class="screen hidden" style="padding:0; z-index: 2000; background:#000;">
         <video id="input_video" style="display:none"></video> 
         <canvas id="output_canvas"></canvas> 
@@ -951,6 +949,71 @@ async function loadLeaderboard(groupId) {
             </div>`;
     });
 
+    document.getElementById('group-content').innerHTML = html;
+}
+        function showAnalysisReport() {
+    // Pak de score uit het user object (die wordt opgeslagen in stopWorkout)
+    let score = user.lastAnalysisScore || 0;
+    
+    const reportOverlay = document.getElementById('report-overlay');
+    reportOverlay.style.display = 'flex';
+    reportOverlay.classList.remove('hidden');
+
+    document.getElementById('report-score').innerText = score + "%";
+    document.getElementById('precision-val').innerText = score + "%";
+    document.getElementById('precision-bar').style.width = score + "%";
+
+    let feedback = "";
+    if (score >= 85) {
+        feedback = "Perfecte houding! Je voert de oefeningen zeer gecontroleerd uit.";
+    } else if (score >= 60) {
+        feedback = "Goed gedaan, maar probeer de bewegingen nog iets vollediger af te maken.";
+    } else if (score === 0) {
+        feedback = "Nog geen data. Doe eerst een workout om je houding te analyseren!";
+    } else {
+        feedback = "Focus op je techniek. Ga iets langzamer voor een betere controle.";
+    }
+    document.getElementById('report-feedback-text').innerText = feedback;
+}
+
+function closeReport() {
+    document.getElementById('report-overlay').style.display = 'none';
+    document.getElementById('report-overlay').classList.add('hidden');
+}
+
+        async function createGroup() {
+    const name = document.getElementById('group-name').value;
+    if(!name) return alert("Vul een groepsnaam in!");
+    
+    const currentUser = auth.currentUser;
+    const groupId = name.toLowerCase().replace(/\s+/g, '-');
+
+    try {
+        await db.collection('groups').doc(groupId).set({
+            groupName: name,
+            members: [currentUser.uid],
+            scores: { [currentUser.uid]: user.totalWorkouts || 0 }
+        });
+        alert("Groep aangemaakt!");
+        loadLeaderboard(groupId);
+    } catch (e) {
+        alert("Fout bij aanmaken: " + e.message);
+    }
+}
+
+async function loadLeaderboard(groupId) {
+    const doc = await db.collection('groups').doc(groupId).get();
+    if(!doc.exists) return;
+    const data = doc.data();
+    const sorted = Object.entries(data.scores).sort((a, b) => b[1] - a[1]);
+
+    let html = `<h3 style="margin-top:20px;">🏆 ${data.groupName}</h3>`;
+    sorted.forEach(([uid, score], i) => {
+        html += `<div class="card" style="display:flex; justify-content:space-between;">
+            <span>${i+1}. Gebruiker ${uid.substring(0,4)}</span>
+            <strong style="color:var(--blue);">${score} PT</strong>
+        </div>`;
+    });
     document.getElementById('group-content').innerHTML = html;
 }
     </script>
