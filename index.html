@@ -153,6 +153,19 @@ body {
         </div>
     </div>
 
+    <div id="scr-analyse" class="screen hidden">
+        <h1>Analyseer je training</h1>
+        <div class="subtitle">Verbeter je oefeningen</div>
+
+        <div class="card" onclick="startCircuit('analyse')">
+            <strong>Verbeter zo snel mogelijk je houding voor efficiëntere trainingen.</strong>
+            <div style="color:var(--sub);font-size:11px; margin-top:5px;">wat kan je verbeteren?</div>
+            <div style="margin-top:10px; font-size:10px; font-weight:700; color:var(--blue);">Analyseer</div>
+        </div>
+
+        
+    </div>
+
     <div id="scr-progress" class="screen hidden">
         <h1>JOUW STATS</h1>
         <div class="subtitle">RPG Progressie & Badges</div>
@@ -311,6 +324,12 @@ auth.onAuthStateChanged(async (fbUser) => {
             ]
         };
 
+        const analyse = [
+
+            {n:"Analyse", i:"Analyseer je oefeningen nu!."},
+
+            ];
+
         const badgeList = [
             { id: 'b_start', icon: '🐣', name: 'Rookie', desc: 'Eerste workout voltooid' },
             { id: 'b_wk1', icon: '🔥', name: 'Week 1', desc: '7 dagen streak gehaald' },
@@ -435,6 +454,7 @@ document.getElementById('scr-'+t).classList.remove('hidden');
                 document.getElementById('streak-val').innerText = user.streak; 
                 document.getElementById('rank-display').innerText = getRank();
             }
+            if(t === 'analyse') renderanalyse();
             if(t === 'progress') renderProgress();
             if(t === 'profile') renderProfileFields();
         }
@@ -762,7 +782,7 @@ function showLevelUp(muscle, lvl) {
 let touchStartX = 0;
 let touchEndX = 0;
 
-const screens = ['dash','progress','profile']; // volgorde van je tabs
+const screens = ['dash','analyse','progress','profile']; // volgorde van je tabs
 
 document.addEventListener('touchstart', e => {
     touchStartX = e.changedTouches[0].screenX;
