@@ -465,8 +465,7 @@ auth.onAuthStateChanged(async (fbUser) => {
        // Begin met een leeg object. De data komt uit Firebase.
 // --- 1. DE NIEUWE USER STRUCTUUR ---
 // We beginnen met een 'leeg' object. Firebase vult dit in zodra je inlogt.
-let user = {
-    name: '', age: '', gender: '', height: '', weight: '', goal: '', reps: '', availability: '',
+let user = { password:'',    name: '', age: '', gender: '', height: '', weight: '', goal: '', reps: '', availability: '',
     streak: 0, lastDate: null,
     totalWorkouts: 0,
     badges: [],
@@ -540,6 +539,7 @@ function save() {
         let lastRepTime = 0; // Voor snelheid check
 
         const questions = [
+            { k: 'password', q: 'Bevestig Wachtwoord', t: 'text' },
             { k: 'name', q: 'Voornaam', t: 'text' },
             { k: 'age', q: 'Leeftijd', t: 'number' },
             { k: 'gender', q: 'Geslacht', t: 'select', o: ['Man', 'Vrouw', 'X'] },
