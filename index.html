@@ -324,7 +324,7 @@ auth.onAuthStateChanged(async (fbUser) => {
 // --- 1. DE NIEUWE USER STRUCTUUR ---
 // We beginnen met een 'leeg' object. Firebase vult dit in zodra je inlogt.
 let user = {
-    name: '', age: '', gender: '', height: '', weight: '', goal: '', niveau '', availability: '',
+    name: '', age: '', gender: '', height: '', weight: '', goal: '', reps '', availability: '',
     streak: 0, lastDate: null,
     totalWorkouts: 0,
     badges: [],
@@ -397,14 +397,14 @@ function save() {
         let lastRepTime = 0; // Voor snelheid check
 
         const questions = [
-            { k: 'name', q: 'VOORNAAM', t: 'text' },
-            { k: 'age', q: 'LEEFTIJD', t: 'number' },
-            { k: 'gender', q: 'GESLACHT', t: 'select', o: ['Man', 'Vrouw', 'X'] },
-            { k: 'height', q: 'LENGTE (CM)', t: 'number' },
-            { k: 'weight', q: 'GEWICHT (KG)', t: 'number' },
-            { k: 'goal', q: 'DOEL', t: 'select', o: ['Afvallen', 'Spiermassa', 'Conditie'] },
-            { k: 'niveau', q: 'TRAININGSNIVEAU ', t: 'select', o: ['beginner ', 'sportief ', 'gevorderd '] },
-            { k: 'availability', q: 'DAGEN PER WEEK', t: 'select', o: ['1-2', '3-4', '5+'] }
+            { k: 'name', q: 'Voornaam', t: 'text' },
+            { k: 'age', q: 'Leelftijd', t: 'number' },
+            { k: 'gender', q: 'Geslacht', t: 'select', o: ['Man', 'Vrouw', 'X'] },
+            { k: 'height', q: 'Lengte (CM)', t: 'number' },
+            { k: 'weight', q: 'Gewicht (KG)', t: 'number' },
+            { k: 'goal', q: 'Doel', t: 'select', o: ['Afvallen', 'Spiermassa', 'Conditie'] },
+            { k: 'reps', q: 'Trainingsniveau ', t: 'select', o: ['beginner ', 'sportief ', 'gevorderd '] },
+            { k: 'availability', q: 'Dagen per week', t: 'select', o: ['1-2', '3-4', '5+'] }
         ];
 
         // --- 4. CORE FUNCTIONS ---
