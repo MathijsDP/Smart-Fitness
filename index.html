@@ -200,12 +200,16 @@ body {
     </div>
 
     <div class="card">
-        <strong style="font-size: 12px; display:block; margin-bottom:10px;">GROEP MAKEN</strong>
-        <input type="text" id="group-name" placeholder="Naam van je groep..." style="margin-bottom:10px;">
-        <button class="btn" onclick="createGroup()" style="height:45px; padding:0; background:var(--surface-2); color:white; border:1px solid #333;">GROEP AANMAKEN</button>
+        <strong style="font-size: 12px; display:block; margin-bottom:10px;">JOIN OF MAAK GROEP</strong>
+        <input type="text" id="group-name" placeholder="Groepsnaam (bijv: Klas4A)..." style="margin-bottom:10px;">
+        <div style="display:flex; gap:10px;">
+            <button class="btn" onclick="joinGroup()" style="height:45px; padding:0; flex:1; background:var(--blue); color:white;">JOIN GROEP</button>
+            <button class="btn" onclick="createGroup()" style="height:45px; padding:0; flex:1; background:var(--surface-2); color:white; border:1px solid #333;">MAAK NIEUW</button>
+        </div>
     </div>
 
-    <div id="group-content"></div>
+    <div id="group-content">
+        </div>
 </div>
 
     <div id="scr-profile" class="screen hidden">
@@ -288,6 +292,38 @@ body {
     <script>
         // --- 1. CONFIGURATION & DATA ---
         // --- FIREBASE CONFIGURATIE ---
+
+        async function joinGroup() {
+    const name = document.getElementById('group-name').value;
+    if(!name) return alert("Typ de groepsnaam die je vriend heeft gemaakt!");
+    
+    const currentUser = auth.currentUser;
+    const groupId = name.toLowerCase().replace(/\s+/g, '-');
+
+    try {
+        const groupRef = db.collection('groups').doc(groupId);
+        const doc = await groupRef.get();
+
+        if (!doc.exists) {
+            return alert("Deze groep bestaat niet. Check de spelling of maak hem zelf aan!");
+        }
+
+        // We voegen de huidige gebruiker toe aan de groep
+        await groupRef.update({
+            members: firebase.firestore.FieldValue.arrayUnion(currentUser.uid),
+            // We zetten zijn huidige aantal workouts ook in de groepsscore
+            [`scores.${currentUser.uid}`]: user.totalWorkouts || 0
+        });
+
+        user.currentGroupId = groupId; // Sla op in lokaal user object
+        save(); // Sla op in Firebase user doc
+        
+        alert("Je zit nu in de groep: " + name);
+        loadLeaderboard(groupId);
+    } catch (e) {
+        alert("Fout bij joinen: " + e.message);
+    }
+}
 const firebaseConfig = {
     apiKey: "AIzaSyBvkD1TvkjjMci5Re2uzY61yqJI_FcthnU",
     authDomain: "smart-fitness-mathijs.firebaseapp.com",
