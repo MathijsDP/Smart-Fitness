@@ -186,20 +186,27 @@ body {
         </div>
     </div>
 
-    <div id="scr-social" class="screen hidden">
-        <h1>COMMUNITY</h1>
-        <div class="subtitle">Battle met je vrienden</div>
-        <div class="card">
-            <strong style="font-size: 14px; display:block; margin-bottom:10px;">MAAK EEN GROEP</strong>
-            <input type="text" id="group-name" placeholder="Naam van je groep of klas..." style="margin-bottom:10px;">
-            <button class="btn" onclick="createGroup()" style="height:45px; padding:0; background:var(--blue); color:white;">GROEP AANMAKEN</button>
+<div id="scr-social" class="screen hidden">
+    <h1>COMMUNITY</h1>
+    <div class="subtitle">Battle met je vrienden</div>
+
+    <div class="card" style="border-bottom: 2px solid var(--blue);">
+        <strong style="font-size: 12px; display:block; margin-bottom:10px; color:var(--blue);">ZOEK ATLETEN</strong>
+        <div style="display:flex; gap:10px;">
+            <input type="text" id="search-user-name" placeholder="Typ naam van vriend..." style="margin-bottom:0; flex:1;">
+            <button class="btn-small" onclick="searchUser()" style="background:var(--blue); border:none; width:80px;">ZOEK</button>
         </div>
-        <div id="group-content">
-            <p style="color:var(--sub); text-align:center; font-size:12px; margin-top:20px;">
-                Je zit nog niet in een groep. Maak er een aan!
-            </p>
-        </div>
+        <div id="search-results" style="margin-top:15px;"></div>
     </div>
+
+    <div class="card">
+        <strong style="font-size: 12px; display:block; margin-bottom:10px;">GROEP MAKEN</strong>
+        <input type="text" id="group-name" placeholder="Naam van je groep..." style="margin-bottom:10px;">
+        <button class="btn" onclick="createGroup()" style="height:45px; padding:0; background:var(--surface-2); color:white; border:1px solid #333;">GROEP AANMAKEN</button>
+    </div>
+
+    <div id="group-content"></div>
+</div>
 
     <div id="scr-profile" class="screen hidden">
         <h1>PROFIEL</h1>
@@ -1016,6 +1023,92 @@ async function loadLeaderboard(groupId) {
     });
     document.getElementById('group-content').innerHTML = html;
 }
+
+        // STAP 3.1: Functie om te zoeken naar vrienden
+async function searchUser() {
+    const searchTerm = document.getElementById('search-user-name').value.toLowerCase();
+    const resultsDiv = document.getElementById('search-results');
+    
+    if(!searchTerm) return alert("Typ eerst een naam!");
+    resultsDiv.innerHTML = "<p style='font-size:11px; color:var(--blue);'>Zoeken in database...</p>";
+
+    try {
+        // We zoeken in Firebase naar gebruikers die deze naam hebben
+        const snapshot = await db.collection('users').where('name', '==', searchTerm).get();
+        
+        if(snapshot.empty) {
+            resultsDiv.innerHTML = "<p style='font-size:11px; color:var(--red);'>Geen gebruiker gevonden met deze exacte naam.</p>";
+            return;
+        }
+
+        let html = "";
+        snapshot.forEach(doc => {
+            const data = doc.data();
+            // Maak een klikbaar kaartje voor elke gevonden persoon
+            html += `
+                <div class="card" onclick="viewFriend('${doc.id}')" style="background:var(--surface-2); display:flex; justify-content:space-between; align-items:center; padding:12px; margin-top:10px; cursor:pointer; border:1px solid #333;">
+                    <div>
+                        <strong style="font-size:14px; color:white;">${data.name}</strong>
+                        <div style="font-size:10px; color:var(--sub); uppercase">${data.goal || 'Athlete'}</div>
+                    </div>
+                    <span style="color:var(--blue); font-size:10px; font-weight:800;">BEKIJK PROFIEL ></span>
+                </div>`;
+        });
+        resultsDiv.innerHTML = html;
+    } catch (e) {
+        resultsDiv.innerHTML = "<p style='color:red;'>Fout: Zorg dat je bent ingelogd.</p>";
+    }
+}
+
+// STAP 3.2: Functie om het profiel van die vriend te openen
+async function viewFriend(friendId) {
+    const doc = await db.collection('users').doc(friendId).get();
+    if(!doc.exists) return;
+    const data = doc.data();
+
+    // Toon de popup die we in Stap 2 hebben gemaakt
+    const overlay = document.getElementById('friend-overlay');
+    overlay.style.display = 'flex';
+
+    // Vul de naam en het doel van de vriend in
+    document.getElementById('friend-name').innerText = data.name.toUpperCase();
+    document.getElementById('friend-goal').innerText = "DOEL: " + (data.goal || "FIT WORDEN");
+    
+    // Bereken hun totaal level
+    let totalLvl = 0;
+    if(data.stats) {
+        totalLvl = Object.values(data.stats).reduce((a,b) => a + b.lvl, 0);
+    }
+    document.getElementById('friend-rank').innerText = "TOTAAL LEVEL " + totalLvl;
+
+    // Toon hun sterkste spiergroepen
+    let statsHtml = "<strong style='font-size:10px; color:var(--blue); letter-spacing:1px;'>TOP STATS:</strong>";
+    if(data.stats) {
+        // Sorteer op hoogste level
+        const sorted = Object.entries(data.stats).sort((a,b) => b[1].lvl - a[1].lvl).slice(0,3);
+        sorted.forEach(([spier, info]) => {
+            statsHtml += `
+                <div style="font-size:12px; margin-top:10px; display:flex; justify-content:space-between;">
+                    <span style="color:#ccc;">${spier}</span>
+                    <span style="color:white; font-weight:800;">LVL ${info.lvl}</span>
+                </div>`;
+        });
+    }
+    document.getElementById('friend-stats-render').innerHTML = statsHtml;
+}
     </script>
+
+    <div id="friend-overlay" style="position:fixed; inset:0; background: rgba(0,0,0,0.95); z-index: 6000; display:none; flex-direction: column; align-items: center; justify-content: center; backdrop-filter: blur(10px);">
+    <div class="card" style="width: 85%; max-width: 350px; text-align: center; border: 1px solid var(--blue);">
+        <div id="friend-rank" class="rank-badge" style="margin-bottom:10px; background:var(--blue); color:white;">LEVEL ...</div>
+        <h2 id="friend-name" style="margin: 10px 0;">Naam...</h2>
+        <p id="friend-goal" class="subtitle" style="margin-bottom:20px; color:var(--sub);"></p>
+        
+        <div id="friend-stats-render" style="text-align:left; background: rgba(255,255,255,0.05); padding: 15px; border-radius: 15px;">
+            </div>
+        
+        <button class="btn" onclick="document.getElementById('friend-overlay').style.display='none'" style="margin-top:20px; background:var(--blue); color:white;">SLUITEN</button>
+    </div>
+</div>
 </body>
 </html>
