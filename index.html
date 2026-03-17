@@ -317,7 +317,7 @@ auth.onAuthStateChanged(async (fbUser) => {
             { id: 'b_push', icon: '💪', name: 'Push Master', desc: 'Borst Level 5 bereikt' },
             { id: 'b_legs', icon: '🦵', name: 'Leg Day', desc: 'Benen Level 5 bereikt' },
             { id: 'b_elite', icon: '🏆', name: 'Elite', desc: 'Totaal Level 50 bereikt' },
-            { id: 'b_early', icon: '🌅', name: 'Vroege Vogel', desc: 'Training voor 08:00u' }
+            { id: 'b_early', icon: '🌅', name: 'Vroege Vogel', desc: 'Training voor 09:00u' }
         ];
 
        // Begin met een leeg object. De data komt uit Firebase.
@@ -415,10 +415,11 @@ function save() {
         // RANG BEREKENING
         function getRank() {
             let totalLvl = Object.values(user.stats).reduce((a,b) => a + b.lvl, 0);
-            if(totalLvl < 10) return "ROOKIE";
-            if(totalLvl < 25) return "AMATEUR";
-            if(totalLvl < 50) return "ATLEET";
-            if(totalLvl < 100) return "PRO";
+            if(totalLvl < 5) return "Rookie";
+            if(totalLvl < 10) return "Amateur";
+            if(totalLvl < 25) return "Atleet";
+            if(totalLvl < 50) return "Pro";
+            if(totalLvl < 100) return "Legendarisch";
             return "ELITE";
         }
 
@@ -649,7 +650,7 @@ document.getElementById('scr-'+t).classList.remove('hidden');
             const focus = circuit[cIdx].focus;
             focus.forEach(muscle => {
                 user.stats[muscle].xp += 15;
-                let currentTarget = Math.round(100 * Math.pow(1.75, user.stats[muscle].lvl - 1));
+                let currentTarget = Math.round(100 * Math.pow(1.5, user.stats[muscle].lvl - 1));
 
                 if(user.stats[muscle].xp >= currentTarget) {
                     user.stats[muscle].xp -= currentTarget;
@@ -699,7 +700,7 @@ function showLevelUp(muscle, lvl) {
     playSound('lvl');
     speak("Level up! " + muscle);
 
-    // AUTOMATISCH SLUITEN NA 2.5 SEC
+    // AUTOMATISCH SLUITEN NA 2 SEC
     setTimeout(() => {
         ov.classList.remove('active');
     }, 2000);
@@ -719,7 +720,7 @@ function showLevelUp(muscle, lvl) {
             // 3. Early Bird
             if(trigger === 'finish') {
                 const hour = new Date().getHours();
-                if(hour < 8 && !user.badges.includes('b_early')) { user.badges.push('b_early'); newBadge=true; }
+                if(hour < 9 && !user.badges.includes('b_early')) { user.badges.push('b_early'); newBadge=true; }
             }
 
             // 4. Level Checks
