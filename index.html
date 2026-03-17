@@ -68,7 +68,7 @@ body {
         .hud-val strong { font-size: 24px; font-family: 'Montserrat'; text-shadow: 0 2px 10px rgba(0,0,0,1); }
 
         #coaching-tip { position: absolute; bottom: 130px; left: 0; width: 100%; text-align: center; color: var(--accent); font-weight: 900; font-size: 20px; text-shadow: 0 4px 12px rgba(0,0,0,1); z-index: 2002; pointer-events: none; transition: 0.2s; }
-        /* 67 */
+
         /* Overlays */
         #rest-overlay { position: absolute; inset: 0; background: rgba(5,5,5,0.98); z-index: 3000; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 20px; backdrop-filter: blur(5px); }
         .timer-txt { font-size: 90px; font-weight: 900; color: var(--blue); font-family: 'Montserrat'; margin: 10px 0; line-height: 1; letter-spacing: -3px; }
@@ -324,7 +324,7 @@ auth.onAuthStateChanged(async (fbUser) => {
 // --- 1. DE NIEUWE USER STRUCTUUR ---
 // We beginnen met een 'leeg' object. Firebase vult dit in zodra je inlogt.
 let user = {
-    name: '', age: '', gender: '', height: '', weight: '', goal: '', reps: 12, availability: '',
+    name: '', age: '', gender: '', height: '', weight: '', goal: '', niveau '', availability: '',
     streak: 0, lastDate: null,
     totalWorkouts: 0,
     badges: [],
@@ -403,7 +403,7 @@ function save() {
             { k: 'height', q: 'LENGTE (CM)', t: 'number' },
             { k: 'weight', q: 'GEWICHT (KG)', t: 'number' },
             { k: 'goal', q: 'DOEL', t: 'select', o: ['Afvallen', 'Spiermassa', 'Conditie'] },
-            { k: 'reps', q: 'TRAININGSNIVEAU (REPS)', t: 'select', o: ['beginner (8)', 'sportief (12)', 'gevorderd (16)'] },
+            { k: 'niveau', q: 'TRAININGSNIVEAU ', t: 'select', o: ['beginner ', 'sportief ', 'gevorderd '] },
             { k: 'availability', q: 'DAGEN PER WEEK', t: 'select', o: ['1-2', '3-4', '5+'] }
         ];
 
