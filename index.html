@@ -157,11 +157,11 @@ body {
         <h1>Analyseer je training</h1>
         <div class="subtitle">Verbeter je oefeningen</div>
 
-        <div class="card" onclick="startCircuit('analyse')">
-            <strong>Verbeter zo snel mogelijk je houding voor efficiëntere trainingen.</strong>
-            <div style="color:var(--sub);font-size:11px; margin-top:5px;">wat kan je verbeteren?</div>
-            <div style="margin-top:10px; font-size:10px; font-weight:700; color:var(--blue);">Analyseer</div>
-        </div>
+        <div class="card" onclick="showAnalysisReport()" style="border-left: 4px solid var(--blue);">
+    <strong>Jouw Houding Rapport</strong>
+    <div style="color:var(--sub);font-size:11px; margin-top:5px;">Bekijk hoe goed je laatste training was.</div>
+    <div style="margin-top:10px; font-size:10px; font-weight:700; color:var(--blue);">KLIK VOOR ANALYSE</div>
+</div>
 
         
     </div>
@@ -575,39 +575,21 @@ document.getElementById('scr-'+t).classList.remove('hidden');
             startRest(30, "LEES DE UITLEG"); 
         }
 
-       function stopWorkout() {
-    // 1. Camera uitzetten
+function stopWorkout() {
     if (camera) camera.stop();
     
-    // 2. Bereken het gemiddelde van alle opgeslagen rep-scores
-    let totalScore = 0;
+    // Bereken de score van de net voltooide sessie
     if (sessionScores.length > 0) {
         let som = sessionScores.reduce((a, b) => a + b, 0);
-        totalScore = Math.round(som / sessionScores.length);
+        let lastScore = Math.round(som / sessionScores.length);
+        
+        // Sla de score op in het user object voor de analyse-knop
+        user.lastAnalysisScore = lastScore;
+        save(); // Sla op in Firebase/LocalStorage
     }
 
-    // 3. Maak het rapport-scherm zichtbaar
-    const reportOverlay = document.getElementById('report-overlay');
-    reportOverlay.style.display = 'flex';
-    reportOverlay.classList.remove('hidden');
-    
-    // 4. Vul de cijfers in het rapport in
-    document.getElementById('report-score').innerText = totalScore + "%";
-    document.getElementById('precision-val').innerText = totalScore + "%";
-    document.getElementById('precision-bar').style.width = totalScore + "%";
-
-    // 5. De tekstuele feedback kiezen
-    let feedback = "";
-    if (totalScore >= 85) {
-        feedback = "Uitstekend! Je techniek is zeer stabiel. Je spieren worden op de juiste manier belast.";
-    } else if (totalScore >= 65) {
-        feedback = "Lekker bezig. Probeer bij de volgende training nog iets dieper te zakken voor meer resultaat.";
-    } else if (sessionScores.length === 0) {
-        feedback = "De camera kon geen volledige bewegingen zien. Sta de volgende keer iets verder naar achteren.";
-    } else {
-        feedback = "Focus op je vorm. Ga minder snel en probeer de beweging heel gecontroleerd uit te voeren.";
-    }
-    document.getElementById('report-feedback-text').innerText = feedback;
+    sessionScores = []; // Reset voor de volgende keer
+    tab('dash'); // Ga gewoon terug naar het dashboard
 }
 
 function closeReport() {
@@ -871,6 +853,38 @@ function handleSwipe() {
         const el = document.querySelector(`.nav-item[onclick^="tab('${prevTab}'`);
         if(el) tab(prevTab, el);
     }
+}
+        function showAnalysisReport() {
+    // 1. We kijken wat de laatste score was (die we hebben opgeslagen in Stap 1)
+    // Als er nog geen score is, gebruiken we 0.
+    let score = user.lastAnalysisScore || 0;
+    
+    // 2. We zoeken het rapport-scherm op in de HTML
+    const reportOverlay = document.getElementById('report-overlay');
+    
+    // 3. We maken het scherm zichtbaar (flexbox zorgt dat het mooi in het midden staat)
+    reportOverlay.style.display = 'flex';
+    reportOverlay.classList.remove('hidden');
+
+    // 4. We vullen de cijfers in op het scherm
+    document.getElementById('report-score').innerText = score + "%";
+    document.getElementById('precision-val').innerText = score + "%";
+    document.getElementById('precision-bar').style.width = score + "%";
+
+    // 5. We schrijven een tekstje op basis van de score
+    let feedback = "";
+    if (score >= 85) {
+        feedback = "Geweldig! Je houding is bijna perfect. Focus nu op het verhogen van je tempo.";
+    } else if (score >= 60) {
+        feedback = "Lekker bezig! Je techniek is goed, maar probeer bij de squats nog iets dieper te zakken.";
+    } else if (score === 0) {
+        feedback = "Nog geen gegevens. Doe eerst een workout zodat de AI je houding kan analyseren!";
+    } else {
+        feedback = "Let op je vorm. De AI zag dat je houding onstabiel was. Ga de volgende keer iets langzamer.";
+    }
+    
+    // Vul de tekst in het rapport
+    document.getElementById('report-feedback-text').innerText = feedback;
 }
     </script>
 </body>
