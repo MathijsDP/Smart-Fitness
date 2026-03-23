@@ -14,39 +14,47 @@
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-firestore-compat.js"></script>
 
+    <!-- FIX #1: Firebase config staat nu BOVENAAN, voor alles andere -->
+    <script>
+        const firebaseConfig = {
+            apiKey: "AIzaSyBvkD1TvkjjMci5Re2uzY61yqJI_FcthnU",
+            authDomain: "smart-fitness-mathijs.firebaseapp.com",
+            projectId: "smart-fitness-mathijs",
+            storageBucket: "smart-fitness-mathijs.firebasestorage.app",
+            messagingSenderId: "123911579168",
+            appId: "1:123911579168:web:c6fcb8a2f380157b0fbe45"
+        };
+        firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+        const db = firebase.firestore();
+    </script>
+
     <style>
-        /* --- CORE STYLING --- */
         :root { --bg: #050505; --surface: #121212; --surface-2: #1e1e1e; --accent: #fff; --sub: #888; --blue: #007aff; --orange: #ff9500; --green: #34c759; --red: #ff3b30; --gold: #ffd700; }
 
-
-
-body { 
-    font-family: 'Inter', sans-serif; 
-    background: var(--bg); 
-    color: var(--accent); 
-    user-select: none; 
-    -webkit-user-select: none; 
-}
-
-
-
+        body { 
+            font-family: 'Inter', sans-serif; 
+            background: var(--bg); 
+            color: var(--accent); 
+            user-select: none; 
+            -webkit-user-select: none; 
+        }
 
         .screen {
-    min-height: 100vh;
-    padding: 30px 20px 120px;
-    display: flex;
-    flex-direction: column;
-    overflow-y: auto;
-    -webkit-overflow-scrolling: touch;
-    transition: opacity 0.3s ease, transform 0.3s ease;
+            min-height: 100vh;
+            padding: 30px 20px 120px;
+            display: flex;
+            flex-direction: column;
+            overflow-y: auto;
+            -webkit-overflow-scrolling: touch;
+            transition: opacity 0.3s ease, transform 0.3s ease;
             touch-action: pan-y;
-}
+        }
         .hidden { display: none !important; opacity: 0; pointer-events: none; }
 
         h1 { font-family: 'Montserrat'; font-size: 26px; font-weight: 900; text-transform: uppercase; margin: 0 0 5px; letter-spacing: -0.5px; }
         .subtitle { color: var(--sub); font-size: 11px; letter-spacing: 1.5px; text-transform: uppercase; margin-bottom: 25px; font-weight: 700; }
 
-        /* UI Components */
         .q-box { flex: 1; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; }
         input, select { width: 100%; max-width: 320px; padding: 16px; border-radius: 12px; border: 1px solid #333; background: var(--surface-2); color: #fff; font-size: 16px; margin-bottom: 12px; outline: none; transition: 0.2s; }
         input:focus { border-color: var(--blue); box-shadow: 0 0 15px rgba(0,122,255,0.3); }
@@ -58,41 +66,33 @@ body {
         .card { background: var(--surface); border-radius: 24px; padding: 20px; margin-bottom: 15px; border: 1px solid #222; position: relative; overflow: hidden; }
         .card:active { background: var(--surface-2); }
 
-        /* Dashboard Elements */
         .streak-badge { background: rgba(255,149,0,0.15); color: var(--orange); padding: 8px 16px; border-radius: 100px; font-weight: 800; font-size: 13px; display: inline-flex; align-items: center; gap: 8px; margin-bottom: 20px; border: 1px solid rgba(255,149,0,0.3); }
         .rank-badge { background: rgba(0,122,255,0.15); color: var(--blue); padding: 5px 10px; border-radius: 6px; font-size: 10px; font-weight: 800; text-transform: uppercase; margin-left: 10px; vertical-align: middle; }
 
-        /* Workout HUD */
         .hud { position: absolute; top: 0; width: 100%; padding: 20px 20px 40px; display: flex; justify-content: space-between; background: linear-gradient(to bottom, rgba(0,0,0,0.9), transparent); z-index: 2001; pointer-events: none; }
         .hud-val span { display: block; font-size: 9px; color: var(--sub); font-weight: 700; letter-spacing: 1px; }
         .hud-val strong { font-size: 24px; font-family: 'Montserrat'; text-shadow: 0 2px 10px rgba(0,0,0,1); }
 
         #coaching-tip { position: absolute; bottom: 130px; left: 0; width: 100%; text-align: center; color: var(--accent); font-weight: 900; font-size: 20px; text-shadow: 0 4px 12px rgba(0,0,0,1); z-index: 2002; pointer-events: none; transition: 0.2s; }
 
-        /* Overlays */
         #rest-overlay { position: absolute; inset: 0; background: rgba(5,5,5,0.98); z-index: 3000; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 20px; backdrop-filter: blur(5px); }
         .timer-txt { font-size: 90px; font-weight: 900; color: var(--blue); font-family: 'Montserrat'; margin: 10px 0; line-height: 1; letter-spacing: -3px; }
 
-        /* Level Up Popups */
         #lvl-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.9); z-index: 4000; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; pointer-events: none; opacity: 0; transition: 0.4s; }
         #lvl-overlay.active { opacity: 1; pointer-events: auto; }
         .lvl-anim { animation: popIn 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; }
         @keyframes popIn { 0% { transform: scale(0.5); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
 
-        /* Floating Text (XP) */
         .float-txt { position: absolute; font-weight: 900; font-size: 16px; color: var(--gold); pointer-events: none; animation: floatUp 1.5s ease-out forwards; z-index: 2005; text-shadow: 0 2px 4px rgba(0,0,0,0.8); }
         @keyframes floatUp { 0% { transform: translateY(0) scale(1); opacity: 1; } 100% { transform: translateY(-80px) scale(1.2); opacity: 0; } }
 
-        /* Navigation */
         .navbar { position: fixed; bottom: 0; width: 100%; background: rgba(16,52,84,1); backdrop-filter: blur(10px); border-top: 1px solid #222; display: flex; justify-content: space-around; padding: 15px 0 35px; padding-bottom: env(safe-area-inset-bottom); z-index: 1000; }
         .nav-item { color: var(--sub); font-size: 9px; font-weight: 700; cursor: pointer; text-align: center; text-transform: uppercase; transition: 0.2s; }
         .nav-item.active { color: var(--accent); transform: translateY(-2px); }
         .nav-item i { display: block; font-size: 20px; margin-bottom: 4px; font-style: normal; }
 
-        /* Camera */
         #output_canvas { width: 100%; height: 100%; object-fit: contain; transform: scaleX(-1); background: #000; }
 
-        /* Stats & Badges */
         .stat-row { margin-bottom: 12px; }
         .stat-header { display: flex; justify-content: space-between; font-size: 11px; font-weight: 700; margin-bottom: 6px; }
         .bar-bg { background: #222; height: 10px; border-radius: 5px; overflow: hidden; position: relative; }
@@ -104,7 +104,6 @@ body {
         .badge-icon { font-size: 24px; display: block; margin-bottom: 5px; }
         .badge-name { font-size: 9px; font-weight: 700; text-transform: uppercase; }
 
-        /* Form Feedback Colors */
         .feedback-good { color: var(--green); }
         .feedback-bad { color: var(--red); }
         .feedback-warn { color: var(--orange); }
@@ -117,15 +116,15 @@ body {
     </div>
 
     <div id="scr-auth" class="screen">
-    <div class="q-box">
-        <h1>Log in</h1>
-        <p class="subtitle">Log in om je account niet te verliezen!</p>
-        <input type="email" id="auth-email" placeholder="E-mail">
-        <input type="password" id="auth-pass" placeholder="Wachtwoord">
-        <button class="btn" onclick="authAction('login')">Inloggen</button>
-        <button class="btn-small" onclick="authAction('signup')" style="margin-top:10px; background:transparent; border:none; color:#888;">Nieuw account maken</button>
+        <div class="q-box">
+            <h1>Log in</h1>
+            <p class="subtitle">Log in om je account niet te verliezen!</p>
+            <input type="email" id="auth-email" placeholder="E-mail">
+            <input type="password" id="auth-pass" placeholder="Wachtwoord">
+            <button class="btn" onclick="authAction('login')">Inloggen</button>
+            <button class="btn-small" onclick="authAction('signup')" style="margin-top:10px; background:transparent; border:none; color:#888;">Nieuw account maken</button>
+        </div>
     </div>
-</div>
 
     <div id="scr-dash" class="screen hidden">
         <div style="display:flex; justify-content:space-between; align-items:center;">
@@ -158,12 +157,10 @@ body {
         <div class="subtitle">Verbeter je oefeningen</div>
 
         <div class="card" onclick="showAnalysisReport()" style="border-left: 4px solid var(--blue);">
-    <strong>Jouw Houding Rapport</strong>
-    <div style="color:var(--sub);font-size:11px; margin-top:5px;">Bekijk hoe goed je laatste training was.</div>
-    <div style="margin-top:10px; font-size:10px; font-weight:700; color:var(--blue);">KLIK VOOR ANALYSE</div>
-</div>
-
-
+            <strong>Jouw Houding Rapport</strong>
+            <div style="color:var(--sub);font-size:11px; margin-top:5px;">Bekijk hoe goed je laatste training was.</div>
+            <div style="margin-top:10px; font-size:10px; font-weight:700; color:var(--blue);">KLIK VOOR ANALYSE</div>
+        </div>
     </div>
 
     <div id="scr-progress" class="screen hidden">
@@ -181,36 +178,35 @@ body {
         </div>
 
         <div class="card">
-             <h3 style="font-size:14px; margin:0 0 10px;">RECENTE HISTORY</h3>
-             <div id="history-render" style="font-size:11px; color:var(--sub);">Nog geen workouts.</div>
+            <h3 style="font-size:14px; margin:0 0 10px;">RECENTE HISTORY</h3>
+            <div id="history-render" style="font-size:11px; color:var(--sub);">Nog geen workouts.</div>
         </div>
     </div>
 
-<div id="scr-social" class="screen hidden">
-    <h1>COMMUNITY</h1>
-    <div class="subtitle">Battle met je vrienden</div>
+    <div id="scr-social" class="screen hidden">
+        <h1>COMMUNITY</h1>
+        <div class="subtitle">Battle met je vrienden</div>
 
-    <div class="card" style="border-bottom: 2px solid var(--blue);">
-        <strong style="font-size: 12px; display:block; margin-bottom:10px; color:var(--blue);">ZOEK ATLETEN</strong>
-        <div style="display:flex; gap:10px;">
-            <input type="text" id="search-user-name" placeholder="Typ naam van vriend..." style="margin-bottom:0; flex:1;">
-            <button class="btn-small" onclick="searchUser()" style="background:var(--blue); border:none; width:80px;">ZOEK</button>
+        <div class="card" style="border-bottom: 2px solid var(--blue);">
+            <strong style="font-size: 12px; display:block; margin-bottom:10px; color:var(--blue);">ZOEK ATLETEN</strong>
+            <div style="display:flex; gap:10px;">
+                <input type="text" id="search-user-name" placeholder="Typ naam van vriend..." style="margin-bottom:0; flex:1;">
+                <button class="btn-small" onclick="searchUser()" style="background:var(--blue); border:none; width:80px;">ZOEK</button>
+            </div>
+            <div id="search-results" style="margin-top:15px;"></div>
         </div>
-        <div id="search-results" style="margin-top:15px;"></div>
+
+        <div class="card">
+            <strong style="font-size: 12px; display:block; margin-bottom:10px;">JOIN OF MAAK GROEP</strong>
+            <input type="text" id="group-name" placeholder="Groepsnaam (bijv: Klas4A)..." style="margin-bottom:10px;">
+            <div style="display:flex; gap:10px;">
+                <button class="btn" onclick="joinGroup()" style="height:45px; padding:0; flex:1; background:var(--blue); color:white;">JOIN GROEP</button>
+                <button class="btn" onclick="createGroup()" style="height:45px; padding:0; flex:1; background:var(--surface-2); color:white; border:1px solid #333;">MAAK NIEUW</button>
+            </div>
+        </div>
+
+        <div id="group-content"></div>
     </div>
-
-    <div class="card">
-        <strong style="font-size: 12px; display:block; margin-bottom:10px;">JOIN OF MAAK GROEP</strong>
-        <input type="text" id="group-name" placeholder="Groepsnaam (bijv: Klas4A)..." style="margin-bottom:10px;">
-        <div style="display:flex; gap:10px;">
-            <button class="btn" onclick="joinGroup()" style="height:45px; padding:0; flex:1; background:var(--blue); color:white;">JOIN GROEP</button>
-            <button class="btn" onclick="createGroup()" style="height:45px; padding:0; flex:1; background:var(--surface-2); color:white; border:1px solid #333;">MAAK NIEUW</button>
-        </div>
-    </div>
-
-    <div id="group-content">
-        </div>
-</div>
 
     <div id="scr-profile" class="screen hidden">
         <h1>PROFIEL</h1>
@@ -218,9 +214,10 @@ body {
         <div class="card" id="profile-fields"></div>
         <button class="btn-small" style="width:100%; padding:15px; margin:20px 0; background:#220000; border-color:#500; color:#f55;" onclick="resetData()">Reset alle data</button>
     </div>
+
     <div id="scr-workout" class="screen hidden" style="padding:0; z-index: 2000; background:#000;">
-        <video id="input_video" style="display:none"></video> 
-        <canvas id="output_canvas"></canvas> 
+        <video id="input_video" style="display:none"></video>
+        <canvas id="output_canvas"></canvas>
 
         <div id="coaching-tip">START POSITIE...</div>
 
@@ -260,26 +257,36 @@ body {
     </div>
 
     <div id="report-overlay" class="screen hidden" style="position:fixed; inset:0; background: rgba(5,5,5,0.98); z-index: 5000; display:none; flex-direction: column; align-items: center; justify-content: center; backdrop-filter: blur(10px);">
-    <div class="card" style="width: 85%; max-width: 400px; text-align: center; border: 1px solid var(--blue); box-shadow: 0 0 30px rgba(0,122,255,0.2);">
-        <h1 style="color: var(--blue); font-size: 20px;">TRAININGS RAPPORT</h1>
-        <div class="subtitle" id="report-date">NET VOLTOOID</div>
+        <div class="card" style="width: 85%; max-width: 400px; text-align: center; border: 1px solid var(--blue); box-shadow: 0 0 30px rgba(0,122,255,0.2);">
+            <h1 style="color: var(--blue); font-size: 20px;">TRAININGS RAPPORT</h1>
+            <div class="subtitle" id="report-date">NET VOLTOOID</div>
 
-        <div id="report-score" style="font-size: 64px; font-weight: 900; margin: 10px 0; font-family: 'Montserrat';">0%</div>
-        <div style="font-size: 11px; text-transform: uppercase; letter-spacing: 2px; color: var(--sub); margin-bottom: 20px;">Houding Score</div>
+            <div id="report-score" style="font-size: 64px; font-weight: 900; margin: 10px 0; font-family: 'Montserrat';">0%</div>
+            <div style="font-size: 11px; text-transform: uppercase; letter-spacing: 2px; color: var(--sub); margin-bottom: 20px;">Houding Score</div>
 
-        <div style="text-align: left; background: rgba(255,255,255,0.03); padding: 15px; border-radius: 12px; margin-bottom: 20px;">
-            <strong style="font-size: 12px; color: var(--blue); display: block; margin-bottom: 5px;">COACH FEEDBACK:</strong>
-            <p id="report-feedback-text" style="font-size: 13px; line-height: 1.5; color: #eee; margin: 0;"></p>
+            <div style="text-align: left; background: rgba(255,255,255,0.03); padding: 15px; border-radius: 12px; margin-bottom: 20px;">
+                <strong style="font-size: 12px; color: var(--blue); display: block; margin-bottom: 5px;">COACH FEEDBACK:</strong>
+                <p id="report-feedback-text" style="font-size: 13px; line-height: 1.5; color: #eee; margin: 0;"></p>
+            </div>
+
+            <div class="stat-row">
+                <div class="stat-header"><span>PRECISIE</span><span id="precision-val">0%</span></div>
+                <div class="bar-bg"><div id="precision-bar" class="bar-fill" style="width: 0%"></div></div>
+            </div>
+
+            <button class="btn" onclick="closeReport()" style="margin-top: 25px; background: var(--blue); color: white;">DOORGAAN</button>
         </div>
-
-        <div class="stat-row">
-            <div class="stat-header"><span>PRECISIE</span><span id="precision-val">0%</span></div>
-            <div class="bar-bg"><div id="precision-bar" class="bar-fill" style="width: 0%"></div></div>
-        </div>
-
-        <button class="btn" onclick="closeReport()" style="margin-top: 25px; background: var(--blue); color: white;">DOORGAAN</button>
     </div>
-</div>
+
+    <div id="friend-overlay" style="position:fixed; inset:0; background: rgba(0,0,0,0.95); z-index: 6000; display:none; flex-direction: column; align-items: center; justify-content: center; backdrop-filter: blur(10px);">
+        <div class="card" style="width: 85%; max-width: 350px; text-align: center; border: 1px solid var(--blue);">
+            <div id="friend-rank" class="rank-badge" style="margin-bottom:10px; background:var(--blue); color:white;">LEVEL ...</div>
+            <h2 id="friend-name" style="margin: 10px 0;">Naam...</h2>
+            <p id="friend-goal" class="subtitle" style="margin-bottom:20px; color:var(--sub);"></p>
+            <div id="friend-stats-render" style="text-align:left; background: rgba(255,255,255,0.05); padding: 15px; border-radius: 15px;"></div>
+            <button class="btn" onclick="document.getElementById('friend-overlay').style.display='none'" style="margin-top:20px; background:var(--blue); color:white;">SLUITEN</button>
+        </div>
+    </div>
 
     <nav class="navbar hidden" id="nav">
         <div class="nav-item active" onclick="tab('dash', this)"><i>🏠</i>Training</div>
@@ -290,137 +297,21 @@ body {
     </nav>
 
     <script>
-        // --- 1. CONFIGURATION & DATA ---
-        // --- FIREBASE CONFIGURATIE ---
-
-        // Deze functie rekent je gemiddelde uit van al je spier-levels
-function calculateMainScore() {
-    let stats = user.stats;
-    let sum = 0;
-    let count = 0;
-    for(let spier in stats) {
-        sum += stats[spier].lvl;
-        count++;
-    }
-    return Math.round((sum / count) * 10); // Maakt van bijv. 3.2 een score van 32
-}
-
-// Deze functie haalt de namen en scores op en zet ze op je scherm
-async function loadLeaderboard(groupId) {
-    if(!groupId) return;
-    const doc = await db.collection('groups').doc(groupId).get();
-    if(!doc.exists) return;
-
-    const data = doc.data();
-    const scoresMap = data.scores;
-    let spelersLijst = [];
-
-    // We lopen door alle mensen in de groep heen
-    for (let uid in scoresMap) {
-        let info = scoresMap[uid];
-        spelersLijst.push({
-            name: info.name || "Atleet " + uid.substring(0,3), // Gebruik naam of kort ID
-            score: info.score || 0,
-            isMe: uid === auth.currentUser.uid
-        });
-    }
-
-    // Sorteer van hoogste score naar laagste
-    spelersLijst.sort((a, b) => b.score - a.score);
-
-    let html = `<h3 style="margin:20px 0 10px; font-family:Montserrat;">🏆 CLASH: ${data.groupName}</h3>`;
-    spelersLijst.forEach((speler, i) => {
-        html += `
-            <div class="card" style="display:flex; justify-content:space-between; align-items:center; border-left: 4px solid ${speler.isMe ? 'var(--blue)' : '#333'};">
-                <span><strong>${i+1}.</strong> ${speler.name} ${speler.isMe ? '(JIJ)' : ''}</span>
-                <span style="font-weight:900; color:var(--blue); font-size:20px;">${speler.score}</span>
-            </div>`;
-    });
-    document.getElementById('group-content').innerHTML = html;
-}
-
-       async function joinGroup() {
-    const gName = document.getElementById('group-name').value;
-    if(!gName) return alert("Typ de naam van de groep!");
-
-    const groupId = gName.toLowerCase().replace(/\s+/g, '-');
-    const myScore = calculateMainScore();
-    const myName = user.name || "Onbekend"; // Zorg dat 'user.name' gevuld is!
-
-    await db.collection('groups').doc(groupId).update({
-        [`scores.${auth.currentUser.uid}`]: {
-            name: myName,
-            score: myScore
-        }
-    });
-
-    user.currentGroupId = groupId;
-    save();
-    loadLeaderboard(groupId);
-}
-const firebaseConfig = {
-    apiKey: "AIzaSyBvkD1TvkjjMci5Re2uzY61yqJI_FcthnU",
-    authDomain: "smart-fitness-mathijs.firebaseapp.com",
-    projectId: "smart-fitness-mathijs",
-    storageBucket: "smart-fitness-mathijs.firebasestorage.app",
-    messagingSenderId: "123911579168",
-    appId: "1:123911579168:web:c6fcb8a2f380157b0fbe45"
-};
-
-// Start de verbinding
-firebase.initializeApp(firebaseConfig);
-const auth = firebase.auth();
-const db = firebase.firestore();
-
-// --- DEEL A: DE LOGIN LOGICA (Zorgt dat de knoppen werken) ---
-async function authAction(type) {
-    const email = document.getElementById('auth-email').value;
-    const pass = document.getElementById('auth-pass').value;
-    if (!email || !pass) return alert("Vul e-mail en wachtwoord in!");
-
-    try {
-        if (type === 'login') {
-            await auth.signInWithEmailAndPassword(email, pass);
-        } else {
-            // Maak account en sla eerste user-data op
-            // --- HIER PAS JE HET AAN VOOR HET MAKEN VAN EEN ACCOUNT ---
-            const res = await auth.createUserWithEmailAndPassword(email, pass);
-            
-            // We voegen het emailadres toe aan het 'user' object voordat we het opslaan
-            user.email = email; 
-            user.name = user.name || "Nieuwe Atleet"; // Zorg dat er een naam is
-            
-            // Nu slaan we het op in Firestore (jouw database)
-            await db.collection('users').doc(res.user.uid).set(user);
-            
-            tab('onboarding');
-        }
-    } catch (e) { alert("Fout: " + e.message); }
-    } catch (e) { 
-        alert("Fout: " + e.message); 
-    }
-}
-
-// --- DEEL B: AUTOMATISCH CHECKEN (Dit draait zodra de app opstart) ---
-auth.onAuthStateChanged(async (fbUser) => {
-    if (fbUser) {
-        // Gebruiker is herkend, haal stats op uit de database
-        const doc = await db.collection('users').doc(fbUser.uid).get();
-        if (doc.exists) { 
-            user = doc.data(); 
-            tab('dash'); 
-            document.getElementById('nav').classList.remove('hidden');
-        } else { 
-            tab('onboarding'); 
-        }
-    } else {
-        // Niemand ingelogd? Toon het inlogscherm
-        tab('auth'); 
-        document.getElementById('nav').classList.add('hidden');
-    }
-});
-
-
+        // ============================================================
+        // 1. DATA & USER OBJECT
+        // ============================================================
+        let user = {
+            name: '', age: '', gender: '', height: '', weight: '', goal: '', reps: '', availability: '',
+            streak: 0, lastDate: null,
+            totalWorkouts: 0,
+            badges: [],
+            history: [],
+            stats: {
+                Borst: {xp:0, lvl:1}, Schouders: {xp:0, lvl:1}, Triceps: {xp:0, lvl:1},
+                Abs: {xp:0, lvl:1}, Rug: {xp:0, lvl:1}, Benen: {xp:0, lvl:1},
+                Billen: {xp:0, lvl:1}, Kuiten: {xp:0, lvl:1}
+            }
+        };
 
         const exercises = {
             Upper: [
@@ -449,12 +340,6 @@ auth.onAuthStateChanged(async (fbUser) => {
             ]
         };
 
-        const analyse = [
-
-            {n:"Analyse", i:"Analyseer je oefeningen nu!."},
-
-            ];
-
         const badgeList = [
             { id: 'b_start', icon: '🐣', name: 'Rookie', desc: 'Eerste workout voltooid' },
             { id: 'b_wk1', icon: '🔥', name: 'Week 1', desc: '7 dagen streak gehaald' },
@@ -464,54 +349,94 @@ auth.onAuthStateChanged(async (fbUser) => {
             { id: 'b_early', icon: '🌅', name: 'Vroege Vogel', desc: 'Training voor 09:00u' }
         ];
 
-       // Begin met een leeg object. De data komt uit Firebase.
-// --- 1. DE NIEUWE USER STRUCTUUR ---
-// We beginnen met een 'leeg' object. Firebase vult dit in zodra je inlogt.
-let user = {
-    name: '', age: '', gender: '', height: '', weight: '', goal: '', reps: '', availability: '',
-    streak: 0, lastDate: null,
-    totalWorkouts: 0,
-    badges: [],
-    history: [],
-    stats: { 
-        Borst: {xp:0, lvl:1}, Schouders: {xp:0, lvl:1}, Triceps: {xp:0, lvl:1},
-        Abs: {xp:0, lvl:1}, Rug: {xp:0, lvl:1}, Benen: {xp:0, lvl:1},
-        Billen: {xp:0, lvl:1}, Kuiten: {xp:0, lvl:1}
-    }
-};
+        const questions = [
+            { k: 'name', q: 'Voornaam', t: 'text' },
+            { k: 'age', q: 'Leeftijd', t: 'number' },
+            { k: 'gender', q: 'Geslacht', t: 'select', o: ['Man', 'Vrouw', 'X'] },
+            { k: 'height', q: 'Lengte (CM)', t: 'number' },
+            { k: 'weight', q: 'Gewicht (KG)', t: 'number' },
+            { k: 'goal', q: 'Doel', t: 'select', o: ['Afvallen', 'Spiermassa', 'Conditie'] },
+            { k: 'reps', q: 'Trainingsniveau', t: 'select', o: ['beginner', 'sportief', 'gevorderd'] },
+            { k: 'availability', q: 'Dagen per week', t: 'select', o: ['1-2', '3-4', '5+'] }
+        ];
 
-// --- 2. DE UPGRADED SAVE FUNCTIE ---
-// Deze overschrijft jouw oude save() functie.
-function save() { 
-    // Sla lokaal op als backup
-    localStorage.setItem('elite_v9_ultimate', JSON.stringify(user)); 
+        // ============================================================
+        // 2. FIREBASE AUTH
+        // FIX #2: authAction had een dubbel catch-blok — nu opgelost
+        // ============================================================
+        async function authAction(type) {
+            const email = document.getElementById('auth-email').value;
+            const pass = document.getElementById('auth-pass').value;
+            if (!email || !pass) return alert("Vul e-mail en wachtwoord in!");
 
-    // Sla op in de Cloud (Firebase)
-    const currentUser = auth.currentUser;
-    if (currentUser) {
-        db.collection('users').doc(currentUser.uid).set(user)
-          .then(() => console.log("Cloud sync: OK"))
-          .catch(e => console.error("Cloud sync error:", e));
-    }
-}
+            try {
+                if (type === 'login') {
+                    await auth.signInWithEmailAndPassword(email, pass);
+                } else {
+                    const res = await auth.createUserWithEmailAndPassword(email, pass);
+                    user.email = email;
+                    user.name = user.name || "Nieuwe Atleet";
+                    await db.collection('users').doc(res.user.uid).set(user);
+                    tab('onboarding');
+                }
+            } catch (e) {
+                alert("Fout: " + e.message);
+            }
+        }
 
-        // --- 2. AUDIO SYSTEM (Synthesizer - No files needed) ---
+        auth.onAuthStateChanged(async (fbUser) => {
+            if (fbUser) {
+                const doc = await db.collection('users').doc(fbUser.uid).get();
+                if (doc.exists) {
+                    user = doc.data();
+                    tab('dash');
+                    document.getElementById('nav').classList.remove('hidden');
+                } else {
+                    tab('onboarding');
+                }
+            } else {
+                tab('auth');
+                document.getElementById('nav').classList.add('hidden');
+            }
+        });
+
+        // ============================================================
+        // 3. SAVE / RESET
+        // FIX #3: save() was dubbel gedefinieerd — nu één versie
+        // ============================================================
+        function save() {
+            localStorage.setItem('elite_v9_ultimate', JSON.stringify(user));
+            const currentUser = auth.currentUser;
+            if (currentUser) {
+                db.collection('users').doc(currentUser.uid).set(user)
+                    .then(() => console.log("Cloud sync: OK"))
+                    .catch(e => console.error("Cloud sync error:", e));
+            }
+        }
+
+        function resetData() {
+            localStorage.removeItem('elite_v9_ultimate');
+            location.reload();
+        }
+
+        // ============================================================
+        // 4. AUDIO
+        // ============================================================
         const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
         function playSound(type) {
-            if(audioCtx.state === 'suspended') audioCtx.resume();
+            if (audioCtx.state === 'suspended') audioCtx.resume();
             const osc = audioCtx.createOscillator();
             const gain = audioCtx.createGain();
             osc.connect(gain);
             gain.connect(audioCtx.destination);
 
-            if(type === 'rep') {
+            if (type === 'rep') {
                 osc.frequency.setValueAtTime(600, audioCtx.currentTime);
                 osc.frequency.exponentialRampToValueAtTime(1200, audioCtx.currentTime + 0.1);
                 gain.gain.setValueAtTime(0.3, audioCtx.currentTime);
                 gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.1);
                 osc.start(); osc.stop(audioCtx.currentTime + 0.1);
             } else if (type === 'lvl') {
-                // Fanfare chord
                 [440, 554, 659].forEach((f, i) => {
                     const o = audioCtx.createOscillator();
                     const g = audioCtx.createGain();
@@ -519,7 +444,7 @@ function save() {
                     o.type = 'triangle';
                     o.frequency.value = f;
                     g.gain.setValueAtTime(0, audioCtx.currentTime);
-                    g.gain.linearRampToValueAtTime(0.2, audioCtx.currentTime + 0.1 + (i*0.05));
+                    g.gain.linearRampToValueAtTime(0.2, audioCtx.currentTime + 0.1 + (i * 0.05));
                     g.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 1.5);
                     o.start(); o.stop(audioCtx.currentTime + 1.5);
                 });
@@ -532,64 +457,68 @@ function save() {
             }
         }
 
-        // --- 3. STATE VARIABLES ---
-        let currentStep = 1; 
+        // ============================================================
+        // 5. STATE VARIABLES
+        // ============================================================
+        let currentStep = 1;
         let circuit = [], cIdx = 0, reps = 0, sets = 1, isRest = false, restTimer = null, tLeft = 30;
         let sessionScores = [];
-        let stage = 'up'; 
+        let stage = 'up';
         let currentCat = '';
         let camera = null;
-        let lastRepTime = 0; // Voor snelheid check
+        let lastRepTime = 0;
 
-        const questions = [
-            { k: 'name', q: 'Voornaam', t: 'text' },
-            { k: 'age', q: 'Leeftijd', t: 'number' },
-            { k: 'gender', q: 'Geslacht', t: 'select', o: ['Man', 'Vrouw', 'X'] },
-            { k: 'height', q: 'Lengte (CM)', t: 'number' },
-            { k: 'weight', q: 'Gewicht (KG)', t: 'number' },
-            { k: 'goal', q: 'Doel', t: 'select', o: ['Afvallen', 'Spiermassa', 'Conditie'] },
-            { k: 'reps', q: 'Trainingsniveau ', t: 'select', o: ['beginner ', 'sportief ', 'gevorderd '] },
-            { k: 'availability', q: 'Dagen per week', t: 'select', o: ['1-2', '3-4', '5+'] }
-        ];
-
-        // --- 4. CORE FUNCTIONS ---
-
-        function save() { localStorage.setItem('elite_v9_ultimate', JSON.stringify(user)); }
-        function resetData() { localStorage.removeItem('elite_v9_ultimate'); location.reload(); }
-
-        // RANG BEREKENING
+        // ============================================================
+        // 6. RANK & SCORE
+        // FIX #4: calculateMainScore en loadLeaderboard waren meerdere
+        //         keren gedefinieerd — nu één versie van elk
+        // ============================================================
         function getRank() {
-            let totalLvl = Object.values(user.stats).reduce((a,b) => a + b.lvl, 0);
-            if(totalLvl < 5) return "Rookie";
-            if(totalLvl < 10) return "Amateur";
-            if(totalLvl < 25) return "Atleet";
-            if(totalLvl < 50) return "Pro";
-            if(totalLvl < 100) return "Legendarisch";
+            let totalLvl = Object.values(user.stats).reduce((a, b) => a + b.lvl, 0);
+            if (totalLvl < 5) return "Rookie";
+            if (totalLvl < 10) return "Amateur";
+            if (totalLvl < 25) return "Atleet";
+            if (totalLvl < 50) return "Pro";
+            if (totalLvl < 100) return "Legendarisch";
             return "ELITE";
         }
 
-        // --- 5. UI & NAVIGATIE ---
+        function calculateMainScore() {
+            const stats = user.stats;
+            const keys = Object.keys(stats);
+            let totalLevel = keys.reduce((sum, key) => sum + stats[key].lvl, 0);
+            let average = totalLevel / keys.length;
+            return Math.round(average * 10);
+        }
 
+        // ============================================================
+        // 7. NAVIGATIE & UI
+        // ============================================================
         function tab(t, el) {
             document.querySelectorAll('.screen').forEach(s => s.classList.add('hidden'));
-document.getElementById('scr-'+t).classList.remove('hidden');
-            if(el) { document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active')); el.classList.add('active'); }
-
-            if(t === 'dash') { 
-                document.getElementById('dash-greet').innerText = "HEY " + (user.name || "CHAMP"); 
-                document.getElementById('streak-val').innerText = user.streak; 
+            document.getElementById('scr-' + t).classList.remove('hidden');
+            if (el) {
+                document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active'));
+                el.classList.add('active');
+            }
+            if (t === 'dash') {
+                document.getElementById('dash-greet').innerText = "HEY " + (user.name || "CHAMP");
+                document.getElementById('streak-val').innerText = user.streak;
                 document.getElementById('rank-display').innerText = getRank();
             }
-            if(t === 'analyse') renderanalyse();
-            if(t === 'progress') renderProgress();
-            if(t === 'profile') renderProfileFields();
-            if(t === 'social' && user.currentGroupId) {
-    loadLeaderboard(user.currentGroupId);
-}
+            if (t === 'analyse') renderAnalyse();
+            if (t === 'progress') renderProgress();
+            if (t === 'profile') renderProfileFields();
+            if (t === 'social' && user.currentGroupId) {
+                loadLeaderboard(user.currentGroupId);
+            }
+        }
+
+        function renderAnalyse() {
+            // placeholder - analyse tab
         }
 
         function renderProgress() {
-            // Stats Bars
             const container = document.getElementById('stats-render');
             container.innerHTML = Object.keys(user.stats).map(key => {
                 const s = user.stats[key];
@@ -602,20 +531,18 @@ document.getElementById('scr-'+t).classList.remove('hidden');
                     </div>`;
             }).join('');
 
-            // Badges
             const badgeCont = document.getElementById('badges-render');
             badgeCont.innerHTML = badgeList.map(b => {
                 const unlocked = user.badges.includes(b.id);
-                return `<div class="badge-item ${unlocked?'unlocked':''}">
+                return `<div class="badge-item ${unlocked ? 'unlocked' : ''}">
                     <div class="badge-icon">${b.icon}</div>
                     <div class="badge-name">${b.name}</div>
                 </div>`;
             }).join('');
 
-            // History
             const histCont = document.getElementById('history-render');
-            if(user.history.length > 0) {
-                histCont.innerHTML = user.history.slice().reverse().slice(0,5).map(h => 
+            if (user.history && user.history.length > 0) {
+                histCont.innerHTML = user.history.slice().reverse().slice(0, 5).map(h =>
                     `<div style="display:flex; justify-content:space-between; padding:10px 0; border-bottom:1px solid #222;">
                         <span>${h.date}</span> <span>${h.cat} (${h.reps} reps)</span>
                     </div>`
@@ -623,11 +550,26 @@ document.getElementById('scr-'+t).classList.remove('hidden');
             }
         }
 
-        // --- 6. ONBOARDING ---
+        function renderProfileFields() {
+            const container = document.getElementById('profile-fields');
+            container.innerHTML = questions.map(q => `
+                <label style="font-size:10px; color:var(--sub); display:block; margin-bottom:5px;">${q.q}</label>
+                ${q.t === 'select' ?
+                    `<select onchange="updateUser('${q.k}', this.value)">${q.o.map(o => `<option value="${o}" ${user[q.k] == o ? 'selected' : ''}>${o}</option>`).join('')}</select>` :
+                    `<input type="${q.t}" value="${user[q.k] || ''}" onchange="updateUser('${q.k}', this.value)">`
+                }
+            `).join('');
+        }
+
+        function updateUser(k, v) { user[k] = v; save(); }
+
+        // ============================================================
+        // 8. ONBOARDING
+        // ============================================================
         function renderQ() {
-            const q = questions[currentStep-1];
+            const q = questions[currentStep - 1];
             let html = `<h1>${q.q}</h1><div class="subtitle">Stap ${currentStep}/${questions.length}</div>`;
-            if(q.t === 'select') {
+            if (q.t === 'select') {
                 html += `<select id="q-val">` + q.o.map(o => `<option value="${o}">${o}</option>`).join('') + `</select>`;
             } else {
                 html += `<input type="${q.t}" id="q-val" value="${user[q.k] || ''}" placeholder="...">`;
@@ -636,90 +578,63 @@ document.getElementById('scr-'+t).classList.remove('hidden');
             document.getElementById('q-container').innerHTML = html;
         }
 
-        function save() { 
-    // Sla lokaal op (als backup)
-    localStorage.setItem('elite_v9_ultimate', JSON.stringify(user)); 
-
-    // Sla op in Firebase (de cloud)
-    const currentUser = auth.currentUser;
-    if (currentUser) {
-        db.collection('users').doc(currentUser.uid).set(user)
-        .then(() => console.log("Cloud Save Succesful"))
-        .catch(e => console.error("Cloud Save Error", e));
-    }
-}
-
-        function renderProfileFields() {
-            const container = document.getElementById('profile-fields');
-            container.innerHTML = questions.map(q => `
-                <label style="font-size:10px; color:var(--sub); display:block; margin-bottom:5px;">${q.q}</label>
-                ${q.t === 'select' ? 
-                    `<select onchange="updateUser('${q.k}', this.value)">${q.o.map(o => `<option value="${o}" ${user[q.k] == o ? 'selected' : ''}>${o}</option>`).join('')}</select>` :
-                    `<input type="${q.t}" value="${user[q.k]}" onchange="updateUser('${q.k}', this.value)">`
-                }
-            `).join('');
+        function saveQ() {
+            const val = document.getElementById('q-val').value;
+            if (!val) return alert("Vul dit veld in!");
+            user[questions[currentStep - 1].k] = val;
+            if (currentStep < questions.length) {
+                currentStep++;
+                renderQ();
+            } else {
+                save();
+                tab('auth');
+            }
         }
-        function updateUser(k, v) { user[k] = v; save(); }
 
-        // --- 7. WORKOUT LOGIC ---
-
+        // ============================================================
+        // 9. WORKOUT LOGICA
+        // ============================================================
         function checkStreak() {
             const today = new Date().toDateString();
-            if(user.lastDate === today) return;
-            const yesterday = new Date(); yesterday.setDate(yesterday.getDate() - 1);
-            if(user.lastDate === yesterday.toDateString()) { user.streak++; }
+            if (user.lastDate === today) return;
+            const yesterday = new Date();
+            yesterday.setDate(yesterday.getDate() - 1);
+            if (user.lastDate === yesterday.toDateString()) { user.streak++; }
             else { user.streak = 1; }
-            user.lastDate = today; save();
+            user.lastDate = today;
+            save();
         }
 
         function startCircuit(cat) {
             currentCat = cat;
-            circuit = [...exercises[cat]].sort(() => 0.5 - Math.random()); 
+            circuit = [...exercises[cat]].sort(() => 0.5 - Math.random());
             cIdx = 0; sets = 1; reps = 0;
-            tab('workout'); 
-            startAI(); 
-            startRest(30, "LEES DE UITLEG"); 
+            tab('workout');
+            startAI();
+            startRest(30, "LEES DE UITLEG");
         }
 
-function stopWorkout() {
-    if (camera) camera.stop();
+        function stopWorkout() {
+            if (camera) camera.stop();
 
-    // Bereken de score van de net voltooide sessie
-    if (sessionScores.length > 0) {
-        let som = sessionScores.reduce((a, b) => a + b, 0);
-        let lastScore = Math.round(som / sessionScores.length);
+            if (sessionScores.length > 0) {
+                let som = sessionScores.reduce((a, b) => a + b, 0);
+                let lastScore = Math.round(som / sessionScores.length);
+                user.lastAnalysisScore = lastScore;
+                save();
+            }
 
-        // Sla de score op in het user object voor de analyse-knop
-        user.lastAnalysisScore = lastScore;
-        save(); // Sla op in Firebase/LocalStorage
-    }
+            if (user.currentGroupId && auth.currentUser) {
+                const myNewScore = calculateMainScore();
+                db.collection('groups').doc(user.currentGroupId).update({
+                    [`scores.${auth.currentUser.uid}.score`]: myNewScore,
+                    [`scores.${auth.currentUser.uid}.name`]: user.name || "Anoniem"
+                }).catch(e => console.error("Groepsscore fout:", e));
+            }
 
-    // --- DIT IS STAP 4: UPDATE DE SCORE IN DE GROEP ---
-    if (user.currentGroupId) {
-        const myNewScore = calculateMainScore(); // Bereken je nieuwe gemiddelde
-
-        db.collection('groups').doc(user.currentGroupId).update({
-            [`scores.${auth.currentUser.uid}.score`]: myNewScore,
-            [`scores.${auth.currentUser.uid}.name`]: user.name || "Anoniem"
-        }).then(() => {
-            console.log("Groepsscore bijgewerkt!");
-        });
-    }
-    // ------------------------------------------------
-
-    sessionScores = []; 
-    tab('dash'); 
-}
-
-
-function closeReport() {
-    // Maak de lijst met scores leeg voor de volgende workout
-    sessionScores = [];
-    // Verberg het rapport en ga naar het dashboard
-    document.getElementById('report-overlay').style.display = 'none';
-    document.getElementById('report-overlay').classList.add('hidden');
-    tab('dash');
-}
+            sessionScores = [];
+            tab('dash');
+        }
 
         function startRest(time, title) {
             isRest = true; tLeft = time;
@@ -732,29 +647,36 @@ function closeReport() {
 
         function runTimer() {
             document.getElementById('timer-val').innerText = tLeft;
-            if(restTimer) clearInterval(restTimer);
+            if (restTimer) clearInterval(restTimer);
             restTimer = setInterval(() => {
-                tLeft--; document.getElementById('timer-val').innerText = tLeft;
-                if(tLeft <= 0) skipRest();
+                tLeft--;
+                document.getElementById('timer-val').innerText = tLeft;
+                if (tLeft <= 0) skipRest();
             }, 1000);
         }
+
         function adjustTime(s) { tLeft += s; document.getElementById('timer-val').innerText = tLeft; }
-        function skipRest() { clearInterval(restTimer); isRest = false; document.getElementById('rest-overlay').classList.add('hidden'); updateHUD(); speak("Start " + circuit[cIdx].n); lastRepTime = Date.now(); }
+
+        function skipRest() {
+            clearInterval(restTimer);
+            isRest = false;
+            document.getElementById('rest-overlay').classList.add('hidden');
+            updateHUD();
+            speak("Start " + circuit[cIdx].n);
+            lastRepTime = Date.now();
+        }
 
         function updateHUD(feedback = null) {
-            document.getElementById('hud-idx').innerText = `${cIdx+1}/6`;
+            document.getElementById('hud-idx').innerText = `${cIdx + 1}/6`;
             document.getElementById('hud-set').innerText = `${sets}/3`;
             document.getElementById('hud-reps').innerText = `${reps}/${user.reps}`;
 
             const tipEl = document.getElementById('coaching-tip');
-
-            // Prioriteit aan feedback (bijv. "Te snel!")
-            if(feedback) {
+            if (feedback) {
                 tipEl.innerText = feedback;
                 tipEl.className = feedback.includes('GOED') ? 'feedback-good' : 'feedback-warn';
                 return;
             }
-
             const rem = user.reps - reps;
             tipEl.className = '';
             if (rem <= 3 && rem > 0) tipEl.innerText = "NOG " + rem + "...";
@@ -762,92 +684,39 @@ function closeReport() {
             else tipEl.innerText = "START!";
         }
 
-        // --- 8. AI & COMPUTER VISION ---
-        const videoElement = document.getElementById('input_video');
-        const canvasElement = document.getElementById('output_canvas');
-        const canvasCtx = canvasElement.getContext('2d');
-
-function onResults(results) {
-    if(!results.poseLandmarks || isRest) return;
-
-    canvasCtx.save();
-    canvasCtx.clearRect(0, 0, canvasElement.width, canvasElement.height);
-    canvasCtx.drawImage(results.image, 0, 0, canvasElement.width, canvasElement.height);
-
-    const m = results.poseLandmarks;
-    const exe = circuit[cIdx].n.toLowerCase();
-
-    // --- DE LOGICA VOOR SQUATS ---
-    if(exe.includes("squat")) {
-        let currentAngle = calcAngle(m[24], m[26], m[28]); // Heup-Knie-Enkel
-
-        if (currentAngle > 160) stage = 'up';
-
-        if (currentAngle < 100 && stage === 'up') {
-            // KWALITEIT BEREKENEN: 90 graden is perfect (100%)
-            let repQuality = Math.max(0, 100 - Math.abs(90 - currentAngle));
-            sessionScores.push(repQuality); 
-
-            stage = 'down';
-            reps++;
-
-            // Gebruik je bestaande functies voor audio en HUD
-            playSound('rep');
-            updateHUD();
-
-            // Check of de set klaar is
-            if (reps >= user.reps) {
-                if (sets < 3) {
-                    sets++; reps = 0;
-                    startRest(30, "GOED GEDAAN! RUST EVEN.");
-                } else {
-                    stopWorkout(); // Dit roept nu het rapport op
-                }
-            }
-        }
-    }
-    canvasCtx.restore();
-}
-
         function registerRep() {
-            // Speed Check
             const now = Date.now();
-            if(now - lastRepTime < 800) {
+            if (now - lastRepTime < 800) {
                 updateHUD("TE SNEL! SLOMER");
                 playSound('bad');
                 lastRepTime = now;
-                return; // Tel rep niet
+                return;
             }
             lastRepTime = now;
-
-            reps++; 
-            updateHUD("GOED BEZIG!"); 
+            reps++;
+            updateHUD("GOED BEZIG!");
             playSound('rep');
-
-            // Floating Text XP
             showFloatingText("+15 XP");
 
-            // XP Logic
             const focus = circuit[cIdx].focus;
             focus.forEach(muscle => {
                 user.stats[muscle].xp += 15;
                 let currentTarget = Math.round(100 * Math.pow(1.5, user.stats[muscle].lvl - 1));
-
-                if(user.stats[muscle].xp >= currentTarget) {
+                if (user.stats[muscle].xp >= currentTarget) {
                     user.stats[muscle].xp -= currentTarget;
                     user.stats[muscle].lvl++;
                     showLevelUp(muscle, user.stats[muscle].lvl);
-                    checkBadges(); // Check badge on level up
+                    checkBadges();
                 }
             });
             save();
 
-            if(reps >= user.reps) {
-                if(sets < 3) { sets++; reps=0; startRest(15, "SET VOLTOOID!"); }
-                else { 
-                    cIdx++; 
-                    if(cIdx < 6) { sets=1; reps=0; startRest(30, "VOLGENDE OEFENING"); } 
-                    else { finishWorkout(); } 
+            if (reps >= user.reps) {
+                if (sets < 3) { sets++; reps = 0; startRest(15, "SET VOLTOOID!"); }
+                else {
+                    cIdx++;
+                    if (cIdx < 6) { sets = 1; reps = 0; startRest(30, "VOLGENDE OEFENING"); }
+                    else { finishWorkout(); }
                 }
             }
         }
@@ -855,14 +724,75 @@ function onResults(results) {
         function finishWorkout() {
             checkStreak();
             checkBadges('finish');
-            user.history.push({date: new Date().toLocaleDateString(), cat: currentCat, reps: user.reps * 3 * 6});
+            user.totalWorkouts = (user.totalWorkouts || 0) + 1;
+            user.history.push({ date: new Date().toLocaleDateString(), cat: currentCat, reps: user.reps * 3 * 6 });
             save();
             speak("Training voltooid. Goed gedaan!");
             stopWorkout();
         }
 
-        // --- 9. VISUALS & EFFECTS ---
+        // ============================================================
+        // 10. AI & COMPUTER VISION
+        // ============================================================
+        const videoElement = document.getElementById('input_video');
+        const canvasElement = document.getElementById('output_canvas');
+        const canvasCtx = canvasElement.getContext('2d');
 
+        function onResults(results) {
+            if (!results.poseLandmarks || isRest) return;
+
+            canvasCtx.save();
+            canvasCtx.clearRect(0, 0, canvasElement.width, canvasElement.height);
+            canvasCtx.drawImage(results.image, 0, 0, canvasElement.width, canvasElement.height);
+
+            const m = results.poseLandmarks;
+            const exe = circuit[cIdx].n.toLowerCase();
+
+            if (exe.includes("squat")) {
+                let currentAngle = calcAngle(m[24], m[26], m[28]);
+                if (currentAngle > 160) stage = 'up';
+                if (currentAngle < 100 && stage === 'up') {
+                    let repQuality = Math.max(0, 100 - Math.abs(90 - currentAngle));
+                    sessionScores.push(repQuality);
+                    stage = 'down';
+                    registerRep();
+                }
+            } else {
+                // Voor andere oefeningen: gebruik registerRep() via HUD knop of angle-detectie
+            }
+
+            canvasCtx.restore();
+        }
+
+        function calcAngle(a, b, c) {
+            const r = Math.atan2(c.y - b.y, c.x - b.x) - Math.atan2(a.y - b.y, a.x - b.x);
+            let ang = Math.abs(r * 180 / Math.PI);
+            return ang > 180 ? 360 - ang : ang;
+        }
+
+        function speak(t) {
+            const m = new SpeechSynthesisUtterance(t);
+            m.lang = 'nl-NL';
+            window.speechSynthesis.speak(m);
+        }
+
+        function startAI() {
+            const pose = new Pose({ locateFile: (f) => `https://cdn.jsdelivr.net/npm/@mediapipe/pose/${f}` });
+            pose.setOptions({ modelComplexity: 1, minDetectionConfidence: 0.5, minTrackingConfidence: 0.5 });
+            pose.onResults(onResults);
+            camera = new Camera(videoElement, {
+                onFrame: async () => {
+                    canvasElement.width = videoElement.videoWidth;
+                    canvasElement.height = videoElement.videoHeight;
+                    await pose.send({ image: videoElement });
+                }
+            });
+            camera.start();
+        }
+
+        // ============================================================
+        // 11. VISUALS & EFFECTS
+        // ============================================================
         function showFloatingText(txt) {
             const el = document.createElement('div');
             el.className = 'float-txt';
@@ -873,382 +803,226 @@ function onResults(results) {
             setTimeout(() => el.remove(), 1500);
         }
 
-function showLevelUp(muscle, lvl) {
-    const ov = document.getElementById('lvl-overlay');
-    const msgEl = document.getElementById('lvl-msg');
-    msgEl.innerText = `${muscle} is nu Level ${lvl}`;
-    ov.classList.add('active');  // overlay tonen
-    playSound('lvl');
-    speak("Level up! " + muscle);
+        function showLevelUp(muscle, lvl) {
+            const ov = document.getElementById('lvl-overlay');
+            document.getElementById('lvl-msg').innerText = `${muscle} is nu Level ${lvl}`;
+            ov.classList.add('active');
+            playSound('lvl');
+            speak("Level up! " + muscle);
+            setTimeout(() => ov.classList.remove('active'), 2000);
+        }
 
-    // AUTOMATISCH SLUITEN NA 2 SEC
-    setTimeout(() => {
-        ov.classList.remove('active');
-    }, 2000);
-}
         function closeLvl() { document.getElementById('lvl-overlay').classList.remove('active'); }
 
-        // --- 10. BADGE LOGIC ---
+        // ============================================================
+        // 12. BADGE LOGICA
+        // ============================================================
         function checkBadges(trigger) {
             let newBadge = false;
-
-            // 1. First Workout
-            if(trigger === 'finish' && !user.badges.includes('b_start')) { user.badges.push('b_start'); newBadge=true; }
-
-            // 2. Week Streak
-            if(user.streak >= 7 && !user.badges.includes('b_wk1')) { user.badges.push('b_wk1'); newBadge=true; }
-
-            // 3. Early Bird
-            if(trigger === 'finish') {
+            if (trigger === 'finish' && !user.badges.includes('b_start')) { user.badges.push('b_start'); newBadge = true; }
+            if (user.streak >= 7 && !user.badges.includes('b_wk1')) { user.badges.push('b_wk1'); newBadge = true; }
+            if (trigger === 'finish') {
                 const hour = new Date().getHours();
-                if(hour < 9 && !user.badges.includes('b_early')) { user.badges.push('b_early'); newBadge=true; }
+                if (hour < 9 && !user.badges.includes('b_early')) { user.badges.push('b_early'); newBadge = true; }
             }
-
-            // 4. Level Checks
-            if(user.stats['Borst'].lvl >= 5 && !user.badges.includes('b_push')) { user.badges.push('b_push'); newBadge=true; }
-            if(user.stats['Benen'].lvl >= 5 && !user.badges.includes('b_legs')) { user.badges.push('b_legs'); newBadge=true; }
-
-            // 5. Total Level
-            let totalLvl = Object.values(user.stats).reduce((a,b) => a + b.lvl, 0);
-            if(totalLvl >= 50 && !user.badges.includes('b_elite')) { user.badges.push('b_elite'); newBadge=true; }
-
-            if(newBadge) {
+            if (user.stats['Borst'].lvl >= 5 && !user.badges.includes('b_push')) { user.badges.push('b_push'); newBadge = true; }
+            if (user.stats['Benen'].lvl >= 5 && !user.badges.includes('b_legs')) { user.badges.push('b_legs'); newBadge = true; }
+            let totalLvl = Object.values(user.stats).reduce((a, b) => a + b.lvl, 0);
+            if (totalLvl >= 50 && !user.badges.includes('b_elite')) { user.badges.push('b_elite'); newBadge = true; }
+            if (newBadge) {
                 save();
                 showFloatingText("🏆 NIEUWE BADGE!");
                 speak("Gefeliciteerd, nieuwe badge ontgrendeld!");
             }
         }
 
-        // Math & Init
-        function calcAngle(a,b,c) { const r = Math.atan2(c.y-b.y,c.x-b.x)-Math.atan2(a.y-b.y,a.x-b.x); let ang = Math.abs(r*180/Math.PI); return ang>180?360-ang:ang; }
-        function speak(t) { const m = new SpeechSynthesisUtterance(t); m.lang='nl-NL'; window.speechSynthesis.speak(m); }
+        // ============================================================
+        // 13. ANALYSE RAPPORT
+        // FIX #5: showAnalysisReport was dubbel — nu één versie
+        // ============================================================
+        function showAnalysisReport() {
+            let score = user.lastAnalysisScore || 0;
+            const reportOverlay = document.getElementById('report-overlay');
+            reportOverlay.style.display = 'flex';
+            reportOverlay.classList.remove('hidden');
+            document.getElementById('report-score').innerText = score + "%";
+            document.getElementById('precision-val').innerText = score + "%";
+            document.getElementById('precision-bar').style.width = score + "%";
 
-        function startAI() {
-            const pose = new Pose({locateFile: (f) => `https://cdn.jsdelivr.net/npm/@mediapipe/pose/${f}`});
-            pose.setOptions({modelComplexity:1, minDetectionConfidence:0.5, minTrackingConfidence:0.5});
-            pose.onResults(onResults);
-            camera = new Camera(videoElement, {
-                onFrame: async() => { 
-                    canvasElement.width = videoElement.videoWidth;
-                    canvasElement.height = videoElement.videoHeight;
-                    await pose.send({image:videoElement}); 
-                }
-            });
-            camera.start();
+            let feedback = "";
+            if (score >= 85) { feedback = "Perfecte houding! Je voert de oefeningen zeer gecontroleerd uit."; }
+            else if (score >= 60) { feedback = "Goed gedaan, maar probeer de bewegingen nog iets vollediger af te maken."; }
+            else if (score === 0) { feedback = "Nog geen data. Doe eerst een workout om je houding te analyseren!"; }
+            else { feedback = "Focus op je techniek. Ga iets langzamer voor een betere controle."; }
+            document.getElementById('report-feedback-text').innerText = feedback;
         }
 
-        if(!user.name) renderQ(); else { tab('dash'); document.getElementById('nav').classList.remove('hidden'); }
+        function closeReport() {
+            sessionScores = [];
+            document.getElementById('report-overlay').style.display = 'none';
+            document.getElementById('report-overlay').classList.add('hidden');
+            tab('dash');
+        }
 
-        // --- HORIZONTALE SWIPE NAVIGATIE ---
-let touchStartX = 0;
-let touchEndX = 0;
-
-const screens = ['dash','analyse','progress','profile']; // volgorde van je tabs
-
-document.addEventListener('touchstart', e => {
-    touchStartX = e.changedTouches[0].screenX;
-}, {passive:true});
-
-document.addEventListener('touchend', e => {
-    touchEndX = e.changedTouches[0].screenX;
-    handleSwipe();
-}, {passive:true});
-
-function handleSwipe() {
-    let activeIdx = screens.findIndex(t => !document.getElementById('scr-'+t).classList.contains('hidden'));
-    if(activeIdx === -1) return;
-
-    const deltaX = touchEndX - touchStartX;
-
-    if(Math.abs(deltaX) < 50) return; // minimale swipe afstand
-
-    if(deltaX < 0 && activeIdx < screens.length-1) {
-        // swipe naar links → volgende tab
-        const nextTab = screens[activeIdx+1];
-        const el = document.querySelector(`.nav-item[onclick^="tab('${nextTab}'`);
-        if(el) tab(nextTab, el);
-    } else if(deltaX > 0 && activeIdx > 0) {
-        // swipe naar rechts → vorige tab
-        const prevTab = screens[activeIdx-1];
-        const el = document.querySelector(`.nav-item[onclick^="tab('${prevTab}'`);
-        if(el) tab(prevTab, el);
-    }
-}
-        function showAnalysisReport() {
-    // 1. We kijken wat de laatste score was (die we hebben opgeslagen in Stap 1)
-    // Als er nog geen score is, gebruiken we 0.
-    let score = user.lastAnalysisScore || 0;
-
-    // 2. We zoeken het rapport-scherm op in de HTML
-    const reportOverlay = document.getElementById('report-overlay');
-
-    // 3. We maken het scherm zichtbaar (flexbox zorgt dat het mooi in het midden staat)
-    reportOverlay.style.display = 'flex';
-    reportOverlay.classList.remove('hidden');
-
-    // 4. We vullen de cijfers in op het scherm
-    document.getElementById('report-score').innerText = score + "%";
-    document.getElementById('precision-val').innerText = score + "%";
-    document.getElementById('precision-bar').style.width = score + "%";
-
-    // 5. We schrijven een tekstje op basis van de score
-    let feedback = "";
-    if (score >= 85) {
-        feedback = "Geweldig! Je houding is bijna perfect. Focus nu op het verhogen van je tempo.";
-    } else if (score >= 60) {
-        feedback = "Lekker bezig! Je techniek is goed, maar probeer bij de squats nog iets dieper te zakken.";
-    } else if (score === 0) {
-        feedback = "Nog geen gegevens. Doe eerst een workout zodat de AI je houding kan analyseren!";
-    } else {
-        feedback = "Let op je vorm. De AI zag dat je houding onstabiel was. Ga de volgende keer iets langzamer.";
-    }
-
-    // Vul de tekst in het rapport
-    document.getElementById('report-feedback-text').innerText = feedback;
-}
-
-        // Functie om een nieuwe groep te maken in de database
-async function createGroup() {
-    const name = document.getElementById('group-name').value;
-    if(!name) return alert("Vul eerst een groepsnaam in!");
-
-    const currentUser = auth.currentUser;
-    // We maken een unieke ID voor de groep op basis van de naam
-    const groupId = name.toLowerCase().replace(/\s+/g, '-');
-
-    try {
-        await db.collection('groups').doc(groupId).set({
-            groupName: name,
-            members: [currentUser.uid],
-            // We slaan de scores op per gebruiker ID
-            scores: {
-                [currentUser.uid]: user.totalWorkouts || 0
-            }
-        });
-
-        user.currentGroupId = groupId; // Onthoud in welke groep de gebruiker zit
-        save(); // Sla dit op in het profiel van de gebruiker
-        alert("Groep " + name + " is aangemaakt!");
-        loadLeaderboard(groupId);
-    } catch (e) {
-        alert("Oeps, er ging iets mis: " + e.message);
-    }
-}
-
-// Functie om de ranglijst te laten zien
-async function loadLeaderboard(groupId) {
-    const doc = await db.collection('groups').doc(groupId).get();
-    if(!doc.exists) return;
-
-    const data = doc.data();
-    // Sorteer de scores van hoog naar laag
-    const sortedScores = Object.entries(data.scores).sort((a, b) => b[1] - a[1]);
-
-    let html = `<h3 style="margin-top:20px;">🏆 Ranglijst: ${data.groupName}</h3>`;
-
-    sortedScores.forEach(([uid, score], index) => {
-        html += `
-            <div class="card" style="display:flex; justify-content:space-between; align-items:center; border-left: 3px solid ${index === 0 ? 'var(--gold)' : 'var(--blue)'};">
-                <span><strong>${index + 1}.</strong> Gebruiker ${uid.substring(0,4)}</span>
-                <span style="font-weight:800; color:var(--blue);">${score} PT</span>
-            </div>`;
-    });
-
-    document.getElementById('group-content').innerHTML = html;
-}
-        function showAnalysisReport() {
-    // Pak de score uit het user object (die wordt opgeslagen in stopWorkout)
-    let score = user.lastAnalysisScore || 0;
-
-    const reportOverlay = document.getElementById('report-overlay');
-    reportOverlay.style.display = 'flex';
-    reportOverlay.classList.remove('hidden');
-
-    document.getElementById('report-score').innerText = score + "%";
-    document.getElementById('precision-val').innerText = score + "%";
-    document.getElementById('precision-bar').style.width = score + "%";
-
-    let feedback = "";
-    if (score >= 85) {
-        feedback = "Perfecte houding! Je voert de oefeningen zeer gecontroleerd uit.";
-    } else if (score >= 60) {
-        feedback = "Goed gedaan, maar probeer de bewegingen nog iets vollediger af te maken.";
-    } else if (score === 0) {
-        feedback = "Nog geen data. Doe eerst een workout om je houding te analyseren!";
-    } else {
-        feedback = "Focus op je techniek. Ga iets langzamer voor een betere controle.";
-    }
-    document.getElementById('report-feedback-text').innerText = feedback;
-}
-
-function closeReport() {
-    document.getElementById('report-overlay').style.display = 'none';
-    document.getElementById('report-overlay').classList.add('hidden');
-}
-
+        // ============================================================
+        // 14. SOCIAL / GROEPEN
+        // FIX #6: createGroup en loadLeaderboard waren dubbel — nu één versie elk
+        // ============================================================
         async function createGroup() {
-    const name = document.getElementById('group-name').value;
-    if(!name) return alert("Vul een groepsnaam in!");
-
-    const currentUser = auth.currentUser;
-    const groupId = name.toLowerCase().replace(/\s+/g, '-');
-
-    try {
-        await db.collection('groups').doc(groupId).set({
-            groupName: name,
-            members: [currentUser.uid],
-            scores: { [currentUser.uid]: user.totalWorkouts || 0 }
-        });
-        alert("Groep aangemaakt!");
-        loadLeaderboard(groupId);
-    } catch (e) {
-        alert("Fout bij aanmaken: " + e.message);
-    }
-}
-
-async function loadLeaderboard(groupId) {
-    const doc = await db.collection('groups').doc(groupId).get();
-    if(!doc.exists) return;
-    const data = doc.data();
-    const sorted = Object.entries(data.scores).sort((a, b) => b[1] - a[1]);
-
-    let html = `<h3 style="margin-top:20px;">🏆 ${data.groupName}</h3>`;
-    sorted.forEach(([uid, score], i) => {
-        html += `<div class="card" style="display:flex; justify-content:space-between;">
-            <span>${i+1}. Gebruiker ${uid.substring(0,4)}</span>
-            <strong style="color:var(--blue);">${score} PT</strong>
-        </div>`;
-    });
-    document.getElementById('group-content').innerHTML = html;
-}
-
-        // STAP 3.1: Functie om te zoeken naar vrienden
-async function searchUser() {
-    const searchTerm = document.getElementById('search-user-name').value.toLowerCase();
-    const resultsDiv = document.getElementById('search-results');
-
-    if(!searchTerm) return alert("Typ eerst een naam!");
-    resultsDiv.innerHTML = "<p style='font-size:11px; color:var(--blue);'>Zoeken in database...</p>";
-
-    try {
-        // We zoeken in Firebase naar gebruikers die deze naam hebben
-        const snapshot = await db.collection('users').where('name', '==', searchTerm).get();
-
-        if(snapshot.empty) {
-            resultsDiv.innerHTML = "<p style='font-size:11px; color:var(--red);'>Geen gebruiker gevonden met deze exacte naam.</p>";
-            return;
+            const name = document.getElementById('group-name').value;
+            if (!name) return alert("Vul eerst een groepsnaam in!");
+            const currentUser = auth.currentUser;
+            if (!currentUser) return alert("Je moet ingelogd zijn!");
+            const groupId = name.toLowerCase().replace(/\s+/g, '-');
+            try {
+                await db.collection('groups').doc(groupId).set({
+                    groupName: name,
+                    members: [currentUser.uid],
+                    scores: {
+                        [currentUser.uid]: { name: user.name || "Atleet", score: calculateMainScore() }
+                    }
+                });
+                user.currentGroupId = groupId;
+                save();
+                alert("Groep " + name + " is aangemaakt!");
+                loadLeaderboard(groupId);
+            } catch (e) {
+                alert("Fout bij aanmaken: " + e.message);
+            }
         }
 
-        let html = "";
-        snapshot.forEach(doc => {
+        async function joinGroup() {
+            const gName = document.getElementById('group-name').value;
+            if (!gName) return alert("Typ de naam van de groep!");
+            if (!auth.currentUser) return alert("Je moet ingelogd zijn!");
+            const groupId = gName.toLowerCase().replace(/\s+/g, '-');
+            const myScore = calculateMainScore();
+            const myName = user.name || "Onbekend";
+            try {
+                await db.collection('groups').doc(groupId).update({
+                    [`scores.${auth.currentUser.uid}`]: { name: myName, score: myScore }
+                });
+                user.currentGroupId = groupId;
+                save();
+                loadLeaderboard(groupId);
+            } catch (e) {
+                alert("Groep niet gevonden of fout: " + e.message);
+            }
+        }
+
+        async function loadLeaderboard(groupId) {
+            if (!groupId) return;
+            const doc = await db.collection('groups').doc(groupId).get();
+            if (!doc.exists) return;
             const data = doc.data();
-            // Maak een klikbaar kaartje voor elke gevonden persoon
-            html += `
-                <div class="card" onclick="viewFriend('${doc.id}')" style="background:var(--surface-2); display:flex; justify-content:space-between; align-items:center; padding:12px; margin-top:10px; cursor:pointer; border:1px solid #333;">
-                    <div>
-                        <strong style="font-size:14px; color:white;">${data.name}</strong>
-                        <div style="font-size:10px; color:var(--sub); uppercase">${data.goal || 'Athlete'}</div>
-                    </div>
-                    <span style="color:var(--blue); font-size:10px; font-weight:800;">BEKIJK PROFIEL ></span>
-                </div>`;
-        });
-        resultsDiv.innerHTML = html;
-    } catch (e) {
-        resultsDiv.innerHTML = "<p style='color:red;'>Fout: Zorg dat je bent ingelogd.</p>";
-    }
-}
+            const players = Object.values(data.scores).sort((a, b) => b.score - a.score);
 
-// STAP 3.2: Functie om het profiel van die vriend te openen
-async function viewFriend(friendId) {
-    const doc = await db.collection('users').doc(friendId).get();
-    if(!doc.exists) return;
-    const data = doc.data();
+            let html = `<h3 style="margin:20px 0 10px; font-family:Montserrat;">🏆 CLASH: ${data.groupName}</h3>`;
+            players.forEach((speler, i) => {
+                const isMe = auth.currentUser && data.scores[auth.currentUser.uid] &&
+                    speler.name === data.scores[auth.currentUser.uid].name;
+                html += `
+                    <div class="card" style="display:flex; justify-content:space-between; align-items:center; border-left: 4px solid ${isMe ? 'var(--blue)' : '#333'};">
+                        <span><strong>${i + 1}.</strong> ${speler.name} ${isMe ? '(JIJ)' : ''}</span>
+                        <span style="font-weight:900; color:var(--blue); font-size:20px;">${speler.score}</span>
+                    </div>`;
+            });
+            document.getElementById('group-content').innerHTML = html;
+        }
 
-    // Toon de popup die we in Stap 2 hebben gemaakt
-    const overlay = document.getElementById('friend-overlay');
-    overlay.style.display = 'flex';
+        async function searchUser() {
+            const searchTerm = document.getElementById('search-user-name').value.toLowerCase();
+            const resultsDiv = document.getElementById('search-results');
+            if (!searchTerm) return alert("Typ eerst een naam!");
+            resultsDiv.innerHTML = "<p style='font-size:11px; color:var(--blue);'>Zoeken in database...</p>";
+            try {
+                const snapshot = await db.collection('users').where('name', '==', searchTerm).get();
+                if (snapshot.empty) {
+                    resultsDiv.innerHTML = "<p style='font-size:11px; color:var(--red);'>Geen gebruiker gevonden met deze exacte naam.</p>";
+                    return;
+                }
+                let html = "";
+                snapshot.forEach(doc => {
+                    const data = doc.data();
+                    html += `
+                        <div class="card" onclick="viewFriend('${doc.id}')" style="background:var(--surface-2); display:flex; justify-content:space-between; align-items:center; padding:12px; margin-top:10px; cursor:pointer; border:1px solid #333;">
+                            <div>
+                                <strong style="font-size:14px; color:white;">${data.name}</strong>
+                                <div style="font-size:10px; color:var(--sub);">${data.goal || 'Athlete'}</div>
+                            </div>
+                            <span style="color:var(--blue); font-size:10px; font-weight:800;">BEKIJK PROFIEL ></span>
+                        </div>`;
+                });
+                resultsDiv.innerHTML = html;
+            } catch (e) {
+                resultsDiv.innerHTML = "<p style='color:red;'>Fout: Zorg dat je bent ingelogd.</p>";
+            }
+        }
 
-    // Vul de naam en het doel van de vriend in
-    document.getElementById('friend-name').innerText = data.name.toUpperCase();
-    document.getElementById('friend-goal').innerText = "DOEL: " + (data.goal || "FIT WORDEN");
+        async function viewFriend(friendId) {
+            const doc = await db.collection('users').doc(friendId).get();
+            if (!doc.exists) return;
+            const data = doc.data();
+            const overlay = document.getElementById('friend-overlay');
+            overlay.style.display = 'flex';
+            document.getElementById('friend-name').innerText = data.name.toUpperCase();
+            document.getElementById('friend-goal').innerText = "DOEL: " + (data.goal || "FIT WORDEN");
+            let totalLvl = 0;
+            if (data.stats) {
+                totalLvl = Object.values(data.stats).reduce((a, b) => a + b.lvl, 0);
+            }
+            document.getElementById('friend-rank').innerText = "TOTAAL LEVEL " + totalLvl;
+            let statsHtml = "<strong style='font-size:10px; color:var(--blue); letter-spacing:1px;'>TOP STATS:</strong>";
+            if (data.stats) {
+                const sorted = Object.entries(data.stats).sort((a, b) => b[1].lvl - a[1].lvl).slice(0, 3);
+                sorted.forEach(([spier, info]) => {
+                    statsHtml += `
+                        <div style="font-size:12px; margin-top:10px; display:flex; justify-content:space-between;">
+                            <span style="color:#ccc;">${spier}</span>
+                            <span style="color:white; font-weight:800;">LVL ${info.lvl}</span>
+                        </div>`;
+                });
+            }
+            document.getElementById('friend-stats-render').innerHTML = statsHtml;
+        }
 
-    // Bereken hun totaal level
-    let totalLvl = 0;
-    if(data.stats) {
-        totalLvl = Object.values(data.stats).reduce((a,b) => a + b.lvl, 0);
-    }
-    document.getElementById('friend-rank').innerText = "TOTAAL LEVEL " + totalLvl;
+        // ============================================================
+        // 15. SWIPE NAVIGATIE
+        // ============================================================
+        let touchStartX = 0;
+        let touchEndX = 0;
+        const screens = ['dash', 'analyse', 'progress', 'social', 'profile'];
 
-    // Toon hun sterkste spiergroepen
-    let statsHtml = "<strong style='font-size:10px; color:var(--blue); letter-spacing:1px;'>TOP STATS:</strong>";
-    if(data.stats) {
-        // Sorteer op hoogste level
-        const sorted = Object.entries(data.stats).sort((a,b) => b[1].lvl - a[1].lvl).slice(0,3);
-        sorted.forEach(([spier, info]) => {
-            statsHtml += `
-                <div style="font-size:12px; margin-top:10px; display:flex; justify-content:space-between;">
-                    <span style="color:#ccc;">${spier}</span>
-                    <span style="color:white; font-weight:800;">LVL ${info.lvl}</span>
-                </div>`;
-        });
-    }
-    document.getElementById('friend-stats-render').innerHTML = statsHtml;
+        document.addEventListener('touchstart', e => {
+            touchStartX = e.changedTouches[0].screenX;
+        }, { passive: true });
 
-    // --- STAP 3: HET LEADERBOARD & DE BATTLE LOGICA ---
+        document.addEventListener('touchend', e => {
+            touchEndX = e.changedTouches[0].screenX;
+            handleSwipe();
+        }, { passive: true });
 
-// 1. Bereken het gemiddelde van al je stats
-function calculateMainScore() {
-    const stats = user.stats;
-    const keys = Object.keys(stats);
-    let totalLevel = keys.reduce((sum, key) => sum + stats[key].lvl, 0);
-    let average = totalLevel / keys.length;
-    return Math.round(average * 10); // Maakt van bijv. 4.2 een score van 42
-}
+        function handleSwipe() {
+            let activeIdx = screens.findIndex(t => !document.getElementById('scr-' + t).classList.contains('hidden'));
+            if (activeIdx === -1) return;
+            const deltaX = touchEndX - touchStartX;
+            if (Math.abs(deltaX) < 50) return;
+            if (deltaX < 0 && activeIdx < screens.length - 1) {
+                const nextTab = screens[activeIdx + 1];
+                const el = document.querySelector(`.nav-item[onclick^="tab('${nextTab}'"]`);
+                if (el) tab(nextTab, el);
+            } else if (deltaX > 0 && activeIdx > 0) {
+                const prevTab = screens[activeIdx - 1];
+                const el = document.querySelector(`.nav-item[onclick^="tab('${prevTab}'"]`);
+                if (el) tab(prevTab, el);
+            }
+        }
 
-// 2. De ranglijst ophalen uit de cloud en laten zien
-async function loadLeaderboard(groupId) {
-    if(!groupId) return;
+        // ============================================================
+        // 16. INIT
+        // ============================================================
+        // auth.onAuthStateChanged hierboven regelt de start automatisch
 
-    const doc = await db.collection('groups').doc(groupId).get();
-    if(!doc.exists) return;
-
-    const data = doc.data();
-    // Verander de database-objecten in een lijst die we kunnen sorteren op score
-    const players = Object.values(data.scores).sort((a, b) => b.score - a.score);
-
-    let html = `<h3 style="margin-top:20px; color:var(--blue); font-family:Montserrat;">🏆 RANGORDE: ${data.groupName}</h3>`;
-
-    players.forEach((player, index) => {
-        let isFirst = index === 0;
-        html += `
-            <div class="card" style="display:flex; justify-content:space-between; align-items:center; border-left: 4px solid ${isFirst ? 'var(--gold)' : '#333'};">
-                <div>
-                    <span style="font-weight:900; margin-right:10px; color:${isFirst ? 'var(--gold)' : 'white'};">${index + 1}.</span>
-                    <span style="text-transform:uppercase; font-size:12px; font-weight:700;">${player.name}</span>
-                </div>
-                <div style="text-align:right;">
-                    <div style="font-size:20px; font-weight:900; color:var(--blue);">${player.score}</div>
-                    <div style="font-size:7px; color:var(--sub); letter-spacing:1px;">POWER SCORE</div>
-                </div>
-            </div>`;
-    });
-
-    document.getElementById('group-content').innerHTML = html;
-}
-}
     </script>
-
-    <div id="friend-overlay" style="position:fixed; inset:0; background: rgba(0,0,0,0.95); z-index: 6000; display:none; flex-direction: column; align-items: center; justify-content: center; backdrop-filter: blur(10px);">
-    <div class="card" style="width: 85%; max-width: 350px; text-align: center; border: 1px solid var(--blue);">
-        <div id="friend-rank" class="rank-badge" style="margin-bottom:10px; background:var(--blue); color:white;">LEVEL ...</div>
-        <h2 id="friend-name" style="margin: 10px 0;">Naam...</h2>
-        <p id="friend-goal" class="subtitle" style="margin-bottom:20px; color:var(--sub);"></p>
-
-        <div id="friend-stats-render" style="text-align:left; background: rgba(255,255,255,0.05); padding: 15px; border-radius: 15px;">
-            </div>
-
-        <button class="btn" onclick="document.getElementById('friend-overlay').style.display='none'" style="margin-top:20px; background:var(--blue); color:white;">SLUITEN</button>
-    </div>
-</div>
 </body>
 </html>
