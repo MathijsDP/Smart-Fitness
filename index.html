@@ -4,16 +4,16 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Smart-Fitness-Mathijs</title>
- 
+
     <script src="https://cdn.jsdelivr.net/npm/@mediapipe/pose"></script>
     <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils"></script>
     <script src="https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&family=Montserrat:wght@700;900&display=swap" rel="stylesheet">
- 
+
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-firestore-compat.js"></script>
- 
+
     <!-- FIX #1: Firebase config staat nu BOVENAAN, voor alles andere -->
     <script>
         const firebaseConfig = {
@@ -28,10 +28,10 @@
         const auth = firebase.auth();
         const db = firebase.firestore();
     </script>
- 
+
     <style>
         :root { --bg: #050505; --surface: #121212; --surface-2: #1e1e1e; --accent: #fff; --sub: #888; --blue: #007aff; --orange: #ff9500; --green: #34c759; --red: #ff3b30; --gold: #ffd700; }
- 
+
         body { 
             font-family: 'Inter', sans-serif; 
             background: var(--bg); 
@@ -39,7 +39,7 @@
             user-select: none; 
             -webkit-user-select: none; 
         }
- 
+
         .screen {
             min-height: 100vh;
             padding: 30px 20px 120px;
@@ -51,66 +51,66 @@
             touch-action: pan-y;
         }
         .hidden { display: none !important; opacity: 0; pointer-events: none; }
- 
+
         h1 { font-family: 'Montserrat'; font-size: 26px; font-weight: 900; text-transform: uppercase; margin: 0 0 5px; letter-spacing: -0.5px; }
         .subtitle { color: var(--sub); font-size: 11px; letter-spacing: 1.5px; text-transform: uppercase; margin-bottom: 25px; font-weight: 700; }
- 
+
         .q-box { flex: 1; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; }
         input, select { width: 100%; max-width: 320px; padding: 16px; border-radius: 12px; border: 1px solid #333; background: var(--surface-2); color: #fff; font-size: 16px; margin-bottom: 12px; outline: none; transition: 0.2s; }
         input:focus { border-color: var(--blue); box-shadow: 0 0 15px rgba(0,122,255,0.3); }
- 
+
         .btn { background: var(--accent); color: #000; border: none; padding: 18px; border-radius: 16px; width: 100%; max-width: 320px; font-weight: 800; text-transform: uppercase; cursor: pointer; transition: transform 0.1s; box-shadow: 0 4px 15px rgba(255,255,255,0.1); }
         .btn:active { transform: scale(0.98); }
         .btn-small { padding: 10px 15px; font-size: 11px; font-weight: 700; background: var(--surface-2); color: #fff; border: 1px solid #333; border-radius: 8px; cursor: pointer; }
- 
+
         .card { background: var(--surface); border-radius: 24px; padding: 20px; margin-bottom: 15px; border: 1px solid #222; position: relative; overflow: hidden; }
         .card:active { background: var(--surface-2); }
- 
+
         .streak-badge { background: rgba(255,149,0,0.15); color: var(--orange); padding: 8px 16px; border-radius: 100px; font-weight: 800; font-size: 13px; display: inline-flex; align-items: center; gap: 8px; margin-bottom: 20px; border: 1px solid rgba(255,149,0,0.3); }
         .rank-badge { background: rgba(0,122,255,0.15); color: var(--blue); padding: 5px 10px; border-radius: 6px; font-size: 10px; font-weight: 800; text-transform: uppercase; margin-left: 10px; vertical-align: middle; }
- 
+
         .hud { position: absolute; top: 0; width: 100%; padding: 20px 20px 40px; display: flex; justify-content: space-between; background: linear-gradient(to bottom, rgba(0,0,0,0.9), transparent); z-index: 2001; pointer-events: none; }
         .hud-val span { display: block; font-size: 9px; color: var(--sub); font-weight: 700; letter-spacing: 1px; }
         .hud-val strong { font-size: 24px; font-family: 'Montserrat'; text-shadow: 0 2px 10px rgba(0,0,0,1); }
- 
+
         #coaching-tip { position: absolute; bottom: 130px; left: 0; width: 100%; text-align: center; color: var(--accent); font-weight: 900; font-size: 20px; text-shadow: 0 4px 12px rgba(0,0,0,1); z-index: 2002; pointer-events: none; transition: 0.2s; }
- 
+
         #rest-overlay { position: absolute; inset: 0; background: rgba(5,5,5,0.98); z-index: 3000; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 20px; backdrop-filter: blur(5px); }
         .timer-txt { font-size: 90px; font-weight: 900; color: var(--blue); font-family: 'Montserrat'; margin: 10px 0; line-height: 1; letter-spacing: -3px; }
- 
+
         #lvl-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.9); z-index: 4000; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; pointer-events: none; opacity: 0; transition: 0.4s; }
         #lvl-overlay.active { opacity: 1; pointer-events: auto; }
         .lvl-anim { animation: popIn 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; }
         @keyframes popIn { 0% { transform: scale(0.5); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
- 
+
         .float-txt { position: absolute; font-weight: 900; font-size: 16px; color: var(--gold); pointer-events: none; animation: floatUp 1.5s ease-out forwards; z-index: 2005; text-shadow: 0 2px 4px rgba(0,0,0,0.8); }
         @keyframes floatUp { 0% { transform: translateY(0) scale(1); opacity: 1; } 100% { transform: translateY(-80px) scale(1.2); opacity: 0; } }
- 
+
         .navbar { position: fixed; bottom: 0; width: 100%; background: rgba(16,52,84,1); backdrop-filter: blur(10px); border-top: 1px solid #222; display: flex; justify-content: space-around; padding: 15px 0 35px; padding-bottom: env(safe-area-inset-bottom); z-index: 1000; }
         .nav-item { color: var(--sub); font-size: 9px; font-weight: 700; cursor: pointer; text-align: center; text-transform: uppercase; transition: 0.2s; }
         .nav-item.active { color: var(--accent); transform: translateY(-2px); }
         .nav-item i { display: block; font-size: 20px; margin-bottom: 4px; font-style: normal; }
- 
+
         #output_canvas { width: 100%; height: 100%; object-fit: contain; transform: scaleX(-1); background: #000; }
- 
+
         .stat-row { margin-bottom: 12px; }
         .stat-header { display: flex; justify-content: space-between; font-size: 11px; font-weight: 700; margin-bottom: 6px; }
         .bar-bg { background: #222; height: 10px; border-radius: 5px; overflow: hidden; position: relative; }
         .bar-fill { height: 100%; background: var(--blue); transition: width 0.6s cubic-bezier(0.22, 1, 0.36, 1); box-shadow: 0 0 10px rgba(0,122,255,0.5); }
- 
+
         .badges-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-top: 15px; }
         .badge-item { background: #1a1a1a; padding: 15px 5px; border-radius: 12px; text-align: center; opacity: 0.4; filter: grayscale(1); transition: 0.3s; border: 1px solid transparent; }
         .badge-item.unlocked { opacity: 1; filter: grayscale(0); border-color: var(--gold); background: rgba(255, 215, 0, 0.05); }
         .badge-icon { font-size: 24px; display: block; margin-bottom: 5px; }
         .badge-name { font-size: 9px; font-weight: 700; text-transform: uppercase; }
- 
+
         .feedback-good { color: var(--green); }
         .feedback-bad { color: var(--red); }
         .feedback-warn { color: var(--orange); }
     </style>
 </head>
 <body>
- 
+
     <!-- LAADSCHERM: zichtbaar totdat Firebase klaar is -->
     <div id="scr-loading" style="position:fixed; inset:0; background:#050505; display:flex; flex-direction:column; align-items:center; justify-content:center; z-index:9999;">
         <div style="font-family:'Montserrat',sans-serif; font-size:22px; font-weight:900; color:#fff; letter-spacing:2px;">SMART FITNESS</div>
@@ -118,12 +118,12 @@
         <div style="margin-top:15px; font-size:11px; color:#888; letter-spacing:1px;">LADEN...</div>
         <style>@keyframes spin { to { transform: rotate(360deg); } }</style>
     </div>
- 
+
     <div id="scr-onboarding" class="screen">
         <div class="q-box" id="q-container"></div>
     </div>
- 
-    <div id="scr-auth" class="screen">
+
+    <div id="scr-auth" class="screen hidden">
         <div class="q-box">
             <h1>Log in</h1>
             <p class="subtitle">Log in om je account niet te verliezen!</p>
@@ -133,16 +133,16 @@
             <button class="btn-small" onclick="authAction('signup')" style="margin-top:10px; background:transparent; border:none; color:#888;">Nieuw account maken</button>
         </div>
     </div>
- 
+
     <div id="scr-dash" class="screen hidden">
         <div style="display:flex; justify-content:space-between; align-items:center;">
             <div class="streak-badge"><i>🔥</i> <span id="streak-val">0</span></div>
             <div id="rank-display" class="rank-badge">ROOKIE</div>
         </div>
- 
+
         <h1 id="dash-greet">HEY!</h1>
         <div class="subtitle">Tijd om te beginnen!</div>
- 
+
         <div class="card" onclick="startCircuit('Upper')">
             <strong>Boven lichaam</strong>
             <div style="color:var(--sub);font-size:11px; margin-top:5px;">Borst, Armen & Schouders</div>
@@ -159,42 +159,42 @@
             <div style="margin-top:10px; font-size:10px; font-weight:700; color:var(--blue);">Vetverbranding + core</div>
         </div>
     </div>
- 
+
     <div id="scr-analyse" class="screen hidden">
         <h1>Analyseer je training</h1>
         <div class="subtitle">Verbeter je oefeningen</div>
- 
+
         <div class="card" onclick="showAnalysisReport()" style="border-left: 4px solid var(--blue);">
             <strong>Jouw Houding Rapport</strong>
             <div style="color:var(--sub);font-size:11px; margin-top:5px;">Bekijk hoe goed je laatste training was.</div>
             <div style="margin-top:10px; font-size:10px; font-weight:700; color:var(--blue);">KLIK VOOR ANALYSE</div>
         </div>
     </div>
- 
+
     <div id="scr-progress" class="screen hidden">
         <h1>JOUW STATS</h1>
         <div class="subtitle">RPG Progressie & Badges</div>
- 
+
         <div class="card">
             <h3 style="font-size:14px; margin:0 0 15px;">SPIER LEVELS</h3>
             <div id="stats-render"></div>
         </div>
- 
+
         <div class="card">
             <h3 style="font-size:14px; margin:0 0 10px;">BADGE COLLECTIE</h3>
             <div class="badges-grid" id="badges-render"></div>
         </div>
- 
+
         <div class="card">
             <h3 style="font-size:14px; margin:0 0 10px;">RECENTE HISTORY</h3>
             <div id="history-render" style="font-size:11px; color:var(--sub);">Nog geen workouts.</div>
         </div>
     </div>
- 
+
     <div id="scr-social" class="screen hidden">
         <h1>COMMUNITY</h1>
         <div class="subtitle">Battle met je vrienden</div>
- 
+
         <div class="card" style="border-bottom: 2px solid var(--blue);">
             <strong style="font-size: 12px; display:block; margin-bottom:10px; color:var(--blue);">ZOEK ATLETEN</strong>
             <div style="display:flex; gap:10px;">
@@ -203,7 +203,7 @@
             </div>
             <div id="search-results" style="margin-top:15px;"></div>
         </div>
- 
+
         <div class="card">
             <strong style="font-size: 12px; display:block; margin-bottom:10px;">JOIN OF MAAK GROEP</strong>
             <input type="text" id="group-name" placeholder="Groepsnaam (bijv: Klas4A)..." style="margin-bottom:10px;">
@@ -212,49 +212,49 @@
                 <button class="btn" onclick="createGroup()" style="height:45px; padding:0; flex:1; background:var(--surface-2); color:white; border:1px solid #333;">MAAK NIEUW</button>
             </div>
         </div>
- 
+
         <div id="group-content"></div>
     </div>
- 
+
     <div id="scr-profile" class="screen hidden">
         <h1>PROFIEL</h1>
         <div class="subtitle">Jouw gegevens</div>
         <div class="card" id="profile-fields"></div>
         <button class="btn-small" style="width:100%; padding:15px; margin:20px 0; background:#220000; border-color:#500; color:#f55;" onclick="resetData()">Reset alle data</button>
     </div>
- 
+
     <div id="scr-workout" class="screen hidden" style="padding:0; z-index: 2000; background:#000;">
         <video id="input_video" style="display:none"></video>
         <canvas id="output_canvas"></canvas>
- 
+
         <div id="coaching-tip">START POSITIE...</div>
- 
+
         <div id="rest-overlay" class="hidden">
             <div id="rest-title" class="subtitle">RUST</div>
             <div id="rest-exe" style="font-size:28px; font-weight:900; margin-bottom:5px;">Oefeningen</div>
             <div class="timer-txt" id="timer-val">30</div>
- 
+
             <div style="display:flex; gap:10px; margin-top:10px;">
                 <button class="btn-small" onclick="adjustTime(10)">+10s</button>
                 <button class="btn-small" style="background:var(--blue); border-color:var(--blue);" onclick="skipRest()">Start nu</button>
             </div>
- 
+
             <div id="rest-instr" style="color:#ccc; font-size:13px; max-width:300px; margin-top:25px; line-height:1.6; font-weight:400;"></div>
- 
+
             <div style="position:absolute; bottom:40px; font-size:10px; color:var(--sub);">
                 💡 Tip: Zorg dat je volledig in beeld staat.
             </div>
         </div>
- 
+
         <div class="hud">
             <div class="hud-val"><span>Oefening</span><strong id="hud-idx">1/6</strong></div>
             <div class="hud-val"><span>Set</span><strong id="hud-set">1/3</strong></div>
             <div class="hud-val"><span>Reps</span><strong id="hud-reps">0/10</strong></div>
         </div>
- 
+
         <button class="btn" style="position:absolute; bottom:30px; left:50%; transform:translateX(-50%); width:60%; height:50px; padding:0; z-index:2001; background:rgba(255,59,48,0.2); border:1px solid rgba(255,59,48,0.5); color:#fff; font-size:12px; backdrop-filter:blur(4px);" onclick="stopWorkout()">STOPPEN</button>
     </div>
- 
+
     <div id="lvl-overlay">
         <div class="lvl-anim">
             <div style="font-size:60px; margin-bottom:10px;">🆙</div>
@@ -263,29 +263,29 @@
             <button class="btn" onclick="closeLvl()">DOORGAAN</button>
         </div>
     </div>
- 
+
     <div id="report-overlay" class="screen hidden" style="position:fixed; inset:0; background: rgba(5,5,5,0.98); z-index: 5000; display:none; flex-direction: column; align-items: center; justify-content: center; backdrop-filter: blur(10px);">
         <div class="card" style="width: 85%; max-width: 400px; text-align: center; border: 1px solid var(--blue); box-shadow: 0 0 30px rgba(0,122,255,0.2);">
             <h1 style="color: var(--blue); font-size: 20px;">TRAININGS RAPPORT</h1>
             <div class="subtitle" id="report-date">NET VOLTOOID</div>
- 
+
             <div id="report-score" style="font-size: 64px; font-weight: 900; margin: 10px 0; font-family: 'Montserrat';">0%</div>
             <div style="font-size: 11px; text-transform: uppercase; letter-spacing: 2px; color: var(--sub); margin-bottom: 20px;">Houding Score</div>
- 
+
             <div style="text-align: left; background: rgba(255,255,255,0.03); padding: 15px; border-radius: 12px; margin-bottom: 20px;">
                 <strong style="font-size: 12px; color: var(--blue); display: block; margin-bottom: 5px;">COACH FEEDBACK:</strong>
                 <p id="report-feedback-text" style="font-size: 13px; line-height: 1.5; color: #eee; margin: 0;"></p>
             </div>
- 
+
             <div class="stat-row">
                 <div class="stat-header"><span>PRECISIE</span><span id="precision-val">0%</span></div>
                 <div class="bar-bg"><div id="precision-bar" class="bar-fill" style="width: 0%"></div></div>
             </div>
- 
+
             <button class="btn" onclick="closeReport()" style="margin-top: 25px; background: var(--blue); color: white;">DOORGAAN</button>
         </div>
     </div>
- 
+
     <div id="friend-overlay" style="position:fixed; inset:0; background: rgba(0,0,0,0.95); z-index: 6000; display:none; flex-direction: column; align-items: center; justify-content: center; backdrop-filter: blur(10px);">
         <div class="card" style="width: 85%; max-width: 350px; text-align: center; border: 1px solid var(--blue);">
             <div id="friend-rank" class="rank-badge" style="margin-bottom:10px; background:var(--blue); color:white;">LEVEL ...</div>
@@ -295,7 +295,7 @@
             <button class="btn" onclick="document.getElementById('friend-overlay').style.display='none'" style="margin-top:20px; background:var(--blue); color:white;">SLUITEN</button>
         </div>
     </div>
- 
+
     <nav class="navbar hidden" id="nav">
         <div class="nav-item active" onclick="tab('dash', this)"><i>🏠</i>Training</div>
         <div class="nav-item" onclick="tab('analyse', this)"><i>📈</i>Analyse</div>
@@ -303,7 +303,7 @@
         <div class="nav-item" onclick="tab('social', this)"><i>👥</i>Sociaal</div>
         <div class="nav-item" onclick="tab('profile', this)"><i>👤</i>Profiel</div>
     </nav>
- 
+
     <script>
         // ============================================================
         // 1. DATA & USER OBJECT
@@ -320,7 +320,7 @@
                 Billen: {xp:0, lvl:1}, Kuiten: {xp:0, lvl:1}
             }
         };
- 
+
         const exercises = {
             Upper: [
                 {n:"Push-up", i:"Houd je lichaam recht. Borst naar de grond.", focus:["Borst", "Triceps", "Schouders"]},
@@ -347,7 +347,7 @@
                 {n:"Crunches", i:"Schouders van grond, kijk naar plafond.", focus:["Abs"]}
             ]
         };
- 
+
         const badgeList = [
             { id: 'b_start', icon: '🐣', name: 'Rookie', desc: 'Eerste workout voltooid' },
             { id: 'b_wk1', icon: '🔥', name: 'Week 1', desc: '7 dagen streak gehaald' },
@@ -356,7 +356,7 @@
             { id: 'b_elite', icon: '🏆', name: 'Elite', desc: 'Totaal Level 50 bereikt' },
             { id: 'b_early', icon: '🌅', name: 'Vroege Vogel', desc: 'Training voor 09:00u' }
         ];
- 
+
         const questions = [
             { k: 'name', q: 'Voornaam', t: 'text' },
             { k: 'age', q: 'Leeftijd', t: 'number' },
@@ -364,10 +364,10 @@
             { k: 'height', q: 'Lengte (CM)', t: 'number' },
             { k: 'weight', q: 'Gewicht (KG)', t: 'number' },
             { k: 'goal', q: 'Doel', t: 'select', o: ['Afvallen', 'Spiermassa', 'Conditie'] },
-            { k: 'reps', q: 'Trainingsniveau', t: 'select', o: ['beginner', 'sportief', 'gevorderd'] },
+            { k: 'reps', q: 'Trainingsniveau', t: 'select', o: ['8 (Beginner)', '12 (Sportief)', '15 (Gevorderd)'] },
             { k: 'availability', q: 'Dagen per week', t: 'select', o: ['1-2', '3-4', '5+'] }
         ];
- 
+
         // ============================================================
         // 2. FIREBASE AUTH
         // FIX #2: authAction had een dubbel catch-blok — nu opgelost
@@ -376,7 +376,7 @@
             const email = document.getElementById('auth-email').value;
             const pass = document.getElementById('auth-pass').value;
             if (!email || !pass) return alert("Vul e-mail en wachtwoord in!");
- 
+
             try {
                 if (type === 'login') {
                     await auth.signInWithEmailAndPassword(email, pass);
@@ -391,18 +391,18 @@
                 alert("Fout: " + e.message);
             }
         }
- 
+
         function hideLoader() {
             const loader = document.getElementById('scr-loading');
             if (loader) loader.style.display = 'none';
         }
- 
+
         // Fallback: als Firebase na 5 seconden nog niks doet, toon loginscherm
         const authFallback = setTimeout(() => {
             hideLoader();
             tab('auth');
         }, 5000);
- 
+
         auth.onAuthStateChanged(async (fbUser) => {
             clearTimeout(authFallback);
             hideLoader();
@@ -420,7 +420,7 @@
                 document.getElementById('nav').classList.add('hidden');
             }
         });
- 
+
         // ============================================================
         // 3. SAVE / RESET
         // FIX #3: save() was dubbel gedefinieerd — nu één versie
@@ -434,12 +434,12 @@
                     .catch(e => console.error("Cloud sync error:", e));
             }
         }
- 
+
         function resetData() {
             localStorage.removeItem('elite_v9_ultimate');
             location.reload();
         }
- 
+
         // ============================================================
         // 4. AUDIO
         // ============================================================
@@ -450,7 +450,7 @@
             const gain = audioCtx.createGain();
             osc.connect(gain);
             gain.connect(audioCtx.destination);
- 
+
             if (type === 'rep') {
                 osc.frequency.setValueAtTime(600, audioCtx.currentTime);
                 osc.frequency.exponentialRampToValueAtTime(1200, audioCtx.currentTime + 0.1);
@@ -477,9 +477,13 @@
                 osc.start(); osc.stop(audioCtx.currentTime + 0.3);
             }
         }
- 
-        // ============================================================
-        // 5. STATE VARIABLES
+
+        function getRepTarget() {
+            const r = user.reps;
+            if (!r) return 10;
+            const num = parseInt(r);
+            return isNaN(num) ? 10 : num;
+        }
         // ============================================================
         let currentStep = 1;
         let circuit = [], cIdx = 0, reps = 0, sets = 1, isRest = false, restTimer = null, tLeft = 30;
@@ -488,7 +492,7 @@
         let currentCat = '';
         let camera = null;
         let lastRepTime = 0;
- 
+
         // ============================================================
         // 6. RANK & SCORE
         // FIX #4: calculateMainScore en loadLeaderboard waren meerdere
@@ -503,7 +507,7 @@
             if (totalLvl < 100) return "Legendarisch";
             return "ELITE";
         }
- 
+
         function calculateMainScore() {
             const stats = user.stats;
             const keys = Object.keys(stats);
@@ -511,7 +515,7 @@
             let average = totalLevel / keys.length;
             return Math.round(average * 10);
         }
- 
+
         // ============================================================
         // 7. NAVIGATIE & UI
         // ============================================================
@@ -534,11 +538,11 @@
                 loadLeaderboard(user.currentGroupId);
             }
         }
- 
+
         function renderAnalyse() {
             // placeholder - analyse tab
         }
- 
+
         function renderProgress() {
             const container = document.getElementById('stats-render');
             container.innerHTML = Object.keys(user.stats).map(key => {
@@ -551,7 +555,7 @@
                         <div class="bar-bg"><div class="bar-fill" style="width: ${Math.min(pct, 100)}%"></div></div>
                     </div>`;
             }).join('');
- 
+
             const badgeCont = document.getElementById('badges-render');
             badgeCont.innerHTML = badgeList.map(b => {
                 const unlocked = user.badges.includes(b.id);
@@ -560,7 +564,7 @@
                     <div class="badge-name">${b.name}</div>
                 </div>`;
             }).join('');
- 
+
             const histCont = document.getElementById('history-render');
             if (user.history && user.history.length > 0) {
                 histCont.innerHTML = user.history.slice().reverse().slice(0, 5).map(h =>
@@ -570,7 +574,7 @@
                 ).join('');
             }
         }
- 
+
         function renderProfileFields() {
             const container = document.getElementById('profile-fields');
             container.innerHTML = questions.map(q => `
@@ -581,9 +585,9 @@
                 }
             `).join('');
         }
- 
+
         function updateUser(k, v) { user[k] = v; save(); }
- 
+
         // ============================================================
         // 8. ONBOARDING
         // ============================================================
@@ -598,7 +602,7 @@
             html += `<button class="btn" onclick="saveQ()">VERDER</button>`;
             document.getElementById('q-container').innerHTML = html;
         }
- 
+
         function saveQ() {
             const val = document.getElementById('q-val').value;
             if (!val) return alert("Vul dit veld in!");
@@ -611,7 +615,7 @@
                 tab('auth');
             }
         }
- 
+
         // ============================================================
         // 9. WORKOUT LOGICA
         // ============================================================
@@ -625,7 +629,7 @@
             user.lastDate = today;
             save();
         }
- 
+
         function startCircuit(cat) {
             currentCat = cat;
             circuit = [...exercises[cat]].sort(() => 0.5 - Math.random());
@@ -634,17 +638,17 @@
             startAI();
             startRest(30, "LEES DE UITLEG");
         }
- 
+
         function stopWorkout() {
             if (camera) camera.stop();
- 
+
             if (sessionScores.length > 0) {
                 let som = sessionScores.reduce((a, b) => a + b, 0);
                 let lastScore = Math.round(som / sessionScores.length);
                 user.lastAnalysisScore = lastScore;
                 save();
             }
- 
+
             if (user.currentGroupId && auth.currentUser) {
                 const myNewScore = calculateMainScore();
                 db.collection('groups').doc(user.currentGroupId).update({
@@ -652,11 +656,11 @@
                     [`scores.${auth.currentUser.uid}.name`]: user.name || "Anoniem"
                 }).catch(e => console.error("Groepsscore fout:", e));
             }
- 
+
             sessionScores = [];
             tab('dash');
         }
- 
+
         function startRest(time, title) {
             isRest = true; tLeft = time;
             document.getElementById('rest-overlay').classList.remove('hidden');
@@ -665,7 +669,7 @@
             document.getElementById('rest-instr').innerText = circuit[cIdx].i;
             runTimer();
         }
- 
+
         function runTimer() {
             document.getElementById('timer-val').innerText = tLeft;
             if (restTimer) clearInterval(restTimer);
@@ -675,9 +679,9 @@
                 if (tLeft <= 0) skipRest();
             }, 1000);
         }
- 
+
         function adjustTime(s) { tLeft += s; document.getElementById('timer-val').innerText = tLeft; }
- 
+
         function skipRest() {
             clearInterval(restTimer);
             isRest = false;
@@ -686,25 +690,25 @@
             speak("Start " + circuit[cIdx].n);
             lastRepTime = Date.now();
         }
- 
+
         function updateHUD(feedback = null) {
             document.getElementById('hud-idx').innerText = `${cIdx + 1}/6`;
             document.getElementById('hud-set').innerText = `${sets}/3`;
-            document.getElementById('hud-reps').innerText = `${reps}/${user.reps}`;
- 
+            document.getElementById('hud-reps').innerText = `${reps}/${getRepTarget()}`;
+
             const tipEl = document.getElementById('coaching-tip');
             if (feedback) {
                 tipEl.innerText = feedback;
                 tipEl.className = feedback.includes('GOED') ? 'feedback-good' : 'feedback-warn';
                 return;
             }
-            const rem = user.reps - reps;
+            const rem = getRepTarget() - reps;
             tipEl.className = '';
             if (rem <= 3 && rem > 0) tipEl.innerText = "NOG " + rem + "...";
             else if (reps > 0) tipEl.innerText = "BLIJF GAAN!";
             else tipEl.innerText = "START!";
         }
- 
+
         function registerRep() {
             const now = Date.now();
             if (now - lastRepTime < 800) {
@@ -718,7 +722,7 @@
             updateHUD("GOED BEZIG!");
             playSound('rep');
             showFloatingText("+15 XP");
- 
+
             const focus = circuit[cIdx].focus;
             focus.forEach(muscle => {
                 user.stats[muscle].xp += 15;
@@ -731,8 +735,8 @@
                 }
             });
             save();
- 
-            if (reps >= user.reps) {
+
+            if (reps >= getRepTarget()) {
                 if (sets < 3) { sets++; reps = 0; startRest(15, "SET VOLTOOID!"); }
                 else {
                     cIdx++;
@@ -741,7 +745,7 @@
                 }
             }
         }
- 
+
         function finishWorkout() {
             checkStreak();
             checkBadges('finish');
@@ -751,24 +755,24 @@
             speak("Training voltooid. Goed gedaan!");
             stopWorkout();
         }
- 
+
         // ============================================================
         // 10. AI & COMPUTER VISION
         // ============================================================
         const videoElement = document.getElementById('input_video');
         const canvasElement = document.getElementById('output_canvas');
         const canvasCtx = canvasElement.getContext('2d');
- 
+
         function onResults(results) {
             if (!results.poseLandmarks || isRest) return;
- 
+
             canvasCtx.save();
             canvasCtx.clearRect(0, 0, canvasElement.width, canvasElement.height);
             canvasCtx.drawImage(results.image, 0, 0, canvasElement.width, canvasElement.height);
- 
+
             const m = results.poseLandmarks;
             const exe = circuit[cIdx].n.toLowerCase();
- 
+
             if (exe.includes("squat")) {
                 let currentAngle = calcAngle(m[24], m[26], m[28]);
                 if (currentAngle > 160) stage = 'up';
@@ -781,22 +785,22 @@
             } else {
                 // Voor andere oefeningen: gebruik registerRep() via HUD knop of angle-detectie
             }
- 
+
             canvasCtx.restore();
         }
- 
+
         function calcAngle(a, b, c) {
             const r = Math.atan2(c.y - b.y, c.x - b.x) - Math.atan2(a.y - b.y, a.x - b.x);
             let ang = Math.abs(r * 180 / Math.PI);
             return ang > 180 ? 360 - ang : ang;
         }
- 
+
         function speak(t) {
             const m = new SpeechSynthesisUtterance(t);
             m.lang = 'nl-NL';
             window.speechSynthesis.speak(m);
         }
- 
+
         function startAI() {
             const pose = new Pose({ locateFile: (f) => `https://cdn.jsdelivr.net/npm/@mediapipe/pose/${f}` });
             pose.setOptions({ modelComplexity: 1, minDetectionConfidence: 0.5, minTrackingConfidence: 0.5 });
@@ -810,7 +814,7 @@
             });
             camera.start();
         }
- 
+
         // ============================================================
         // 11. VISUALS & EFFECTS
         // ============================================================
@@ -823,7 +827,7 @@
             document.body.appendChild(el);
             setTimeout(() => el.remove(), 1500);
         }
- 
+
         function showLevelUp(muscle, lvl) {
             const ov = document.getElementById('lvl-overlay');
             document.getElementById('lvl-msg').innerText = `${muscle} is nu Level ${lvl}`;
@@ -832,9 +836,9 @@
             speak("Level up! " + muscle);
             setTimeout(() => ov.classList.remove('active'), 2000);
         }
- 
+
         function closeLvl() { document.getElementById('lvl-overlay').classList.remove('active'); }
- 
+
         // ============================================================
         // 12. BADGE LOGICA
         // ============================================================
@@ -856,7 +860,7 @@
                 speak("Gefeliciteerd, nieuwe badge ontgrendeld!");
             }
         }
- 
+
         // ============================================================
         // 13. ANALYSE RAPPORT
         // FIX #5: showAnalysisReport was dubbel — nu één versie
@@ -869,7 +873,7 @@
             document.getElementById('report-score').innerText = score + "%";
             document.getElementById('precision-val').innerText = score + "%";
             document.getElementById('precision-bar').style.width = score + "%";
- 
+
             let feedback = "";
             if (score >= 85) { feedback = "Perfecte houding! Je voert de oefeningen zeer gecontroleerd uit."; }
             else if (score >= 60) { feedback = "Goed gedaan, maar probeer de bewegingen nog iets vollediger af te maken."; }
@@ -877,14 +881,14 @@
             else { feedback = "Focus op je techniek. Ga iets langzamer voor een betere controle."; }
             document.getElementById('report-feedback-text').innerText = feedback;
         }
- 
+
         function closeReport() {
             sessionScores = [];
             document.getElementById('report-overlay').style.display = 'none';
             document.getElementById('report-overlay').classList.add('hidden');
             tab('dash');
         }
- 
+
         // ============================================================
         // 14. SOCIAL / GROEPEN
         // FIX #6: createGroup en loadLeaderboard waren dubbel — nu één versie elk
@@ -911,7 +915,7 @@
                 alert("Fout bij aanmaken: " + e.message);
             }
         }
- 
+
         async function joinGroup() {
             const gName = document.getElementById('group-name').value;
             if (!gName) return alert("Typ de naam van de groep!");
@@ -930,14 +934,14 @@
                 alert("Groep niet gevonden of fout: " + e.message);
             }
         }
- 
+
         async function loadLeaderboard(groupId) {
             if (!groupId) return;
             const doc = await db.collection('groups').doc(groupId).get();
             if (!doc.exists) return;
             const data = doc.data();
             const players = Object.values(data.scores).sort((a, b) => b.score - a.score);
- 
+
             let html = `<h3 style="margin:20px 0 10px; font-family:Montserrat;">🏆 CLASH: ${data.groupName}</h3>`;
             players.forEach((speler, i) => {
                 const isMe = auth.currentUser && data.scores[auth.currentUser.uid] &&
@@ -950,7 +954,7 @@
             });
             document.getElementById('group-content').innerHTML = html;
         }
- 
+
         async function searchUser() {
             const searchTerm = document.getElementById('search-user-name').value.toLowerCase();
             const resultsDiv = document.getElementById('search-results');
@@ -979,7 +983,7 @@
                 resultsDiv.innerHTML = "<p style='color:red;'>Fout: Zorg dat je bent ingelogd.</p>";
             }
         }
- 
+
         async function viewFriend(friendId) {
             const doc = await db.collection('users').doc(friendId).get();
             if (!doc.exists) return;
@@ -1006,23 +1010,23 @@
             }
             document.getElementById('friend-stats-render').innerHTML = statsHtml;
         }
- 
+
         // ============================================================
         // 15. SWIPE NAVIGATIE
         // ============================================================
         let touchStartX = 0;
         let touchEndX = 0;
         const screens = ['dash', 'analyse', 'progress', 'social', 'profile'];
- 
+
         document.addEventListener('touchstart', e => {
             touchStartX = e.changedTouches[0].screenX;
         }, { passive: true });
- 
+
         document.addEventListener('touchend', e => {
             touchEndX = e.changedTouches[0].screenX;
             handleSwipe();
         }, { passive: true });
- 
+
         function handleSwipe() {
             let activeIdx = screens.findIndex(t => !document.getElementById('scr-' + t).classList.contains('hidden'));
             if (activeIdx === -1) return;
@@ -1038,12 +1042,12 @@
                 if (el) tab(prevTab, el);
             }
         }
- 
+
         // ============================================================
         // 16. INIT
         // ============================================================
         // auth.onAuthStateChanged hierboven regelt de start automatisch
- 
+
     </script>
 </body>
 </html>
