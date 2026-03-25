@@ -209,6 +209,10 @@
 
     <!-- Mijn vrienden -->
     <div class="card">
+        <div class="card">
+    <strong style="font-size:12px;display:block;margin-bottom:10px;">📩 VERZOEKEN</strong>
+    <div id="requests-list"></div>
+</div>
         <strong style="font-size:12px;display:block;margin-bottom:10px;">👥 MIJN VRIENDEN</strong>
         <div id="friends-list"><div style="color:var(--sub);font-size:12px;">Nog geen vrienden toegevoegd.</div></div>
     </div>
@@ -306,7 +310,7 @@
 const DEFAULT_USER = {
     name:'', age:'', gender:'', height:'', weight:'', goal:'', reps:10, availability:'',
     streak:0, lastDate:null, totalWorkouts:0, lastAnalysisScore:0,
-    badges:[], history:[], friends:[], currentGroupId:null,
+    badges:[], history:[], friends:[], friendRequests: [], sentRequests: [], currentGroupId:null,
     stats:{
         Borst:{xp:0,lvl:1}, Schouders:{xp:0,lvl:1}, Triceps:{xp:0,lvl:1},
         Abs:{xp:0,lvl:1}, Rug:{xp:0,lvl:1}, Benen:{xp:0,lvl:1},
@@ -517,6 +521,7 @@ function tab(t, el) {
             return;
         }
         loadFriends();
+        loadRequests();
         if (user.currentGroupId) loadLeaderboard();
     }
 }
@@ -635,6 +640,23 @@ function renderProgress() {
 // ============================================================
 // SOCIAL — VRIENDEN
 // ============================================================
+
+    async function acceptFriend(uid) {
+    const myUid = auth.currentUser.uid;
+
+    await db.collection('users').doc(myUid).update({
+        friends: firebase.firestore.FieldValue.arrayUnion(uid),
+        friendRequests: firebase.firestore.FieldValue.arrayRemove(uid)
+    });
+
+    await db.collection('users').doc(uid).update({
+        friends: firebase.firestore.FieldValue.arrayUnion(myUid),
+        sentRequests: firebase.firestore.FieldValue.arrayRemove(myUid)
+    });
+
+    alert("Vriend toegevoegd!");
+    loadFriends();
+}
 async function searchFriend() {
     const term = document.getElementById('search-input').value.trim().toLowerCase();
     const div  = document.getElementById('search-results');
@@ -661,7 +683,7 @@ async function searchFriend() {
                     </div>
                     ${isFriend
                         ? '<span style="font-size:11px;color:var(--green);font-weight:700;">✓ Vriend</span>'
-                        : `<button class="btn-small" onclick="addFriend('${doc.id}','${d.name}')" style="background:var(--blue);border:none;color:#fff;">+ Voeg toe</button>`
+                        : `<button class="btn-small" onclick="sendFriendRequest('${doc.id}')" style="background:var(--blue);border:none;color:#fff;">+ Voeg toe</button>`
                     }
                 </div>`;
         });
@@ -670,14 +692,18 @@ async function searchFriend() {
     }
 }
 
-async function addFriend(uid, name) {
-    if (!user.friends) user.friends = [];
-    if (user.friends.includes(uid)) return;
-    user.friends.push(uid);
-    save();
-    document.getElementById('search-results').innerHTML =
-        `<div style="color:var(--green);font-size:12px;font-weight:700;">✓ ${name} toegevoegd als vriend!</div>`;
-    loadFriends();
+async function sendFriendRequest(targetUid) {
+    const myUid = auth.currentUser.uid;
+
+    await db.collection('users').doc(targetUid).update({
+        friendRequests: firebase.firestore.FieldValue.arrayUnion(myUid)
+    });
+
+    await db.collection('users').doc(myUid).update({
+        sentRequests: firebase.firestore.FieldValue.arrayUnion(targetUid)
+    });
+
+    alert("Verzoek verstuurd!");
 }
 
 async function loadFriends() {
@@ -708,6 +734,32 @@ async function loadFriends() {
         } catch(e) {}
     }
     div.innerHTML = html || '<div style="color:var(--sub);font-size:12px;">Vrienden niet geladen.</div>';
+}
+
+    async function loadRequests() {
+    const div = document.getElementById('requests-list');
+
+    if (!user.friendRequests || user.friendRequests.length === 0) {
+        div.innerHTML = '<div style="color:var(--sub);font-size:12px;">Geen verzoeken</div>';
+        return;
+    }
+
+    let html = '';
+
+    for (const uid of user.friendRequests) {
+        const doc = await db.collection('users').doc(uid).get();
+        if (!doc.exists) continue;
+
+        const d = doc.data();
+
+        html += `
+        <div class="friend-card">
+            <div>${d.name}</div>
+            <button class="btn-small" onclick="acceptFriend('${uid}')">ACCEPT</button>
+        </div>`;
+    }
+
+    div.innerHTML = html;
 }
 
 // ============================================================
