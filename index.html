@@ -9,6 +9,22 @@
     <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils"></script>
     <script src="https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&family=Montserrat:wght@700;900&display=swap" rel="stylesheet">
+    <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-firestore-compat.js"></script>
+    <script>
+    const firebaseConfig = {
+        apiKey: "AIzaSyBvkD1TvkjjMci5Re2uzY61yqJI_FcthnU",
+        authDomain: "smart-fitness-mathijs.firebaseapp.com",
+        projectId: "smart-fitness-mathijs",
+        storageBucket: "smart-fitness-mathijs.firebasestorage.app",
+        messagingSenderId: "123911579168",
+        appId: "1:123911579168:web:c6fcb8a2f380157b0fbe45"
+    };
+    firebase.initializeApp(firebaseConfig);
+    const auth = firebase.auth();
+    const db   = firebase.firestore();
+</script>
  
     <style>
         :root { --bg: #050505; --surface: #121212; --surface-2: #1e1e1e; --accent: #fff; --sub: #888; --blue: #007aff; --orange: #ff9500; --green: #34c759; --red: #ff3b30; --gold: #ffd700; }
@@ -149,14 +165,54 @@
     </div>
 </div>
  
+<div id="scr-auth" class="screen hidden">
+    <div class="q-box">
+        <div style="font-size:48px;margin-bottom:10px;">💪</div>
+        <h1 style="margin-bottom:5px;">Inloggen</h1>
+        <p class="subtitle">Sla je voortgang op in de cloud</p>
+        <input type="email"    id="auth-email" placeholder="E-mailadres" autocomplete="email">
+        <input type="password" id="auth-pass"  placeholder="Wachtwoord"  autocomplete="current-password">
+        <button class="btn" onclick="authLogin()" style="margin-bottom:10px;">INLOGGEN</button>
+        <button class="btn-small" onclick="authSignup()" style="background:transparent;border:none;color:var(--sub);padding:10px;width:100%;max-width:320px;">Nieuw account aanmaken</button>
+        <div id="auth-error" style="color:var(--red);font-size:12px;margin-top:8px;text-align:center;"></div>
+    </div>
+</div>
+
 <div id="scr-social" class="screen hidden">
     <h1>COMMUNITY</h1>
-    <div class="subtitle">Komt later — Firebase nodig</div>
-    <div class="card" style="text-align:center;padding:40px 20px;">
-        <div style="font-size:40px;margin-bottom:15px;">🔒</div>
-        <strong>Sociaal gedeelte</strong>
-        <div style="color:var(--sub);font-size:12px;margin-top:10px;">Dit onderdeel werkt wanneer Firebase weer is ingesteld.</div>
+    <div class="subtitle">Vrienden & Groepen</div>
+
+    <!-- Vrienden zoeken -->
+    <div class="card">
+        <strong style="font-size:12px;display:block;margin-bottom:10px;color:var(--blue);">🔍 VRIEND ZOEKEN</strong>
+        <div style="display:flex;gap:8px;">
+            <input type="text" id="search-input" placeholder="Zoek op naam..." style="flex:1;margin-bottom:0;">
+            <button class="btn-small" onclick="searchFriend()" style="background:var(--blue);border:none;white-space:nowrap;">ZOEK</button>
+        </div>
+        <div id="search-results" style="margin-top:12px;"></div>
     </div>
+
+    <!-- Vrienden lijst -->
+    <div class="card">
+        <strong style="font-size:12px;display:block;margin-bottom:10px;">👥 MIJN VRIENDEN</strong>
+        <div id="friends-list"><div style="color:var(--sub);font-size:12px;">Nog geen vrienden toegevoegd.</div></div>
+    </div>
+
+    <!-- Groep -->
+    <div class="card">
+        <strong style="font-size:12px;display:block;margin-bottom:10px;">🏆 GROEP</strong>
+        <input type="text" id="group-name-input" placeholder="Groepsnaam..." style="margin-bottom:8px;">
+        <div style="display:flex;gap:8px;">
+            <button class="btn" onclick="createGroup()" style="flex:1;height:44px;padding:0;background:var(--blue);color:#fff;">MAAK GROEP</button>
+            <button class="btn" onclick="joinGroup()"   style="flex:1;height:44px;padding:0;background:var(--surface-2);color:#fff;border:1px solid #333;">JOIN GROEP</button>
+        </div>
+    </div>
+
+    <!-- Leaderboard -->
+    <div id="leaderboard-container"></div>
+
+    <!-- Uitloggen -->
+    <button class="btn-small" onclick="authLogout()" style="width:100%;padding:14px;margin-top:8px;background:#220000;border-color:#500;color:#f55;">Uitloggen</button>
 </div>
  
 <div id="scr-profile" class="screen hidden">
