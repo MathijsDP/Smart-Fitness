@@ -728,6 +728,7 @@ async function createGroup() {
         await db.collection('groups').doc(groupId).set({
             groupName: name,
             createdBy: auth.currentUser.uid,
+            createdByName: user.name,
             scores: {
                 [auth.currentUser.uid]: { name: user.name || 'Atleet', score: calcScore() }
             }
