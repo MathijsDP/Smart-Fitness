@@ -4,33 +4,35 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Smart-Fitness-Mathijs</title>
- 
+
     <script src="https://cdn.jsdelivr.net/npm/@mediapipe/pose"></script>
     <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils"></script>
     <script src="https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&family=Montserrat:wght@700;900&display=swap" rel="stylesheet">
+
+    <!-- FIREBASE -->
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-firestore-compat.js"></script>
     <script>
-    const firebaseConfig = {
-        apiKey: "AIzaSyBvkD1TvkjjMci5Re2uzY61yqJI_FcthnU",
-        authDomain: "smart-fitness-mathijs.firebaseapp.com",
-        projectId: "smart-fitness-mathijs",
-        storageBucket: "smart-fitness-mathijs.firebasestorage.app",
-        messagingSenderId: "123911579168",
-        appId: "1:123911579168:web:c6fcb8a2f380157b0fbe45"
-    };
-    firebase.initializeApp(firebaseConfig);
-    const auth = firebase.auth();
-    const db   = firebase.firestore();
-</script>
- 
+        const firebaseConfig = {
+            apiKey: "AIzaSyBvkD1TvkjjMci5Re2uzY61yqJI_FcthnU",
+            authDomain: "smart-fitness-mathijs.firebaseapp.com",
+            projectId: "smart-fitness-mathijs",
+            storageBucket: "smart-fitness-mathijs.firebasestorage.app",
+            messagingSenderId: "123911579168",
+            appId: "1:123911579168:web:c6fcb8a2f380157b0fbe45"
+        };
+        firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+        const db   = firebase.firestore();
+    </script>
+
     <style>
         :root { --bg: #050505; --surface: #121212; --surface-2: #1e1e1e; --accent: #fff; --sub: #888; --blue: #007aff; --orange: #ff9500; --green: #34c759; --red: #ff3b30; --gold: #ffd700; }
- 
+
         * { box-sizing: border-box; margin: 0; padding: 0; }
- 
+
         body {
             font-family: 'Inter', sans-serif;
             background: var(--bg);
@@ -38,7 +40,7 @@
             user-select: none;
             -webkit-user-select: none;
         }
- 
+
         .screen {
             min-height: 100vh;
             padding: 30px 20px 120px;
@@ -49,71 +51,94 @@
             touch-action: pan-y;
         }
         .hidden { display: none !important; }
- 
+
         h1 { font-family: 'Montserrat', sans-serif; font-size: 26px; font-weight: 900; text-transform: uppercase; margin: 0 0 5px; letter-spacing: -0.5px; }
         .subtitle { color: var(--sub); font-size: 11px; letter-spacing: 1.5px; text-transform: uppercase; margin-bottom: 25px; font-weight: 700; }
- 
+
         .q-box { flex: 1; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; }
         input, select { width: 100%; max-width: 320px; padding: 16px; border-radius: 12px; border: 1px solid #333; background: var(--surface-2); color: #fff; font-size: 16px; margin-bottom: 12px; outline: none; transition: 0.2s; }
         input:focus { border-color: var(--blue); box-shadow: 0 0 15px rgba(0,122,255,0.3); }
- 
+
         .btn { background: var(--accent); color: #000; border: none; padding: 18px; border-radius: 16px; width: 100%; max-width: 320px; font-weight: 800; text-transform: uppercase; cursor: pointer; transition: transform 0.1s; box-shadow: 0 4px 15px rgba(255,255,255,0.1); font-size: 14px; }
         .btn:active { transform: scale(0.98); }
         .btn-small { padding: 10px 15px; font-size: 11px; font-weight: 700; background: var(--surface-2); color: #fff; border: 1px solid #333; border-radius: 8px; cursor: pointer; }
- 
+
         .card { background: var(--surface); border-radius: 24px; padding: 20px; margin-bottom: 15px; border: 1px solid #222; position: relative; overflow: hidden; }
- 
+
         .streak-badge { background: rgba(255,149,0,0.15); color: var(--orange); padding: 8px 16px; border-radius: 100px; font-weight: 800; font-size: 13px; display: inline-flex; align-items: center; gap: 8px; margin-bottom: 20px; border: 1px solid rgba(255,149,0,0.3); }
         .rank-badge { background: rgba(0,122,255,0.15); color: var(--blue); padding: 5px 10px; border-radius: 6px; font-size: 10px; font-weight: 800; text-transform: uppercase; }
- 
+
         .hud { position: absolute; top: 0; width: 100%; padding: 20px 20px 40px; display: flex; justify-content: space-between; background: linear-gradient(to bottom, rgba(0,0,0,0.9), transparent); z-index: 2001; pointer-events: none; }
         .hud-val span { display: block; font-size: 9px; color: var(--sub); font-weight: 700; letter-spacing: 1px; }
         .hud-val strong { font-size: 24px; font-family: 'Montserrat', sans-serif; text-shadow: 0 2px 10px rgba(0,0,0,1); }
- 
+
         #coaching-tip { position: absolute; bottom: 130px; left: 0; width: 100%; text-align: center; color: var(--accent); font-weight: 900; font-size: 20px; text-shadow: 0 4px 12px rgba(0,0,0,1); z-index: 2002; pointer-events: none; }
- 
+
         #rest-overlay { position: absolute; inset: 0; background: rgba(5,5,5,0.98); z-index: 3000; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 20px; }
         .timer-txt { font-size: 90px; font-weight: 900; color: var(--blue); font-family: 'Montserrat', sans-serif; margin: 10px 0; line-height: 1; letter-spacing: -3px; }
- 
+
         #lvl-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.9); z-index: 4000; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; pointer-events: none; opacity: 0; transition: 0.4s; }
         #lvl-overlay.active { opacity: 1; pointer-events: auto; }
         @keyframes popIn { 0% { transform: scale(0.5); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
         .lvl-anim { animation: popIn 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; }
- 
+
         .float-txt { position: fixed; font-weight: 900; font-size: 16px; color: var(--gold); pointer-events: none; animation: floatUp 1.5s ease-out forwards; z-index: 5000; text-shadow: 0 2px 4px rgba(0,0,0,0.8); }
         @keyframes floatUp { 0% { transform: translateY(0) scale(1); opacity: 1; } 100% { transform: translateY(-80px) scale(1.2); opacity: 0; } }
- 
+
         .navbar { position: fixed; bottom: 0; left: 0; width: 100%; background: rgba(16,52,84,1); border-top: 1px solid #222; display: flex; justify-content: space-around; padding: 15px 0; padding-bottom: calc(15px + env(safe-area-inset-bottom)); z-index: 1000; }
         .nav-item { color: var(--sub); font-size: 9px; font-weight: 700; cursor: pointer; text-align: center; text-transform: uppercase; transition: 0.2s; }
         .nav-item.active { color: var(--accent); transform: translateY(-2px); }
         .nav-item i { display: block; font-size: 20px; margin-bottom: 4px; font-style: normal; }
- 
+
         #output_canvas { width: 100%; height: 100%; object-fit: contain; transform: scaleX(-1); background: #000; display: block; }
- 
+
         .stat-row { margin-bottom: 12px; }
         .stat-header { display: flex; justify-content: space-between; font-size: 11px; font-weight: 700; margin-bottom: 6px; }
         .bar-bg { background: #222; height: 10px; border-radius: 5px; overflow: hidden; }
         .bar-fill { height: 100%; background: var(--blue); transition: width 0.6s ease; box-shadow: 0 0 10px rgba(0,122,255,0.5); }
- 
+
         .badges-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-top: 15px; }
         .badge-item { background: #1a1a1a; padding: 15px 5px; border-radius: 12px; text-align: center; opacity: 0.4; filter: grayscale(1); transition: 0.3s; border: 1px solid transparent; }
         .badge-item.unlocked { opacity: 1; filter: grayscale(0); border-color: var(--gold); background: rgba(255,215,0,0.05); }
         .badge-icon { font-size: 24px; display: block; margin-bottom: 5px; }
         .badge-name { font-size: 9px; font-weight: 700; text-transform: uppercase; }
- 
+
         .feedback-good { color: var(--green) !important; }
         .feedback-warn { color: var(--orange) !important; }
- 
+
+        /* Social styles */
+        .friend-card { display: flex; justify-content: space-between; align-items: center; padding: 12px; background: var(--surface-2); border-radius: 12px; margin-bottom: 8px; }
+        .leaderboard-row { display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 1px solid #222; }
+        .leaderboard-row:last-child { border-bottom: none; }
+        .leaderboard-num { font-family: 'Montserrat', sans-serif; font-size: 20px; font-weight: 900; color: var(--blue); }
+        .gold-border { border-left: 4px solid var(--gold) !important; padding-left: 12px; }
+
         @keyframes spin { to { transform: rotate(360deg); } }
+        .spinner { width: 30px; height: 30px; border: 3px solid #333; border-top-color: var(--blue); border-radius: 50%; animation: spin 0.8s linear infinite; margin: 20px auto; }
     </style>
 </head>
 <body>
- 
-<!-- SCHERMEN -->
+
+<!-- ── LOGIN SCHERM ── -->
+<div id="scr-auth" class="screen hidden">
+    <div class="q-box">
+        <div style="font-size:52px;margin-bottom:12px;">💪</div>
+        <h1 style="margin-bottom:4px;">Smart Fitness</h1>
+        <p class="subtitle">Log in om je voortgang op te slaan</p>
+        <input type="email"    id="auth-email" placeholder="E-mailadres"  autocomplete="email">
+        <input type="password" id="auth-pass"  placeholder="Wachtwoord"   autocomplete="current-password">
+        <button class="btn" onclick="authLogin()" style="margin-bottom:10px;">INLOGGEN</button>
+        <button class="btn-small" onclick="authSignup()" style="background:transparent;border:none;color:var(--sub);padding:10px;width:100%;max-width:320px;font-size:13px;">Nieuw account aanmaken</button>
+        <div id="auth-error" style="color:var(--red);font-size:12px;margin-top:8px;text-align:center;min-height:20px;"></div>
+    </div>
+</div>
+
+<!-- ── ONBOARDING ── -->
 <div id="scr-onboarding" class="screen hidden">
     <div class="q-box" id="q-container"></div>
 </div>
- 
+
+<!-- ── DASHBOARD ── -->
 <div id="scr-dash" class="screen hidden">
     <div style="display:flex; justify-content:space-between; align-items:center;">
         <div class="streak-badge">🔥 <span id="streak-val">0</span></div>
@@ -137,7 +162,8 @@
         <div style="margin-top:10px;font-size:10px;font-weight:700;color:var(--blue);">Vetverbranding + core</div>
     </div>
 </div>
- 
+
+<!-- ── ANALYSE ── -->
 <div id="scr-analyse" class="screen hidden">
     <h1>Analyseer je training</h1>
     <div class="subtitle">Verbeter je oefeningen</div>
@@ -147,7 +173,8 @@
         <div style="margin-top:10px;font-size:10px;font-weight:700;color:var(--blue);">KLIK VOOR ANALYSE</div>
     </div>
 </div>
- 
+
+<!-- ── STATS ── -->
 <div id="scr-progress" class="screen hidden">
     <h1>JOUW STATS</h1>
     <div class="subtitle">RPG Progressie & Badges</div>
@@ -164,44 +191,32 @@
         <div id="history-render" style="font-size:11px;color:var(--sub);">Nog geen workouts.</div>
     </div>
 </div>
- 
-<div id="scr-auth" class="screen hidden">
-    <div class="q-box">
-        <div style="font-size:48px;margin-bottom:10px;">💪</div>
-        <h1 style="margin-bottom:5px;">Inloggen</h1>
-        <p class="subtitle">Sla je voortgang op in de cloud</p>
-        <input type="email"    id="auth-email" placeholder="E-mailadres" autocomplete="email">
-        <input type="password" id="auth-pass"  placeholder="Wachtwoord"  autocomplete="current-password">
-        <button class="btn" onclick="authLogin()" style="margin-bottom:10px;">INLOGGEN</button>
-        <button class="btn-small" onclick="authSignup()" style="background:transparent;border:none;color:var(--sub);padding:10px;width:100%;max-width:320px;">Nieuw account aanmaken</button>
-        <div id="auth-error" style="color:var(--red);font-size:12px;margin-top:8px;text-align:center;"></div>
-    </div>
-</div>
 
+<!-- ── SOCIAAL ── -->
 <div id="scr-social" class="screen hidden">
     <h1>COMMUNITY</h1>
     <div class="subtitle">Vrienden & Groepen</div>
 
-    <!-- Vrienden zoeken -->
+    <!-- Vriend zoeken -->
     <div class="card">
         <strong style="font-size:12px;display:block;margin-bottom:10px;color:var(--blue);">🔍 VRIEND ZOEKEN</strong>
         <div style="display:flex;gap:8px;">
             <input type="text" id="search-input" placeholder="Zoek op naam..." style="flex:1;margin-bottom:0;">
-            <button class="btn-small" onclick="searchFriend()" style="background:var(--blue);border:none;white-space:nowrap;">ZOEK</button>
+            <button class="btn-small" onclick="searchFriend()" style="background:var(--blue);border:none;color:#fff;white-space:nowrap;">ZOEK</button>
         </div>
         <div id="search-results" style="margin-top:12px;"></div>
     </div>
 
-    <!-- Vrienden lijst -->
+    <!-- Mijn vrienden -->
     <div class="card">
         <strong style="font-size:12px;display:block;margin-bottom:10px;">👥 MIJN VRIENDEN</strong>
         <div id="friends-list"><div style="color:var(--sub);font-size:12px;">Nog geen vrienden toegevoegd.</div></div>
     </div>
 
-    <!-- Groep -->
+    <!-- Groep aanmaken / joinen -->
     <div class="card">
         <strong style="font-size:12px;display:block;margin-bottom:10px;">🏆 GROEP</strong>
-        <input type="text" id="group-name-input" placeholder="Groepsnaam..." style="margin-bottom:8px;">
+        <input type="text" id="group-name-input" placeholder="Groepsnaam (bijv: Klas4A)..." style="margin-bottom:8px;">
         <div style="display:flex;gap:8px;">
             <button class="btn" onclick="createGroup()" style="flex:1;height:44px;padding:0;background:var(--blue);color:#fff;">MAAK GROEP</button>
             <button class="btn" onclick="joinGroup()"   style="flex:1;height:44px;padding:0;background:var(--surface-2);color:#fff;border:1px solid #333;">JOIN GROEP</button>
@@ -212,16 +227,18 @@
     <div id="leaderboard-container"></div>
 
     <!-- Uitloggen -->
-    <button class="btn-small" onclick="authLogout()" style="width:100%;padding:14px;margin-top:8px;background:#220000;border-color:#500;color:#f55;">Uitloggen</button>
+    <button class="btn-small" onclick="authLogout()" style="width:100%;padding:14px;margin-top:4px;background:#220000;border-color:#500;color:#f55;">Uitloggen</button>
 </div>
- 
+
+<!-- ── PROFIEL ── -->
 <div id="scr-profile" class="screen hidden">
     <h1>PROFIEL</h1>
     <div class="subtitle">Jouw gegevens</div>
     <div class="card" id="profile-fields"></div>
     <button class="btn-small" style="width:100%;padding:15px;margin:20px 0;background:#220000;border-color:#500;color:#f55;" onclick="resetData()">Reset alle data</button>
 </div>
- 
+
+<!-- ── WORKOUT ── -->
 <div id="scr-workout" class="screen hidden" style="padding:0;z-index:2000;background:#000;position:relative;">
     <video id="input_video" style="display:none;"></video>
     <canvas id="output_canvas"></canvas>
@@ -244,8 +261,8 @@
     </div>
     <button class="btn" style="position:absolute;bottom:30px;left:50%;transform:translateX(-50%);width:60%;height:50px;padding:0;z-index:2001;background:rgba(255,59,48,0.2);border:1px solid rgba(255,59,48,0.5);color:#fff;font-size:12px;" onclick="stopWorkout()">STOPPEN</button>
 </div>
- 
-<!-- OVERLAYS -->
+
+<!-- ── OVERLAYS ── -->
 <div id="lvl-overlay">
     <div class="lvl-anim" style="text-align:center;">
         <div style="font-size:60px;margin-bottom:10px;">🆙</div>
@@ -254,7 +271,7 @@
         <button class="btn" onclick="closeLvl()">DOORGAAN</button>
     </div>
 </div>
- 
+
 <div id="report-overlay" style="position:fixed;inset:0;background:rgba(5,5,5,0.98);z-index:5000;display:none;flex-direction:column;align-items:center;justify-content:center;padding:20px;">
     <div class="card" style="width:85%;max-width:400px;text-align:center;border:1px solid var(--blue);">
         <h1 style="color:var(--blue);font-size:20px;">TRAININGS RAPPORT</h1>
@@ -272,8 +289,8 @@
         <button class="btn" onclick="closeReport()" style="margin-top:25px;background:var(--blue);color:white;">DOORGAAN</button>
     </div>
 </div>
- 
-<!-- NAVBAR -->
+
+<!-- ── NAVBAR ── -->
 <nav class="navbar hidden" id="nav">
     <div class="nav-item active" onclick="tab('dash',this)"><i>🏠</i>Training</div>
     <div class="nav-item" onclick="tab('analyse',this)"><i>📈</i>Analyse</div>
@@ -281,94 +298,154 @@
     <div class="nav-item" onclick="tab('social',this)"><i>👥</i>Sociaal</div>
     <div class="nav-item" onclick="tab('profile',this)"><i>👤</i>Profiel</div>
 </nav>
- 
+
 <script>
 // ============================================================
 // DATA
 // ============================================================
 const DEFAULT_USER = {
-    name:'', age:'', gender:'', height:'', weight:'', goal:'', reps: 10, availability:'',
+    name:'', age:'', gender:'', height:'', weight:'', goal:'', reps:10, availability:'',
     streak:0, lastDate:null, totalWorkouts:0, lastAnalysisScore:0,
-    badges:[], history:[],
+    badges:[], history:[], friends:[], currentGroupId:null,
     stats:{
         Borst:{xp:0,lvl:1}, Schouders:{xp:0,lvl:1}, Triceps:{xp:0,lvl:1},
         Abs:{xp:0,lvl:1}, Rug:{xp:0,lvl:1}, Benen:{xp:0,lvl:1},
         Billen:{xp:0,lvl:1}, Kuiten:{xp:0,lvl:1}
     }
 };
- 
+
 let user = JSON.parse(JSON.stringify(DEFAULT_USER));
- 
+
+// ============================================================
+// SAVE / LOAD
+// ============================================================
 function save() {
     localStorage.setItem('smartfitness_v1', JSON.stringify(user));
-}
- 
-function load() {
-    const saved = localStorage.getItem('smartfitness_v1');
-    if (saved) {
-        try { user = JSON.parse(saved); return true; }
-        catch(e) { return false; }
+    const u = auth.currentUser;
+    if (u) {
+        db.collection('users').doc(u.uid).set(user).catch(e => console.error('Save fout:', e));
     }
+}
+
+function load() {
+    const d = localStorage.getItem('smartfitness_v1');
+    if (d) { try { user = JSON.parse(d); return true; } catch(e) {} }
     return false;
 }
- 
+
 function resetData() {
-    if (confirm("Weet je zeker dat je alle data wil wissen?")) {
-        localStorage.removeItem('smartfitness_v1');
-        location.reload();
+    if (!confirm('Alle data wissen?')) return;
+    localStorage.removeItem('smartfitness_v1');
+    auth.signOut().then(() => location.reload());
+}
+
+// ============================================================
+// FIREBASE AUTH
+// ============================================================
+async function authLogin() {
+    const email = document.getElementById('auth-email').value.trim();
+    const pass  = document.getElementById('auth-pass').value;
+    const errEl = document.getElementById('auth-error');
+    errEl.innerText = '';
+    if (!email || !pass) { errEl.innerText = 'Vul e-mail en wachtwoord in!'; return; }
+    try {
+        await auth.signInWithEmailAndPassword(email, pass);
+        // onAuthStateChanged handelt de rest af
+    } catch(e) {
+        const msgs = {
+            'auth/user-not-found':    'Geen account gevonden met dit e-mail.',
+            'auth/wrong-password':    'Wachtwoord is onjuist.',
+            'auth/invalid-email':     'Ongeldig e-mailadres.',
+            'auth/invalid-credential':'E-mail of wachtwoord is onjuist.'
+        };
+        errEl.innerText = msgs[e.code] || e.message;
     }
 }
- 
+
+async function authSignup() {
+    const email = document.getElementById('auth-email').value.trim();
+    const pass  = document.getElementById('auth-pass').value;
+    const errEl = document.getElementById('auth-error');
+    errEl.innerText = '';
+    if (!email || !pass) { errEl.innerText = 'Vul e-mail en wachtwoord in!'; return; }
+    if (pass.length < 6) { errEl.innerText = 'Wachtwoord moet minstens 6 tekens zijn.'; return; }
+    try {
+        const res = await auth.createUserWithEmailAndPassword(email, pass);
+        user.email = email;
+        await db.collection('users').doc(res.user.uid).set(user);
+        // Ga naar onboarding voor naam etc.
+        document.querySelectorAll('.screen').forEach(s => s.classList.add('hidden'));
+        currentStep = 0;
+        document.getElementById('scr-onboarding').classList.remove('hidden');
+        renderQ();
+    } catch(e) {
+        const msgs = {
+            'auth/email-already-in-use': 'Dit e-mail is al in gebruik.',
+            'auth/weak-password':        'Wachtwoord te zwak (min. 6 tekens).',
+            'auth/invalid-email':        'Ongeldig e-mailadres.'
+        };
+        errEl.innerText = msgs[e.code] || e.message;
+    }
+}
+
+function authLogout() {
+    if (!confirm('Wil je uitloggen?')) return;
+    auth.signOut().then(() => {
+        localStorage.removeItem('smartfitness_v1');
+        location.reload();
+    });
+}
+
 // ============================================================
-// OEFENINGEN & DATA
+// OEFENINGEN
 // ============================================================
 const exercises = {
     Upper: [
-        {n:"Push-up", i:"Houd je lichaam recht. Borst naar de grond.", focus:["Borst","Triceps","Schouders"]},
-        {n:"Shoulder Taps", i:"Hoge plank. Tik schouders om en om aan.", focus:["Schouders","Abs"]},
-        {n:"Pike Push-up", i:"Buig je armen in een omgekeerde V-positie.", focus:["Schouders","Triceps"]},
-        {n:"Superman", i:"Til armen en benen van de grond terwijl je op je buik ligt.", focus:["Rug","Schouders"]},
-        {n:"Diamond Push-up", i:"Push-up met handen dicht bij elkaar.", focus:["Triceps","Borst"]},
-        {n:"Plank", i:"Houd je lichaam recht op je onderarmen.", focus:["Abs","Schouders"]}
+        {n:"Push-up",        i:"Houd je lichaam recht. Borst naar de grond.",              focus:["Borst","Triceps","Schouders"]},
+        {n:"Shoulder Taps",  i:"Hoge plank. Tik schouders om en om aan.",                 focus:["Schouders","Abs"]},
+        {n:"Pike Push-up",   i:"Buig je armen in een omgekeerde V-positie.",              focus:["Schouders","Triceps"]},
+        {n:"Superman",       i:"Til armen en benen van de grond terwijl je op je buik ligt.", focus:["Rug","Schouders"]},
+        {n:"Diamond Push-up",i:"Push-up met handen dicht bij elkaar.",                    focus:["Triceps","Borst"]},
+        {n:"Plank",          i:"Houd je lichaam recht op je onderarmen.",                  focus:["Abs","Schouders"]}
     ],
     Lower: [
-        {n:"Squat", i:"Billen naar achteren, knieën niet voorbij tenen.", focus:["Benen","Billen"]},
-        {n:"Lunge", i:"Stap naar voren en zak door je knieën.", focus:["Benen","Billen"]},
-        {n:"Bulgarian Split Squat", i:"Achterste voet op een stoel, zak door je knie.", focus:["Billen","Rug"]},
-        {n:"Side Lunges", i:"Stap opzij, één been buigen, ander recht.", focus:["Benen","Billen"]},
-        {n:"Calf Raise", i:"Op tenen staan en rustig zakken.", focus:["Kuiten"]},
-        {n:"High Knees", i:"Rennen op de plaats, knieën hoog.", focus:["Benen","Abs"]}
+        {n:"Squat",               i:"Billen naar achteren, knieën niet voorbij tenen.",        focus:["Benen","Billen"]},
+        {n:"Lunge",               i:"Stap naar voren en zak door je knieën.",                  focus:["Benen","Billen"]},
+        {n:"Bulgarian Split Squat",i:"Achterste voet op een stoel, zak door je knie.",         focus:["Billen","Rug"]},
+        {n:"Side Lunges",         i:"Stap opzij, één been buigen, ander recht.",               focus:["Benen","Billen"]},
+        {n:"Calf Raise",          i:"Op tenen staan en rustig zakken.",                        focus:["Kuiten"]},
+        {n:"High Knees",          i:"Rennen op de plaats, knieën hoog.",                       focus:["Benen","Abs"]}
     ],
     Conditie: [
-        {n:"Jumping Jacks", i:"Spring wijd, armen omhoog.", focus:["Benen","Schouders"]},
-        {n:"Burpees", i:"Squat, plank, terugspringen, sprong omhoog.", focus:["Borst","Benen","Abs"]},
-        {n:"Mountain Climbers", i:"Plank positie, knieën snel naar borst.", focus:["Abs","Schouders"]},
-        {n:"Skater Jumps", i:"Spring zijwaarts van been naar been.", focus:["Benen","Billen"]},
-        {n:"Plank", i:"Op ellebogen. Lichaam recht als een plank.", focus:["Abs","Rug"]},
-        {n:"Crunches", i:"Schouders van grond, kijk naar plafond.", focus:["Abs"]}
+        {n:"Jumping Jacks",    i:"Spring wijd, armen omhoog.",                    focus:["Benen","Schouders"]},
+        {n:"Burpees",          i:"Squat, plank, terugspringen, sprong omhoog.",   focus:["Borst","Benen","Abs"]},
+        {n:"Mountain Climbers",i:"Plank positie, knieën snel naar borst.",        focus:["Abs","Schouders"]},
+        {n:"Skater Jumps",     i:"Spring zijwaarts van been naar been.",           focus:["Benen","Billen"]},
+        {n:"Plank",            i:"Op ellebogen. Lichaam recht als een plank.",    focus:["Abs","Rug"]},
+        {n:"Crunches",         i:"Schouders van grond, kijk naar plafond.",       focus:["Abs"]}
     ]
 };
- 
+
 const badgeList = [
     {id:'b_start', icon:'🐣', name:'Rookie'},
-    {id:'b_wk1',  icon:'🔥', name:'Week 1'},
-    {id:'b_push', icon:'💪', name:'Push Master'},
-    {id:'b_legs', icon:'🦵', name:'Leg Day'},
-    {id:'b_elite',icon:'🏆', name:'Elite'},
-    {id:'b_early',icon:'🌅', name:'Vroege Vogel'}
+    {id:'b_wk1',   icon:'🔥', name:'Week 1'},
+    {id:'b_push',  icon:'💪', name:'Push Master'},
+    {id:'b_legs',  icon:'🦵', name:'Leg Day'},
+    {id:'b_elite', icon:'🏆', name:'Elite'},
+    {id:'b_early', icon:'🌅', name:'Vroege Vogel'}
 ];
- 
+
 const questions = [
-    {k:'name',  q:'Wat is je voornaam?',    t:'text'},
-    {k:'age',   q:'Hoe oud ben je?',        t:'number'},
-    {k:'gender',q:'Geslacht',               t:'select', o:['Man','Vrouw','X']},
-    {k:'height',q:'Lengte (cm)',            t:'number'},
-    {k:'weight',q:'Gewicht (kg)',           t:'number'},
-    {k:'goal',  q:'Wat is je doel?',        t:'select', o:['Afvallen','Spiermassa','Conditie']},
-    {k:'reps',  q:'Trainingsniveau',        t:'select', o:['8','12','15'], labels:['Beginner (8 reps)','Sportief (12 reps)','Gevorderd (15 reps)']},
-    {k:'availability', q:'Dagen per week',  t:'select', o:['1-2','3-4','5+']}
+    {k:'name',  q:'Wat is je voornaam?',  t:'text'},
+    {k:'age',   q:'Hoe oud ben je?',      t:'number'},
+    {k:'gender',q:'Geslacht',             t:'select', o:['Man','Vrouw','X']},
+    {k:'height',q:'Lengte (cm)',          t:'number'},
+    {k:'weight',q:'Gewicht (kg)',         t:'number'},
+    {k:'goal',  q:'Wat is je doel?',      t:'select', o:['Afvallen','Spiermassa','Conditie']},
+    {k:'reps',  q:'Trainingsniveau',      t:'select', o:['8','12','15'], labels:['Beginner (8 reps)','Sportief (12 reps)','Gevorderd (15 reps)']},
+    {k:'availability',q:'Dagen per week', t:'select', o:['1-2','3-4','5+']}
 ];
- 
+
 // ============================================================
 // AUDIO
 // ============================================================
@@ -408,7 +485,7 @@ function playSound(type) {
         }
     } catch(e) {}
 }
- 
+
 function speak(t) {
     try {
         const m = new SpeechSynthesisUtterance(t);
@@ -416,7 +493,7 @@ function speak(t) {
         window.speechSynthesis.speak(m);
     } catch(e) {}
 }
- 
+
 // ============================================================
 // NAVIGATIE
 // ============================================================
@@ -431,14 +508,28 @@ function tab(t, el) {
     if (t === 'dash')     renderDash();
     if (t === 'progress') renderProgress();
     if (t === 'profile')  renderProfile();
+    if (t === 'social') {
+        if (!auth.currentUser) {
+            // Niet ingelogd → toon login
+            document.querySelectorAll('.screen').forEach(s => s.classList.add('hidden'));
+            document.getElementById('scr-auth').classList.remove('hidden');
+            document.getElementById('nav').classList.add('hidden');
+            return;
+        }
+        loadFriends();
+        if (user.currentGroupId) loadLeaderboard();
+    }
 }
- 
+
+// ============================================================
+// DASHBOARD
+// ============================================================
 function renderDash() {
     document.getElementById('dash-greet').innerText = "HEY " + (user.name || "CHAMP").toUpperCase() + "!";
     document.getElementById('streak-val').innerText = user.streak || 0;
     document.getElementById('rank-display').innerText = getRank();
 }
- 
+
 function getRank() {
     const total = Object.values(user.stats).reduce((a,b) => a + b.lvl, 0);
     if (total < 5)   return "Rookie";
@@ -448,17 +539,17 @@ function getRank() {
     if (total < 100) return "Legendarisch";
     return "ELITE";
 }
- 
+
 function getRepTarget() {
     const r = parseInt(user.reps);
     return isNaN(r) ? 10 : r;
 }
- 
+
 // ============================================================
 // ONBOARDING
 // ============================================================
 let currentStep = 0;
- 
+
 function renderQ() {
     const q = questions[currentStep];
     let html = `<h1 style="font-size:20px;">${q.q}</h1>
@@ -471,10 +562,9 @@ function renderQ() {
     }
     html += `<button class="btn" onclick="saveQ()" style="margin-top:10px;">VERDER →</button>`;
     document.getElementById('q-container').innerHTML = html;
-    // Focus input
     setTimeout(() => { const el = document.getElementById('q-val'); if(el) el.focus(); }, 100);
 }
- 
+
 function saveQ() {
     const val = document.getElementById('q-val').value.trim();
     if (!val) { alert("Vul dit veld in!"); return; }
@@ -487,12 +577,12 @@ function saveQ() {
         showApp();
     }
 }
- 
+
 function showApp() {
     document.getElementById('nav').classList.remove('hidden');
     tab('dash');
 }
- 
+
 // ============================================================
 // PROFIEL
 // ============================================================
@@ -509,12 +599,11 @@ function renderProfile() {
         return label + `<input type="${q.t}" value="${user[q.k]||''}" onchange="user['${q.k}']=this.value;save()">`;
     }).join('');
 }
- 
+
 // ============================================================
 // STATS & BADGES
 // ============================================================
 function renderProgress() {
-    // Spier levels
     document.getElementById('stats-render').innerHTML = Object.keys(user.stats).map(key => {
         const s = user.stats[key];
         const target = Math.round(100 * Math.pow(1.75, s.lvl - 1));
@@ -524,8 +613,7 @@ function renderProgress() {
             <div class="bar-bg"><div class="bar-fill" style="width:${pct}%"></div></div>
         </div>`;
     }).join('');
- 
-    // Badges
+
     document.getElementById('badges-render').innerHTML = badgeList.map(b => {
         const unlocked = (user.badges || []).includes(b.id);
         return `<div class="badge-item ${unlocked?'unlocked':''}">
@@ -533,8 +621,7 @@ function renderProgress() {
             <div class="badge-name">${b.name}</div>
         </div>`;
     }).join('');
- 
-    // History
+
     const hist = user.history || [];
     if (hist.length > 0) {
         document.getElementById('history-render').innerHTML = hist.slice().reverse().slice(0,5).map(h =>
@@ -544,18 +631,178 @@ function renderProgress() {
         ).join('');
     }
 }
- 
+
+// ============================================================
+// SOCIAL — VRIENDEN
+// ============================================================
+async function searchFriend() {
+    const term = document.getElementById('search-input').value.trim().toLowerCase();
+    const div  = document.getElementById('search-results');
+    if (!term) { div.innerHTML = '<div style="color:var(--sub);font-size:12px;">Typ een naam om te zoeken.</div>'; return; }
+    div.innerHTML = '<div class="spinner"></div>';
+    try {
+        const snap = await db.collection('users').where('name', '==', term).get();
+        if (snap.empty) {
+            div.innerHTML = '<div style="color:var(--sub);font-size:12px;">Niemand gevonden met deze naam.</div>';
+            return;
+        }
+        div.innerHTML = '';
+        snap.forEach(doc => {
+            const d = doc.data();
+            const isFriend = (user.friends || []).includes(doc.id);
+            const isMe = auth.currentUser && doc.id === auth.currentUser.uid;
+            if (isMe) return;
+            const totalLvl = d.stats ? Object.values(d.stats).reduce((a,b) => a + b.lvl, 0) : 0;
+            div.innerHTML += `
+                <div class="friend-card">
+                    <div>
+                        <div style="font-weight:700;font-size:13px;">${d.name}</div>
+                        <div style="font-size:10px;color:var(--sub);">Totaal Level ${totalLvl} · ${d.goal || 'Atleet'}</div>
+                    </div>
+                    ${isFriend
+                        ? '<span style="font-size:11px;color:var(--green);font-weight:700;">✓ Vriend</span>'
+                        : `<button class="btn-small" onclick="addFriend('${doc.id}','${d.name}')" style="background:var(--blue);border:none;color:#fff;">+ Voeg toe</button>`
+                    }
+                </div>`;
+        });
+    } catch(e) {
+        div.innerHTML = '<div style="color:var(--red);font-size:12px;">Fout — zorg dat je ingelogd bent.</div>';
+    }
+}
+
+async function addFriend(uid, name) {
+    if (!user.friends) user.friends = [];
+    if (user.friends.includes(uid)) return;
+    user.friends.push(uid);
+    save();
+    document.getElementById('search-results').innerHTML =
+        `<div style="color:var(--green);font-size:12px;font-weight:700;">✓ ${name} toegevoegd als vriend!</div>`;
+    loadFriends();
+}
+
+async function loadFriends() {
+    const div = document.getElementById('friends-list');
+    if (!user.friends || !user.friends.length) {
+        div.innerHTML = '<div style="color:var(--sub);font-size:12px;">Nog geen vrienden. Zoek hierboven!</div>';
+        return;
+    }
+    div.innerHTML = '<div class="spinner"></div>';
+    let html = '';
+    for (const uid of user.friends) {
+        try {
+            const doc = await db.collection('users').doc(uid).get();
+            if (!doc.exists) continue;
+            const d = doc.data();
+            const totalLvl = d.stats ? Object.values(d.stats).reduce((a,b) => a + b.lvl, 0) : 0;
+            html += `
+                <div class="friend-card">
+                    <div>
+                        <div style="font-weight:700;font-size:13px;">${d.name}</div>
+                        <div style="font-size:10px;color:var(--sub);">${d.goal || 'Atleet'} · ${d.totalWorkouts || 0} workouts</div>
+                    </div>
+                    <div style="text-align:right;">
+                        <div style="font-weight:900;font-size:16px;color:var(--blue);">LVL ${totalLvl}</div>
+                        <div style="font-size:9px;color:var(--sub);">TOTAAL</div>
+                    </div>
+                </div>`;
+        } catch(e) {}
+    }
+    div.innerHTML = html || '<div style="color:var(--sub);font-size:12px;">Vrienden niet geladen.</div>';
+}
+
+// ============================================================
+// SOCIAL — GROEPEN & LEADERBOARD
+// ============================================================
+function calcScore() {
+    const keys = Object.keys(user.stats);
+    const total = keys.reduce((s, k) => s + user.stats[k].lvl, 0);
+    return Math.round((total / keys.length) * 10);
+}
+
+async function createGroup() {
+    if (!auth.currentUser) { alert('Je moet ingelogd zijn!'); return; }
+    const name = document.getElementById('group-name-input').value.trim();
+    if (!name) { alert('Vul een groepsnaam in!'); return; }
+    const groupId = name.toLowerCase().replace(/\s+/g, '-');
+    try {
+        await db.collection('groups').doc(groupId).set({
+            groupName: name,
+            createdBy: auth.currentUser.uid,
+            scores: {
+                [auth.currentUser.uid]: { name: user.name || 'Atleet', score: calcScore() }
+            }
+        });
+        user.currentGroupId = groupId;
+        save();
+        alert('Groep "' + name + '" is aangemaakt!');
+        loadLeaderboard();
+    } catch(e) { alert('Fout: ' + e.message); }
+}
+
+async function joinGroup() {
+    if (!auth.currentUser) { alert('Je moet ingelogd zijn!'); return; }
+    const name = document.getElementById('group-name-input').value.trim();
+    if (!name) { alert('Typ de groepsnaam!'); return; }
+    const groupId = name.toLowerCase().replace(/\s+/g, '-');
+    try {
+        await db.collection('groups').doc(groupId).update({
+            [`scores.${auth.currentUser.uid}`]: { name: user.name || 'Atleet', score: calcScore() }
+        });
+        user.currentGroupId = groupId;
+        save();
+        loadLeaderboard();
+    } catch(e) { alert('Groep niet gevonden! Controleer de naam.'); }
+}
+
+async function loadLeaderboard() {
+    if (!user.currentGroupId) return;
+    const container = document.getElementById('leaderboard-container');
+    container.innerHTML = '<div class="card"><div class="spinner"></div></div>';
+    try {
+        const doc = await db.collection('groups').doc(user.currentGroupId).get();
+        if (!doc.exists) { container.innerHTML = ''; return; }
+        const data = doc.data();
+        const myUid = auth.currentUser?.uid;
+        const players = Object.entries(data.scores)
+            .map(([uid, info]) => ({ ...info, isMe: uid === myUid }))
+            .sort((a, b) => b.score - a.score);
+
+        let html = `<div class="card">
+            <strong style="font-size:12px;display:block;margin-bottom:12px;color:var(--gold);">🏆 ${data.groupName}</strong>`;
+        players.forEach((p, i) => {
+            const medal = i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : `${i+1}.`;
+            html += `<div class="leaderboard-row ${i===0?'gold-border':''}">
+                <div>
+                    <span style="font-size:16px;margin-right:8px;">${medal}</span>
+                    <span style="font-weight:${p.isMe?'800':'600'};font-size:13px;color:${p.isMe?'var(--blue)':'var(--accent)'};">${p.name}</span>
+                    ${p.isMe ? '<span style="font-size:9px;color:var(--blue);margin-left:4px;">(jij)</span>' : ''}
+                </div>
+                <div class="leaderboard-num">${p.score}</div>
+            </div>`;
+        });
+        html += '</div>';
+        container.innerHTML = html;
+    } catch(e) { container.innerHTML = ''; }
+}
+
+// Update score in groep na workout
+async function updateGroupScore() {
+    if (!user.currentGroupId || !auth.currentUser) return;
+    try {
+        await db.collection('groups').doc(user.currentGroupId).update({
+            [`scores.${auth.currentUser.uid}.score`]: calcScore(),
+            [`scores.${auth.currentUser.uid}.name`]:  user.name || 'Atleet'
+        });
+    } catch(e) {}
+}
+
 // ============================================================
 // WORKOUT LOGICA
 // ============================================================
 let circuit = [], cIdx = 0, reps = 0, sets = 1;
 let isRest = false, restTimer = null, tLeft = 30;
-let sessionScores = [];
-let stage = 'up';
-let currentCat = '';
-let camera = null;
-let lastRepTime = 0;
- 
+let sessionScores = [], stage = 'up', currentCat = '', camera = null, lastRepTime = 0;
+
 function startCircuit(cat) {
     currentCat = cat;
     circuit = [...exercises[cat]].sort(() => 0.5 - Math.random());
@@ -564,7 +811,7 @@ function startCircuit(cat) {
     startAI();
     startRest(30, "LEES DE UITLEG");
 }
- 
+
 function stopWorkout() {
     if (camera) { try { camera.stop(); } catch(e) {} camera = null; }
     if (sessionScores.length > 0) {
@@ -574,7 +821,7 @@ function stopWorkout() {
     save();
     tab('dash');
 }
- 
+
 function startRest(time, title) {
     isRest = true; tLeft = time;
     const overlay = document.getElementById('rest-overlay');
@@ -584,7 +831,7 @@ function startRest(time, title) {
     document.getElementById('rest-instr').innerText = circuit[cIdx] ? circuit[cIdx].i : '';
     runTimer();
 }
- 
+
 function runTimer() {
     document.getElementById('timer-val').innerText = tLeft;
     if (restTimer) clearInterval(restTimer);
@@ -594,9 +841,9 @@ function runTimer() {
         if (tLeft <= 0) skipRest();
     }, 1000);
 }
- 
+
 function adjustTime(s) { tLeft += s; document.getElementById('timer-val').innerText = tLeft; }
- 
+
 function skipRest() {
     clearInterval(restTimer);
     isRest = false;
@@ -605,7 +852,7 @@ function skipRest() {
     speak("Start " + (circuit[cIdx] ? circuit[cIdx].n : ''));
     lastRepTime = Date.now();
 }
- 
+
 function updateHUD(feedback) {
     document.getElementById('hud-idx').innerText = `${cIdx+1}/6`;
     document.getElementById('hud-set').innerText = `${sets}/3`;
@@ -622,7 +869,7 @@ function updateHUD(feedback) {
     else if (reps > 0) tip.innerText = "BLIJF GAAN!";
     else tip.innerText = "START!";
 }
- 
+
 function registerRep() {
     const now = Date.now();
     if (now - lastRepTime < 800) {
@@ -636,7 +883,7 @@ function registerRep() {
     updateHUD("GOED BEZIG! 💪");
     playSound('rep');
     showFloat("+15 XP");
- 
+
     if (circuit[cIdx]) {
         circuit[cIdx].focus.forEach(muscle => {
             if (!user.stats[muscle]) return;
@@ -651,7 +898,7 @@ function registerRep() {
         });
     }
     save();
- 
+
     if (reps >= getRepTarget()) {
         if (sets < 3) {
             sets++; reps = 0;
@@ -663,7 +910,7 @@ function registerRep() {
         }
     }
 }
- 
+
 function finishWorkout() {
     checkStreak();
     checkBadges('finish');
@@ -671,10 +918,11 @@ function finishWorkout() {
     if (!user.history) user.history = [];
     user.history.push({ date: new Date().toLocaleDateString('nl-NL'), cat: currentCat, reps: getRepTarget() * 3 * 6 });
     save();
+    updateGroupScore(); // Score bijwerken in groep
     speak("Training voltooid. Goed gedaan!");
     stopWorkout();
 }
- 
+
 function checkStreak() {
     const today = new Date().toDateString();
     if (user.lastDate === today) return;
@@ -682,7 +930,7 @@ function checkStreak() {
     user.streak = (user.lastDate === yesterday.toDateString()) ? (user.streak||0)+1 : 1;
     user.lastDate = today;
 }
- 
+
 // ============================================================
 // BADGES
 // ============================================================
@@ -698,7 +946,7 @@ function checkBadges(trigger) {
     if (Object.values(user.stats).reduce((a,b) => a+b.lvl,0) >= 50) add('b_elite');
     if (newBadge) { save(); showFloat("🏆 BADGE!"); speak("Nieuwe badge!"); }
 }
- 
+
 // ============================================================
 // VISUELE EFFECTEN
 // ============================================================
@@ -711,7 +959,7 @@ function showFloat(txt) {
     document.body.appendChild(el);
     setTimeout(() => el.remove(), 1500);
 }
- 
+
 function showLevelUp(muscle, lvl) {
     document.getElementById('lvl-msg').innerText = `${muscle} is nu Level ${lvl}!`;
     document.getElementById('lvl-overlay').classList.add('active');
@@ -720,7 +968,7 @@ function showLevelUp(muscle, lvl) {
     setTimeout(() => document.getElementById('lvl-overlay').classList.remove('active'), 2500);
 }
 function closeLvl() { document.getElementById('lvl-overlay').classList.remove('active'); }
- 
+
 // ============================================================
 // ANALYSE RAPPORT
 // ============================================================
@@ -741,14 +989,14 @@ function closeReport() {
     document.getElementById('report-overlay').style.display = 'none';
     tab('dash');
 }
- 
+
 // ============================================================
 // AI / MEDIAPIPE
 // ============================================================
 const videoElement = document.getElementById('input_video');
 const canvasElement = document.getElementById('output_canvas');
 const canvasCtx = canvasElement.getContext('2d');
- 
+
 function onResults(results) {
     if (!results.poseLandmarks || isRest) return;
 
@@ -759,39 +1007,30 @@ function onResults(results) {
     const m = results.poseLandmarks;
     const exe = circuit[cIdx] ? circuit[cIdx].n.toLowerCase() : '';
 
-    // Bereken kwaliteit voor kleur (0 = slecht/rood, 100 = perfect/groen)
-    let quality = 0;
+    // Kwaliteit berekenen voor kleur (0=rood, 50=geel, 100=groen)
+    let quality = 50;
     if (exe.includes('squat')) {
         const angle = calcAngle(m[24], m[26], m[28]);
-        if (stage === 'up') {
-            // Hoe dichter bij 90 graden onderaan, hoe beter
-            quality = Math.max(0, 100 - Math.abs(90 - angle));
-        }
+        if (stage === 'up') quality = Math.max(0, 100 - Math.abs(90 - angle));
         if (angle > 160) { stage = 'up'; quality = 20; }
         if (angle < 100 && stage === 'up') {
             sessionScores.push(Math.max(0, 100 - Math.abs(90 - angle)));
             stage = 'down';
             registerRep();
         }
-    } else {
-        // Voor andere oefeningen: neutraal geel
-        quality = 50;
     }
 
-    // Kleur bepalen op basis van kwaliteit
-    // 0 = rood, 50 = geel, 100 = groen
+    // Kleur: rood → geel → groen
     const r = quality < 50 ? 255 : Math.round(255 - (quality - 50) * 5.1);
     const g = quality < 50 ? Math.round(quality * 5.1) : 255;
-    const b = 0;
-    const lineColor = `rgb(${r}, ${g}, ${b})`;
-    const dotColor  = `rgba(${r}, ${g}, ${b}, 0.9)`;
+    const lineColor = `rgb(${r},${g},0)`;
 
-    // Verbindingen tekenen (skelet lijnen)
+    // Skelet verbindingen
     const connections = [
-        [11,12],[11,13],[13,15],[12,14],[14,16], // armen
-        [11,23],[12,24],[23,24],                 // romp
-        [23,25],[25,27],[24,26],[26,28],          // benen
-        [27,29],[29,31],[28,30],[30,32]           // voeten
+        [11,12],[11,13],[13,15],[12,14],[14,16],
+        [11,23],[12,24],[23,24],
+        [23,25],[25,27],[24,26],[26,28],
+        [27,29],[29,31],[28,30],[30,32]
     ];
 
     canvasCtx.lineWidth = 3;
@@ -802,38 +1041,33 @@ function onResults(results) {
 
     connections.forEach(([a, b]) => {
         const pA = m[a], pB = m[b];
-        if (!pA || !pB) return;
-        if (pA.visibility < 0.5 || pB.visibility < 0.5) return;
+        if (!pA || !pB || pA.visibility < 0.5 || pB.visibility < 0.5) return;
         canvasCtx.beginPath();
         canvasCtx.moveTo(pA.x * canvasElement.width, pA.y * canvasElement.height);
         canvasCtx.lineTo(pB.x * canvasElement.width, pB.y * canvasElement.height);
         canvasCtx.stroke();
     });
 
-    // Punten tekenen (joints)
-    canvasCtx.fillStyle = dotColor;
+    // Gewrichtspunten
+    canvasCtx.fillStyle = `rgba(${r},${g},0,0.9)`;
     canvasCtx.shadowBlur = 12;
     m.forEach((point, i) => {
         if (i < 11 || !point || point.visibility < 0.5) return;
         canvasCtx.beginPath();
-        canvasCtx.arc(
-            point.x * canvasElement.width,
-            point.y * canvasElement.height,
-            5, 0, 2 * Math.PI
-        );
+        canvasCtx.arc(point.x * canvasElement.width, point.y * canvasElement.height, 5, 0, 2 * Math.PI);
         canvasCtx.fill();
     });
 
     canvasCtx.shadowBlur = 0;
     canvasCtx.restore();
 }
- 
+
 function calcAngle(a, b, c) {
     const r = Math.atan2(c.y-b.y, c.x-b.x) - Math.atan2(a.y-b.y, a.x-b.x);
     let ang = Math.abs(r * 180 / Math.PI);
     return ang > 180 ? 360 - ang : ang;
 }
- 
+
 function startAI() {
     try {
         const pose = new Pose({ locateFile: f => `https://cdn.jsdelivr.net/npm/@mediapipe/pose/${f}` });
@@ -849,7 +1083,7 @@ function startAI() {
         camera.start();
     } catch(e) { console.error("AI fout:", e); }
 }
- 
+
 // ============================================================
 // SWIPE NAVIGATIE
 // ============================================================
@@ -859,7 +1093,10 @@ document.addEventListener('touchstart', e => { touchStartX = e.changedTouches[0]
 document.addEventListener('touchend', e => {
     const delta = e.changedTouches[0].screenX - touchStartX;
     if (Math.abs(delta) < 60) return;
-    const active = tabOrder.findIndex(t => !document.getElementById('scr-'+t).classList.contains('hidden'));
+    const active = tabOrder.findIndex(t => {
+        const el = document.getElementById('scr-'+t);
+        return el && !el.classList.contains('hidden');
+    });
     if (active === -1) return;
     const next = delta < 0 ? active+1 : active-1;
     if (next >= 0 && next < tabOrder.length) {
@@ -868,19 +1105,52 @@ document.addEventListener('touchend', e => {
         tab(t, el);
     }
 }, {passive:true});
- 
+
 // ============================================================
 // START APP
 // ============================================================
 window.addEventListener('load', () => {
-    const hasData = load();
-    if (hasData && user.name) {
-        showApp();
-    } else {
-        currentStep = 0;
-        tab('onboarding');
-        renderQ();
-    }
+    auth.onAuthStateChanged(async (fbUser) => {
+        if (fbUser) {
+            // Ingelogd — haal data op uit Firestore
+            try {
+                const doc = await db.collection('users').doc(fbUser.uid).get();
+                if (doc.exists) {
+                    user = doc.data();
+                    // Zorg dat alle velden bestaan
+                    if (!user.stats)   user.stats   = JSON.parse(JSON.stringify(DEFAULT_USER.stats));
+                    if (!user.badges)  user.badges  = [];
+                    if (!user.history) user.history = [];
+                    if (!user.friends) user.friends = [];
+                    save();
+                    showApp();
+                } else {
+                    // Account bestaat maar nog geen profiel → onboarding
+                    currentStep = 0;
+                    document.querySelectorAll('.screen').forEach(s => s.classList.add('hidden'));
+                    document.getElementById('scr-onboarding').classList.remove('hidden');
+                    renderQ();
+                }
+            } catch(e) {
+                console.error('Firebase fout:', e);
+                // Fallback op localStorage
+                const hasLocal = load();
+                if (hasLocal && user.name) showApp();
+                else { currentStep = 0; document.querySelectorAll('.screen').forEach(s => s.classList.add('hidden')); document.getElementById('scr-onboarding').classList.remove('hidden'); renderQ(); }
+            }
+        } else {
+            // Niet ingelogd
+            const hasLocal = load();
+            if (hasLocal && user.name) {
+                // Heeft lokale data → gewoon doorgaan, kan later inloggen via Sociaal
+                showApp();
+            } else {
+                // Nieuw → toon login
+                document.querySelectorAll('.screen').forEach(s => s.classList.add('hidden'));
+                document.getElementById('scr-auth').classList.remove('hidden');
+            }
+        }
+    });
 });
 </script>
 </body>
