@@ -726,13 +726,16 @@ async function createGroup() {
     const groupId = name.toLowerCase().replace(/\s+/g, '-');
     try {
         await db.collection('groups').doc(groupId).set({
-            groupName: name,
-            createdBy: auth.currentUser.uid,
-            createdByName: user.name,
-            scores: {
-                [auth.currentUser.uid]: { name: user.name || 'Atleet', score: calcScore() }
-            }
-        });
+    groupName: name,
+    createdBy: auth.currentUser.uid,  
+    createdByName: user.name,         
+    scores: {
+        [auth.currentUser.uid]: { 
+            name: user.name || 'Atleet', 
+            score: calcScore() 
+        }
+    }
+});
         user.currentGroupId = groupId;
         save();
         alert('Groep "' + name + '" is aangemaakt!');
