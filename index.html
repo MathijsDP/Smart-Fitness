@@ -695,20 +695,80 @@ const canvasCtx = canvasElement.getContext('2d');
  
 function onResults(results) {
     if (!results.poseLandmarks || isRest) return;
+
     canvasCtx.save();
     canvasCtx.clearRect(0, 0, canvasElement.width, canvasElement.height);
     canvasCtx.drawImage(results.image, 0, 0, canvasElement.width, canvasElement.height);
+
     const m = results.poseLandmarks;
     const exe = circuit[cIdx] ? circuit[cIdx].n.toLowerCase() : '';
-    if (exe.includes("squat")) {
+
+    // Bereken kwaliteit voor kleur (0 = slecht/rood, 100 = perfect/groen)
+    let quality = 0;
+    if (exe.includes('squat')) {
         const angle = calcAngle(m[24], m[26], m[28]);
-        if (angle > 160) stage = 'up';
+        if (stage === 'up') {
+            // Hoe dichter bij 90 graden onderaan, hoe beter
+            quality = Math.max(0, 100 - Math.abs(90 - angle));
+        }
+        if (angle > 160) { stage = 'up'; quality = 20; }
         if (angle < 100 && stage === 'up') {
             sessionScores.push(Math.max(0, 100 - Math.abs(90 - angle)));
             stage = 'down';
             registerRep();
         }
+    } else {
+        // Voor andere oefeningen: neutraal geel
+        quality = 50;
     }
+
+    // Kleur bepalen op basis van kwaliteit
+    // 0 = rood, 50 = geel, 100 = groen
+    const r = quality < 50 ? 255 : Math.round(255 - (quality - 50) * 5.1);
+    const g = quality < 50 ? Math.round(quality * 5.1) : 255;
+    const b = 0;
+    const lineColor = `rgb(${r}, ${g}, ${b})`;
+    const dotColor  = `rgba(${r}, ${g}, ${b}, 0.9)`;
+
+    // Verbindingen tekenen (skelet lijnen)
+    const connections = [
+        [11,12],[11,13],[13,15],[12,14],[14,16], // armen
+        [11,23],[12,24],[23,24],                 // romp
+        [23,25],[25,27],[24,26],[26,28],          // benen
+        [27,29],[29,31],[28,30],[30,32]           // voeten
+    ];
+
+    canvasCtx.lineWidth = 3;
+    canvasCtx.lineCap = 'round';
+    canvasCtx.strokeStyle = lineColor;
+    canvasCtx.shadowColor = lineColor;
+    canvasCtx.shadowBlur = 8;
+
+    connections.forEach(([a, b]) => {
+        const pA = m[a], pB = m[b];
+        if (!pA || !pB) return;
+        if (pA.visibility < 0.5 || pB.visibility < 0.5) return;
+        canvasCtx.beginPath();
+        canvasCtx.moveTo(pA.x * canvasElement.width, pA.y * canvasElement.height);
+        canvasCtx.lineTo(pB.x * canvasElement.width, pB.y * canvasElement.height);
+        canvasCtx.stroke();
+    });
+
+    // Punten tekenen (joints)
+    canvasCtx.fillStyle = dotColor;
+    canvasCtx.shadowBlur = 12;
+    m.forEach((point, i) => {
+        if (i < 11 || !point || point.visibility < 0.5) return;
+        canvasCtx.beginPath();
+        canvasCtx.arc(
+            point.x * canvasElement.width,
+            point.y * canvasElement.height,
+            5, 0, 2 * Math.PI
+        );
+        canvasCtx.fill();
+    });
+
+    canvasCtx.shadowBlur = 0;
     canvasCtx.restore();
 }
  
