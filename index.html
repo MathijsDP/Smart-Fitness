@@ -197,6 +197,12 @@
     <h1>COMMUNITY</h1>
     <div class="subtitle">Vrienden & Groepen</div>
 
+    <!-- Inkomende verzoeken -->
+    <div class="card" id="requests-card" style="display:none;">
+        <strong style="font-size:12px;display:block;margin-bottom:10px;color:var(--orange);">🔔 VRIENDSCHAPSVERZOEKEN</strong>
+        <div id="requests-list"></div>
+    </div>
+
     <!-- Vriend zoeken -->
     <div class="card">
         <strong style="font-size:12px;display:block;margin-bottom:10px;color:var(--blue);">🔍 VRIEND ZOEKEN</strong>
@@ -209,10 +215,6 @@
 
     <!-- Mijn vrienden -->
     <div class="card">
-        <div class="card">
-    <strong style="font-size:12px;display:block;margin-bottom:10px;">📩 VERZOEKEN</strong>
-    <div id="requests-list"></div>
-</div>
         <strong style="font-size:12px;display:block;margin-bottom:10px;">👥 MIJN VRIENDEN</strong>
         <div id="friends-list"><div style="color:var(--sub);font-size:12px;">Nog geen vrienden toegevoegd.</div></div>
     </div>
@@ -310,7 +312,7 @@
 const DEFAULT_USER = {
     name:'', age:'', gender:'', height:'', weight:'', goal:'', reps:10, availability:'',
     streak:0, lastDate:null, totalWorkouts:0, lastAnalysisScore:0,
-    badges:[], history:[], friends:[], friendRequests: [], sentRequests: [], currentGroupId:null,
+    badges:[], history:[], friends:[], currentGroupId:null,
     stats:{
         Borst:{xp:0,lvl:1}, Schouders:{xp:0,lvl:1}, Triceps:{xp:0,lvl:1},
         Abs:{xp:0,lvl:1}, Rug:{xp:0,lvl:1}, Benen:{xp:0,lvl:1},
@@ -514,14 +516,13 @@ function tab(t, el) {
     if (t === 'profile')  renderProfile();
     if (t === 'social') {
         if (!auth.currentUser) {
-            // Niet ingelogd → toon login
             document.querySelectorAll('.screen').forEach(s => s.classList.add('hidden'));
             document.getElementById('scr-auth').classList.remove('hidden');
             document.getElementById('nav').classList.add('hidden');
             return;
         }
+        loadFriendRequests();
         loadFriends();
-        loadRequests();
         if (user.currentGroupId) loadLeaderboard();
     }
 }
@@ -532,17 +533,26 @@ function tab(t, el) {
 function renderDash() {
     document.getElementById('dash-greet').innerText = "HEY " + (user.name || "CHAMP").toUpperCase() + "!";
     document.getElementById('streak-val').innerText = user.streak || 0;
-    document.getElementById('rank-display').innerText = getRank();
+    document.getElementById('rank-display').innerText = getRank() + ' · LVL ' + getDisplayLevel();
+}
+
+function getAvgLevel() {
+    const vals = Object.values(user.stats);
+    return vals.reduce((a,b) => a + b.lvl, 0) / vals.length;
 }
 
 function getRank() {
-    const total = Object.values(user.stats).reduce((a,b) => a + b.lvl, 0);
-    if (total < 5)   return "Rookie";
-    if (total < 10)  return "Amateur";
-    if (total < 25)  return "Atleet";
-    if (total < 50)  return "Pro";
-    if (total < 100) return "Legendarisch";
+    const avg = getAvgLevel();
+    if (avg < 2)  return "Rookie";
+    if (avg < 3)  return "Amateur";
+    if (avg < 5)  return "Atleet";
+    if (avg < 8)  return "Pro";
+    if (avg < 12) return "Legendarisch";
     return "ELITE";
+}
+
+function getDisplayLevel() {
+    return Math.floor(getAvgLevel());
 }
 
 function getRepTarget() {
@@ -638,25 +648,91 @@ function renderProgress() {
 }
 
 // ============================================================
-// SOCIAL — VRIENDEN
+// SOCIAL — VRIENDSCHAPSVERZOEKEN
 // ============================================================
-
-    async function acceptFriend(uid) {
-    const myUid = auth.currentUser.uid;
-
-    await db.collection('users').doc(myUid).update({
-        friends: firebase.firestore.FieldValue.arrayUnion(uid),
-        friendRequests: firebase.firestore.FieldValue.arrayRemove(uid)
-    });
-
-    await db.collection('users').doc(uid).update({
-        friends: firebase.firestore.FieldValue.arrayUnion(myUid),
-        sentRequests: firebase.firestore.FieldValue.arrayRemove(myUid)
-    });
-
-    alert("Vriend toegevoegd!");
-    loadFriends();
+async function sendFriendRequest(toUid, toName) {
+    const myUid = auth.currentUser?.uid;
+    if (!myUid) return;
+    try {
+        await db.collection('friendRequests').add({
+            from: myUid,
+            fromName: user.name || 'Onbekend',
+            to: toUid,
+            status: 'pending',
+            timestamp: firebase.firestore.FieldValue.serverTimestamp()
+        });
+        document.getElementById('search-results').innerHTML =
+            `<div style="color:var(--green);font-size:12px;font-weight:700;">✓ Vriendschapsverzoek verstuurd naar ${toName}!</div>`;
+    } catch(e) { alert('Fout: ' + e.message); }
 }
+
+async function loadFriendRequests() {
+    const myUid = auth.currentUser?.uid;
+    if (!myUid) return;
+    try {
+        const snap = await db.collection('friendRequests')
+            .where('to', '==', myUid)
+            .where('status', '==', 'pending')
+            .get();
+        const card = document.getElementById('requests-card');
+        const list = document.getElementById('requests-list');
+        list.innerHTML = '';
+
+        if (snap.empty) { card.style.display = 'none'; }
+        else {
+            card.style.display = 'block';
+            snap.forEach(doc => {
+                const d = doc.data();
+                list.innerHTML += `
+                    <div class="friend-card" style="margin-bottom:8px;">
+                        <div>
+                            <div style="font-weight:700;font-size:13px;">👤 ${d.fromName}</div>
+                            <div style="font-size:10px;color:var(--sub);">wil jouw vriend worden</div>
+                        </div>
+                        <div style="display:flex;gap:6px;">
+                            <button class="btn-small" onclick="acceptRequest('${doc.id}','${d.from}','${d.fromName}')" style="background:var(--green);border:none;color:#fff;">✓</button>
+                            <button class="btn-small" onclick="declineRequest('${doc.id}')" style="background:var(--red);border:none;color:#fff;">✕</button>
+                        </div>
+                    </div>`;
+            });
+        }
+
+        // Ook groepsuitnodigingen laden
+        await loadGroupInvites();
+    } catch(e) { console.error(e); }
+}
+
+async function acceptRequest(reqId, fromUid, fromName) {
+    const myUid = auth.currentUser?.uid;
+    if (!myUid) return;
+    try {
+        if (!user.friends) user.friends = [];
+        if (!user.friends.includes(fromUid)) user.friends.push(fromUid);
+        save();
+        // Voeg ook jezelf toe bij de ander
+        const senderDoc = await db.collection('users').doc(fromUid).get();
+        if (senderDoc.exists) {
+            const sf = senderDoc.data().friends || [];
+            if (!sf.includes(myUid)) sf.push(myUid);
+            await db.collection('users').doc(fromUid).update({ friends: sf });
+        }
+        await db.collection('friendRequests').doc(reqId).delete();
+        showFloat('✅ ' + fromName + ' is nu je vriend!');
+        loadFriendRequests();
+        loadFriends();
+    } catch(e) { alert('Fout: ' + e.message); }
+}
+
+async function declineRequest(reqId) {
+    try {
+        await db.collection('friendRequests').doc(reqId).delete();
+        loadFriendRequests();
+    } catch(e) {}
+}
+
+// ============================================================
+// SOCIAL — VRIENDEN ZOEKEN & TONEN
+// ============================================================
 async function searchFriend() {
     const term = document.getElementById('search-input').value.trim().toLowerCase();
     const div  = document.getElementById('search-results');
@@ -664,46 +740,31 @@ async function searchFriend() {
     div.innerHTML = '<div class="spinner"></div>';
     try {
         const snap = await db.collection('users').where('name', '==', term).get();
-        if (snap.empty) {
-            div.innerHTML = '<div style="color:var(--sub);font-size:12px;">Niemand gevonden met deze naam.</div>';
-            return;
-        }
+        if (snap.empty) { div.innerHTML = '<div style="color:var(--sub);font-size:12px;">Niemand gevonden.</div>'; return; }
         div.innerHTML = '';
         snap.forEach(doc => {
             const d = doc.data();
             const isFriend = (user.friends || []).includes(doc.id);
             const isMe = auth.currentUser && doc.id === auth.currentUser.uid;
             if (isMe) return;
-            const totalLvl = d.stats ? Object.values(d.stats).reduce((a,b) => a + b.lvl, 0) : 0;
+            const avgLvl = d.stats
+                ? (Object.values(d.stats).reduce((a,b) => a + b.lvl, 0) / Object.values(d.stats).length).toFixed(1)
+                : '1.0';
             div.innerHTML += `
                 <div class="friend-card">
                     <div>
                         <div style="font-weight:700;font-size:13px;">${d.name}</div>
-                        <div style="font-size:10px;color:var(--sub);">Totaal Level ${totalLvl} · ${d.goal || 'Atleet'}</div>
+                        <div style="font-size:10px;color:var(--sub);">Gem. Level ${avgLvl} · ${d.goal || 'Atleet'}</div>
                     </div>
                     ${isFriend
                         ? '<span style="font-size:11px;color:var(--green);font-weight:700;">✓ Vriend</span>'
-                        : `<button class="btn-small" onclick="sendFriendRequest('${doc.id}')" style="background:var(--blue);border:none;color:#fff;">+ Voeg toe</button>`
+                        : `<button class="btn-small" onclick="sendFriendRequest('${doc.id}','${d.name}')" style="background:var(--blue);border:none;color:#fff;">+ Verzoek</button>`
                     }
                 </div>`;
         });
     } catch(e) {
         div.innerHTML = '<div style="color:var(--red);font-size:12px;">Fout — zorg dat je ingelogd bent.</div>';
     }
-}
-
-async function sendFriendRequest(targetUid) {
-    const myUid = auth.currentUser.uid;
-
-    await db.collection('users').doc(targetUid).update({
-        friendRequests: firebase.firestore.FieldValue.arrayUnion(myUid)
-    });
-
-    await db.collection('users').doc(myUid).update({
-        sentRequests: firebase.firestore.FieldValue.arrayUnion(targetUid)
-    });
-
-    alert("Verzoek verstuurd!");
 }
 
 async function loadFriends() {
@@ -719,16 +780,20 @@ async function loadFriends() {
             const doc = await db.collection('users').doc(uid).get();
             if (!doc.exists) continue;
             const d = doc.data();
-            const totalLvl = d.stats ? Object.values(d.stats).reduce((a,b) => a + b.lvl, 0) : 0;
+            const avgLvl = d.stats
+                ? (Object.values(d.stats).reduce((a,b) => a + b.lvl, 0) / Object.values(d.stats).length).toFixed(1)
+                : '1.0';
             html += `
-                <div class="friend-card">
+                <div class="friend-card" style="margin-bottom:8px;">
                     <div>
                         <div style="font-weight:700;font-size:13px;">${d.name}</div>
-                        <div style="font-size:10px;color:var(--sub);">${d.goal || 'Atleet'} · ${d.totalWorkouts || 0} workouts</div>
+                        <div style="font-size:10px;color:var(--sub);">Gem. Level ${avgLvl} · ${d.totalWorkouts||0} workouts</div>
                     </div>
-                    <div style="text-align:right;">
-                        <div style="font-weight:900;font-size:16px;color:var(--blue);">LVL ${totalLvl}</div>
-                        <div style="font-size:9px;color:var(--sub);">TOTAAL</div>
+                    <div style="display:flex;gap:6px;align-items:center;">
+                        <div style="font-weight:900;font-size:16px;color:var(--blue);margin-right:4px;">LVL ${Math.floor(parseFloat(avgLvl))}</div>
+                        ${user.currentGroupId
+                            ? `<button class="btn-small" onclick="inviteFriendToGroup('${uid}','${d.name}')" style="background:var(--orange);border:none;color:#fff;">Uitnodigen</button>`
+                            : ''}
                     </div>
                 </div>`;
         } catch(e) {}
@@ -736,39 +801,80 @@ async function loadFriends() {
     div.innerHTML = html || '<div style="color:var(--sub);font-size:12px;">Vrienden niet geladen.</div>';
 }
 
-    async function loadRequests() {
-    const div = document.getElementById('requests-list');
-
-    if (!user.friendRequests || user.friendRequests.length === 0) {
-        div.innerHTML = '<div style="color:var(--sub);font-size:12px;">Geen verzoeken</div>';
-        return;
-    }
-
-    let html = '';
-
-    for (const uid of user.friendRequests) {
-        const doc = await db.collection('users').doc(uid).get();
-        if (!doc.exists) continue;
-
-        const d = doc.data();
-
-        html += `
-        <div class="friend-card">
-            <div>${d.name}</div>
-            <button class="btn-small" onclick="acceptFriend('${uid}')">ACCEPT</button>
-        </div>`;
-    }
-
-    div.innerHTML = html;
-}
-
 // ============================================================
-// SOCIAL — GROEPEN & LEADERBOARD
+// SOCIAL — GROEPEN, UITNODIGEN & LEADERBOARD
 // ============================================================
 function calcScore() {
-    const keys = Object.keys(user.stats);
-    const total = keys.reduce((s, k) => s + user.stats[k].lvl, 0);
-    return Math.round((total / keys.length) * 10);
+    return Math.round(getAvgLevel() * 10);
+}
+
+async function inviteFriendToGroup(friendUid, friendName) {
+    if (!user.currentGroupId) { alert('Maak eerst een groep aan!'); return; }
+    if (!auth.currentUser) return;
+    try {
+        await db.collection('groupInvites').add({
+            from: auth.currentUser.uid,
+            fromName: user.name || 'Iemand',
+            to: friendUid,
+            groupId: user.currentGroupId,
+            status: 'pending',
+            timestamp: firebase.firestore.FieldValue.serverTimestamp()
+        });
+        showFloat('📨 Uitnodiging verstuurd!');
+        alert(friendName + ' is uitgenodigd voor de groep!');
+    } catch(e) { alert('Fout: ' + e.message); }
+}
+
+async function loadGroupInvites() {
+    const myUid = auth.currentUser?.uid;
+    if (!myUid) return;
+    try {
+        const snap = await db.collection('groupInvites')
+            .where('to', '==', myUid)
+            .where('status', '==', 'pending')
+            .get();
+        if (snap.empty) return;
+        const card = document.getElementById('requests-card');
+        const list = document.getElementById('requests-list');
+        card.style.display = 'block';
+        snap.forEach(doc => {
+            const d = doc.data();
+            list.innerHTML += `
+                <div class="friend-card" style="margin-bottom:8px;border-left:3px solid var(--gold);">
+                    <div>
+                        <div style="font-weight:700;font-size:13px;">🏆 Groepsuitnodiging</div>
+                        <div style="font-size:10px;color:var(--sub);">${d.fromName} nodigt je uit voor groep "${d.groupId}"</div>
+                    </div>
+                    <div style="display:flex;gap:6px;">
+                        <button class="btn-small" onclick="acceptGroupInvite('${doc.id}','${d.groupId}')" style="background:var(--gold);border:none;color:#000;font-weight:700;">JOIN</button>
+                        <button class="btn-small" onclick="declineGroupInvite('${doc.id}')" style="background:var(--red);border:none;color:#fff;">✕</button>
+                    </div>
+                </div>`;
+        });
+    } catch(e) { console.error(e); }
+}
+
+async function acceptGroupInvite(inviteId, groupId) {
+    if (!auth.currentUser) return;
+    try {
+        await db.collection('groups').doc(groupId).update({
+            [`scores.${auth.currentUser.uid}`]: { name: user.name || 'Atleet', score: calcScore() }
+        });
+        user.currentGroupId = groupId;
+        save();
+        await db.collection('groupInvites').doc(inviteId).delete();
+        showFloat('🏆 Je bent lid van de groep!');
+        loadFriendRequests();
+        loadFriends();
+        loadLeaderboard();
+    } catch(e) { alert('Fout: ' + e.message); }
+}
+
+async function declineGroupInvite(inviteId) {
+    try {
+        await db.collection('groupInvites').doc(inviteId).delete();
+        loadFriendRequests();
+    } catch(e) {}
 }
 
 async function createGroup() {
@@ -778,19 +884,14 @@ async function createGroup() {
     const groupId = name.toLowerCase().replace(/\s+/g, '-');
     try {
         await db.collection('groups').doc(groupId).set({
-    groupName: name,
-    createdBy: auth.currentUser.uid,  
-    createdByName: user.name,         
-    scores: {
-        [auth.currentUser.uid]: { 
-            name: user.name || 'Atleet', 
-            score: calcScore() 
-        }
-    }
-});
+            groupName: name,
+            createdBy: auth.currentUser.uid,
+            scores: { [auth.currentUser.uid]: { name: user.name || 'Atleet', score: calcScore() } }
+        });
         user.currentGroupId = groupId;
         save();
-        alert('Groep "' + name + '" is aangemaakt!');
+        alert('Groep "' + name + '" aangemaakt! Nodig vrienden uit via de vriendenlijst.');
+        loadFriends();
         loadLeaderboard();
     } catch(e) { alert('Fout: ' + e.message); }
 }
@@ -806,8 +907,9 @@ async function joinGroup() {
         });
         user.currentGroupId = groupId;
         save();
+        loadFriends();
         loadLeaderboard();
-    } catch(e) { alert('Groep niet gevonden! Controleer de naam.'); }
+    } catch(e) { alert('Groep niet gevonden!'); }
 }
 
 async function loadLeaderboard() {
@@ -822,11 +924,10 @@ async function loadLeaderboard() {
         const players = Object.entries(data.scores)
             .map(([uid, info]) => ({ ...info, isMe: uid === myUid }))
             .sort((a, b) => b.score - a.score);
-
         let html = `<div class="card">
             <strong style="font-size:12px;display:block;margin-bottom:12px;color:var(--gold);">🏆 ${data.groupName}</strong>`;
         players.forEach((p, i) => {
-            const medal = i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : `${i+1}.`;
+            const medal = i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : (i+1)+'.';
             html += `<div class="leaderboard-row ${i===0?'gold-border':''}">
                 <div>
                     <span style="font-size:16px;margin-right:8px;">${medal}</span>
@@ -841,7 +942,6 @@ async function loadLeaderboard() {
     } catch(e) { container.innerHTML = ''; }
 }
 
-// Update score in groep na workout
 async function updateGroupScore() {
     if (!user.currentGroupId || !auth.currentUser) return;
     try {
