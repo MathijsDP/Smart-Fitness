@@ -199,13 +199,13 @@
 
     <!-- Inkomende verzoeken -->
     <div class="card" id="requests-card" style="display:none;">
-        <strong style="font-size:12px;display:block;margin-bottom:10px;color:var(--orange);">🔔 VRIENDSCHAPSVERZOEKEN</strong>
+        <strong style="font-size:12px;display:block;margin-bottom:10px;color:var(--orange);">🔔 Vriendschapverzoeken</strong>
         <div id="requests-list"></div>
     </div>
 
     <!-- Vriend zoeken -->
     <div class="card">
-        <strong style="font-size:12px;display:block;margin-bottom:10px;color:var(--blue);">🔍 VRIEND ZOEKEN</strong>
+        <strong style="font-size:12px;display:block;margin-bottom:10px;color:var(--blue);">🔍 Vriend zoeken</strong>
         <div style="display:flex;gap:8px;">
             <input type="text" id="search-input" placeholder="Zoek op naam..." style="flex:1;margin-bottom:0;">
             <button class="btn-small" onclick="searchFriend()" style="background:var(--blue);border:none;color:#fff;white-space:nowrap;">ZOEK</button>
@@ -215,17 +215,17 @@
 
     <!-- Mijn vrienden -->
     <div class="card">
-        <strong style="font-size:12px;display:block;margin-bottom:10px;">👥 MIJN VRIENDEN</strong>
+        <strong style="font-size:12px;display:block;margin-bottom:10px;">👥 Mijn vrienden</strong>
         <div id="friends-list"><div style="color:var(--sub);font-size:12px;">Nog geen vrienden toegevoegd.</div></div>
     </div>
 
     <!-- Groep aanmaken / joinen -->
     <div class="card">
-        <strong style="font-size:12px;display:block;margin-bottom:10px;">🏆 GROEP</strong>
-        <input type="text" id="group-name-input" placeholder="Groepsnaam (bijv: Klas4A)..." style="margin-bottom:8px;">
+        <strong style="font-size:12px;display:block;margin-bottom:10px;">🏆 Groep</strong>
+        <input type="text" id="group-name-input" placeholder="Groepsnaam (bijv: Klas6iict)..." style="margin-bottom:8px;">
         <div style="display:flex;gap:8px;">
             <button class="btn" onclick="createGroup()" style="flex:1;height:44px;padding:0;background:var(--blue);color:#fff;">MAAK GROEP</button>
-            <button class="btn" onclick="joinGroup()"   style="flex:1;height:44px;padding:0;background:var(--surface-2);color:#fff;border:1px solid #333;">JOIN GROEP</button>
+            <button class="btn" onclick="joinGroup()"   style="flex:1;height:44px;padding:0;background:var(--surface-2);color:#fff;border:1px solid #333;">Join groep</button>
         </div>
     </div>
 
@@ -239,7 +239,7 @@
 <!-- ── PROFIEL ── -->
 <div id="scr-profile" class="screen hidden">
     <h1>PROFIEL</h1>
-    <div class="subtitle">Jouw gegevens</div>
+    <div class="subtitle">Jouw gegeven</div>
     <div class="card" id="profile-fields"></div>
     <button class="btn-small" style="width:100%;padding:15px;margin:20px 0;background:#220000;border-color:#500;color:#f55;" onclick="resetData()">Reset alle data</button>
 </div>
