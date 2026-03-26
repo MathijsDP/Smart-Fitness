@@ -5,6 +5,38 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Smart-Fitness-Mathijs</title>
 
+    <!--
+    ╔══════════════════════════════════════════════════════════╗
+    ║  BIJGEWERKTE FIREBASE RULES (kopieer naar Firebase)      ║
+    ╠══════════════════════════════════════════════════════════╣
+    rules_version = '2';
+    service cloud.firestore {
+      match /databases/{database}/documents {
+        match /users/{userId} {
+          allow read: if request.auth != null;
+          allow write: if request.auth != null && request.auth.uid == userId;
+          // Laat iemand anders jouw friends-array updaten (voor wederzijdse vriendschap)
+          allow update: if request.auth != null
+            && request.resource.data.diff(resource.data)
+               .affectedKeys().hasOnly(['friends']);
+        }
+        match /groups/{groupId} {
+          allow read, write: if request.auth != null;
+        }
+        match /friendRequests/{docId} {
+          allow read, write: if request.auth != null;
+        }
+        match /groupInvites/{docId} {
+          allow read, write: if request.auth != null;
+        }
+        match /challenges/{docId} {
+          allow read, write: if request.auth != null;
+        }
+      }
+    }
+    ╚══════════════════════════════════════════════════════════╝
+    -->
+
     <script src="https://cdn.jsdelivr.net/npm/@mediapipe/pose"></script>
     <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils"></script>
     <script src="https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils"></script>
@@ -29,41 +61,37 @@
     </script>
 
     <style>
-        :root { --bg: #1b2025; --surface: #121212; --surface-2: #1e1e1e; --accent: #fff; --sub: #888; --blue: #007aff; --orange: #ff9500; --green: #34c759; --red: #ff3b30; --gold: #ffd700; }
+        /* ── THEMA VARIABELEN ── */
+        :root {
+            --bg: #1b2025; --surface: #121212; --surface-2: #1e1e1e;
+            --accent: #fff; --sub: #888; --blue: #007aff; --orange: #ff9500;
+            --green: #34c759; --red: #ff3b30; --gold: #ffd700;
+            --card-border: #222; --nav-bg: rgba(16,52,84,1);
+        }
+        body.light-mode {
+            --bg: #f0f2f5; --surface: #ffffff; --surface-2: #e8eaed;
+            --accent: #111; --sub: #666; --card-border: #ddd;
+            --nav-bg: rgba(255,255,255,0.97);
+        }
 
         * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--accent); user-select: none; -webkit-user-select: none; transition: background 0.3s, color 0.3s; }
 
-        body {
-            font-family: 'Inter', sans-serif;
-            background: var(--bg);
-            color: var(--accent);
-            user-select: none;
-            -webkit-user-select: none;
-        }
-
-        .screen {
-            min-height: 100vh;
-            padding: 30px 20px 120px;
-            display: flex;
-            flex-direction: column;
-            overflow-y: auto;
-            -webkit-overflow-scrolling: touch;
-            touch-action: pan-y;
-        }
+        .screen { min-height: 100vh; padding: 30px 20px 120px; display: flex; flex-direction: column; overflow-y: auto; -webkit-overflow-scrolling: touch; touch-action: pan-y; }
         .hidden { display: none !important; }
 
         h1 { font-family: 'Montserrat', sans-serif; font-size: 26px; font-weight: 900; text-transform: uppercase; margin: 0 0 5px; letter-spacing: -0.5px; }
         .subtitle { color: var(--sub); font-size: 11px; letter-spacing: 1.5px; text-transform: uppercase; margin-bottom: 25px; font-weight: 700; }
 
-        .q-box { flex: 1; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; }
-        input, select { width: 100%; max-width: 320px; padding: 16px; border-radius: 12px; border: 1px solid #333; background: var(--surface-2); color: #fff; font-size: 16px; margin-bottom: 12px; outline: none; transition: 0.2s; }
+        .q-box { flex: 1; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; padding-bottom: 100px; }
+        input, select { width: 100%; max-width: 320px; padding: 16px; border-radius: 12px; border: 1px solid var(--card-border); background: var(--surface-2); color: var(--accent); font-size: 16px; margin-bottom: 12px; outline: none; transition: 0.2s; }
         input:focus { border-color: var(--blue); box-shadow: 0 0 15px rgba(0,122,255,0.3); }
 
-        .btn { background: var(--accent); color: #000; border: none; padding: 18px; border-radius: 16px; width: 100%; max-width: 320px; font-weight: 800; text-transform: uppercase; cursor: pointer; transition: transform 0.1s; box-shadow: 0 4px 15px rgba(255,255,255,0.1); font-size: 14px; }
+        .btn { background: var(--accent); color: var(--bg); border: none; padding: 18px; border-radius: 16px; width: 100%; max-width: 320px; font-weight: 800; text-transform: uppercase; cursor: pointer; transition: transform 0.1s; box-shadow: 0 4px 15px rgba(255,255,255,0.1); font-size: 14px; }
         .btn:active { transform: scale(0.98); }
-        .btn-small { padding: 10px 15px; font-size: 11px; font-weight: 700; background: var(--surface-2); color: #fff; border: 1px solid #333; border-radius: 8px; cursor: pointer; }
+        .btn-small { padding: 10px 15px; font-size: 11px; font-weight: 700; background: var(--surface-2); color: var(--accent); border: 1px solid var(--card-border); border-radius: 8px; cursor: pointer; }
 
-        .card { background: var(--surface); border-radius: 24px; padding: 20px; margin-bottom: 15px; border: 1px solid #222; position: relative; overflow: hidden; }
+        .card { background: var(--surface); border-radius: 24px; padding: 20px; margin-bottom: 15px; border: 1px solid var(--card-border); position: relative; overflow: hidden; transition: background 0.3s; }
 
         .streak-badge { background: rgba(255,149,0,0.15); color: var(--orange); padding: 8px 16px; border-radius: 100px; font-weight: 800; font-size: 13px; display: inline-flex; align-items: center; gap: 8px; margin-bottom: 20px; border: 1px solid rgba(255,149,0,0.3); }
         .rank-badge { background: rgba(0,122,255,0.15); color: var(--blue); padding: 5px 10px; border-radius: 6px; font-size: 10px; font-weight: 800; text-transform: uppercase; }
@@ -85,7 +113,7 @@
         .float-txt { position: fixed; font-weight: 900; font-size: 16px; color: var(--gold); pointer-events: none; animation: floatUp 1.5s ease-out forwards; z-index: 5000; text-shadow: 0 2px 4px rgba(0,0,0,0.8); }
         @keyframes floatUp { 0% { transform: translateY(0) scale(1); opacity: 1; } 100% { transform: translateY(-80px) scale(1.2); opacity: 0; } }
 
-        .navbar { position: fixed; bottom: 0; left: 0; width: 100%; background: rgba(16,52,84,1); border-top: 1px solid #222; display: flex; justify-content: space-around; padding: 15px 0; padding-bottom: calc(15px + env(safe-area-inset-bottom)); z-index: 1000; }
+        .navbar { position: fixed; bottom: 0; left: 0; width: 100%; background: var(--nav-bg); border-top: 1px solid var(--card-border); display: flex; justify-content: space-around; padding: 15px 0; padding-bottom: calc(15px + env(safe-area-inset-bottom)); z-index: 1000; backdrop-filter: blur(10px); }
         .nav-item { color: var(--sub); font-size: 9px; font-weight: 700; cursor: pointer; text-align: center; text-transform: uppercase; transition: 0.2s; }
         .nav-item.active { color: var(--accent); transform: translateY(-2px); }
         .nav-item i { display: block; font-size: 20px; margin-bottom: 4px; font-style: normal; }
@@ -106,15 +134,33 @@
         .feedback-good { color: var(--green) !important; }
         .feedback-warn { color: var(--orange) !important; }
 
-        /* Social styles */
         .friend-card { display: flex; justify-content: space-between; align-items: center; padding: 12px; background: var(--surface-2); border-radius: 12px; margin-bottom: 8px; }
-        .leaderboard-row { display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 1px solid #222; }
+        .leaderboard-row { display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 1px solid var(--card-border); }
         .leaderboard-row:last-child { border-bottom: none; }
         .leaderboard-num { font-family: 'Montserrat', sans-serif; font-size: 20px; font-weight: 900; color: var(--blue); }
         .gold-border { border-left: 4px solid var(--gold) !important; padding-left: 12px; }
 
         @keyframes spin { to { transform: rotate(360deg); } }
         .spinner { width: 30px; height: 30px; border: 3px solid #333; border-top-color: var(--blue); border-radius: 50%; animation: spin 0.8s linear infinite; margin: 20px auto; }
+
+        /* ── AUTH TOGGLE ── */
+        .auth-tab { padding: 10px 24px; border-radius: 10px; font-weight: 700; font-size: 13px; cursor: pointer; border: none; background: transparent; color: var(--sub); transition: 0.2s; }
+        .auth-tab.active { background: var(--blue); color: #fff; }
+
+        /* ── FOTO GRID ── */
+        .photo-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; margin-top: 10px; }
+        .photo-thumb { aspect-ratio: 1; border-radius: 8px; object-fit: cover; width: 100%; }
+
+        /* ── VOICE BUTTON ── */
+        #voice-btn { position: absolute; top: 80px; right: 15px; z-index: 2003; background: rgba(0,0,0,0.6); border: 2px solid #555; border-radius: 50%; width: 44px; height: 44px; font-size: 20px; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+        #voice-btn.active { border-color: var(--green); background: rgba(52,199,89,0.2); }
+
+        /* ── PDF PRINT ── */
+        @media print {
+            body * { visibility: hidden; }
+            #print-area, #print-area * { visibility: visible; }
+            #print-area { position: fixed; inset: 0; padding: 30px; background: white; color: black; font-family: Arial, sans-serif; }
+        }
     </style>
 </head>
 <body>
@@ -123,20 +169,24 @@
 <div id="scr-auth" class="screen hidden">
     <div class="q-box">
         <div style="font-size:52px;margin-bottom:12px;">💪</div>
-        <h1 style="margin-bottom:4px;">Smart Fitness</h1>
-        <p class="subtitle">Log in om je voortgang op te slaan</p>
+        <h1 style="margin-bottom:16px;">Smart Fitness</h1>
+
+        <!-- Toggle tabs -->
+        <div style="display:flex;gap:4px;background:var(--surface-2);padding:4px;border-radius:14px;margin-bottom:20px;">
+            <button class="auth-tab active" id="tab-login"  onclick="switchAuthMode('login')">Inloggen</button>
+            <button class="auth-tab"        id="tab-signup" onclick="switchAuthMode('signup')">Account aanmaken</button>
+        </div>
+
         <input type="email"    id="auth-email" placeholder="E-mailadres"  autocomplete="email">
         <input type="password" id="auth-pass"  placeholder="Wachtwoord"   autocomplete="current-password">
-        <button class="btn" onclick="authLogin()" style="margin-bottom:10px;">INLOGGEN</button>
-        <button class="btn-small" onclick="authSignup()" style="background:transparent;border:none;color:var(--sub);padding:10px;width:100%;max-width:320px;font-size:13px;">Nieuw account aanmaken</button>
-        <div id="auth-error" style="color:var(--red);font-size:12px;margin-top:8px;text-align:center;min-height:20px;"></div>
+        <button class="btn" id="auth-main-btn" onclick="authLogin()" style="margin-bottom:10px;">INLOGGEN</button>
+        <div id="auth-error" style="font-size:12px;margin-top:8px;text-align:center;min-height:36px;line-height:1.5;max-width:300px;"></div>
     </div>
 </div>
 
 <!-- ── ONBOARDING ── -->
 <div id="scr-onboarding" class="screen hidden">
     <div class="q-box" id="q-container"></div>
-    <!-- Voortgangsbalk onderaan -->
     <div style="position:fixed;bottom:0;left:0;width:100%;padding:20px 20px calc(20px + env(safe-area-inset-bottom));background:rgba(18,18,18,0.95);backdrop-filter:blur(10px);border-top:1px solid #222;z-index:999;">
         <div style="display:flex;justify-content:space-between;font-size:10px;font-weight:700;color:var(--sub);margin-bottom:8px;text-transform:uppercase;letter-spacing:1px;">
             <span id="q-progress-label">Vraag 1 van 8</span>
@@ -151,12 +201,34 @@
 
 <!-- ── DASHBOARD ── -->
 <div id="scr-dash" class="screen hidden">
-    <div style="display:flex; justify-content:space-between; align-items:center;">
+    <div style="display:flex;justify-content:space-between;align-items:center;">
         <div class="streak-badge">🔥 <span id="streak-val">0</span></div>
         <div id="rank-display" class="rank-badge">ROOKIE</div>
     </div>
     <h1 id="dash-greet">HEY!</h1>
     <div class="subtitle">Tijd om te beginnen!</div>
+
+    <!-- Calorie balk -->
+    <div class="card" id="calorie-card" style="border-left:4px solid var(--orange);">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+            <strong style="font-size:13px;">🔥 Calorieën vandaag</strong>
+            <span id="cal-pct" style="font-size:11px;color:var(--sub);">0 / 0 kcal</span>
+        </div>
+        <div class="bar-bg"><div id="cal-bar" class="bar-fill" style="width:0%;background:var(--orange);"></div></div>
+        <div style="display:flex;gap:8px;margin-top:10px;align-items:center;">
+            <input type="number" id="cal-input" placeholder="Voeg kcal toe..." style="flex:1;margin:0;padding:10px;font-size:13px;">
+            <button class="btn-small" onclick="addCalories()" style="background:var(--orange);border:none;color:#fff;">+</button>
+            <button class="btn-small" onclick="resetCalories()" style="font-size:10px;">Reset</button>
+        </div>
+    </div>
+
+    <!-- Gepersonaliseerde workout -->
+    <div id="personal-workout-card" class="card" style="border-left:4px solid var(--gold);cursor:pointer;" onclick="startPersonalWorkout()">
+        <strong style="color:var(--gold);">⭐ Jouw Persoonlijke Workout</strong>
+        <div id="personal-workout-desc" style="color:var(--sub);font-size:11px;margin-top:5px;">Op basis van jouw profiel</div>
+        <div style="margin-top:10px;font-size:10px;font-weight:700;color:var(--gold);">AANBEVOLEN VOOR JOU ▶</div>
+    </div>
+
     <div class="card" onclick="startCircuit('Upper')" style="cursor:pointer;">
         <strong>Boven lichaam</strong>
         <div style="color:var(--sub);font-size:11px;margin-top:5px;">Borst, Armen & Schouders</div>
@@ -172,12 +244,6 @@
         <div style="color:var(--sub);font-size:11px;margin-top:5px;">Vetverbranding & Core</div>
         <div style="margin-top:10px;font-size:10px;font-weight:700;color:var(--blue);">Vetverbranding + core</div>
     </div>
-    <!-- Gepersonaliseerde workout -->
-    <div id="personal-workout-card" class="card" style="border-left:4px solid var(--gold);cursor:pointer;" onclick="startPersonalWorkout()">
-        <strong style="color:var(--gold);">⭐ Jouw Persoonlijke Workout</strong>
-        <div id="personal-workout-desc" style="color:var(--sub);font-size:11px;margin-top:5px;">Op basis van jouw profiel</div>
-        <div style="margin-top:10px;font-size:10px;font-weight:700;color:var(--gold);">AANBEVOLEN VOOR JOU</div>
-    </div>
 </div>
 
 <!-- ── ANALYSE ── -->
@@ -189,6 +255,11 @@
         <div style="color:var(--sub);font-size:11px;margin-top:5px;">Bekijk hoe goed je laatste training was.</div>
         <div style="margin-top:10px;font-size:10px;font-weight:700;color:var(--blue);">KLIK VOOR ANALYSE</div>
     </div>
+    <button class="btn" onclick="printReport()" style="background:var(--surface-2);color:var(--accent);border:1px solid var(--card-border);margin-top:4px;">
+        📄 Download rapport als PDF
+    </button>
+    <!-- Verborgen print area -->
+    <div id="print-area" style="display:none;"></div>
 </div>
 
 <!-- ── STATS ── -->
@@ -214,9 +285,9 @@
     <h1>COMMUNITY</h1>
     <div class="subtitle">Vrienden & Groepen</div>
 
-    <!-- Inkomende verzoeken -->
+    <!-- Inkomende verzoeken & uitdagingen -->
     <div class="card" id="requests-card" style="display:none;">
-        <strong style="font-size:12px;display:block;margin-bottom:10px;color:var(--orange);">🔔 Vriendschapverzoeken</strong>
+        <strong style="font-size:12px;display:block;margin-bottom:10px;color:var(--orange);">🔔 Meldingen</strong>
         <div id="requests-list"></div>
     </div>
 
@@ -242,7 +313,7 @@
         <input type="text" id="group-name-input" placeholder="Groepsnaam (bijv: Klas6iict)..." style="margin-bottom:8px;">
         <div style="display:flex;gap:8px;">
             <button class="btn" onclick="createGroup()" style="flex:1;height:44px;padding:0;background:var(--blue);color:#fff;">MAAK GROEP</button>
-            <button class="btn" onclick="joinGroup()"   style="flex:1;height:44px;padding:0;background:var(--surface-2);color:#fff;border:1px solid #333;">Join groep</button>
+            <button class="btn" onclick="joinGroup()"   style="flex:1;height:44px;padding:0;background:var(--surface-2);color:var(--accent);border:1px solid var(--card-border);">Join groep</button>
         </div>
     </div>
 
@@ -256,8 +327,34 @@
 <!-- ── PROFIEL ── -->
 <div id="scr-profile" class="screen hidden">
     <h1>PROFIEL</h1>
-    <div class="subtitle">Jouw gegeven</div>
+    <div class="subtitle">Jouw instellingen</div>
+
+    <!-- Dark/Light mode toggle -->
+    <div class="card" style="display:flex;justify-content:space-between;align-items:center;">
+        <div>
+            <strong style="font-size:13px;" id="theme-label">🌙 Donker thema</strong>
+            <div style="color:var(--sub);font-size:11px;margin-top:3px;">Wissel kleurenschema</div>
+        </div>
+        <div id="theme-toggle" onclick="toggleTheme()" style="width:48px;height:28px;background:#333;border-radius:14px;cursor:pointer;position:relative;transition:0.3s;">
+            <div id="theme-knob" style="width:22px;height:22px;background:#fff;border-radius:50%;position:absolute;top:3px;left:3px;transition:0.3s;"></div>
+        </div>
+    </div>
+
+    <!-- Profielgegevens -->
     <div class="card" id="profile-fields"></div>
+
+    <!-- Voortgangsfoto's -->
+    <div class="card">
+        <strong style="font-size:13px;display:block;margin-bottom:10px;">📸 Voortgangsfoto's</strong>
+        <div style="color:var(--sub);font-size:11px;margin-bottom:12px;">Sla wekelijks een foto op om je transformatie te volgen.</div>
+        <input type="file" id="photo-input" accept="image/*" capture="user" style="display:none;" onchange="savePhoto(this)">
+        <button class="btn-small" onclick="document.getElementById('photo-input').click()" style="width:100%;padding:12px;background:var(--blue);border:none;color:#fff;margin-bottom:10px;">
+            📷 Foto maken / uploaden
+        </button>
+        <div class="photo-grid" id="photo-grid"></div>
+    </div>
+
+    <!-- Reset -->
     <button class="btn-small" style="width:100%;padding:15px;margin:20px 0;background:#220000;border-color:#500;color:#f55;" onclick="resetData()">Reset alle data</button>
 </div>
 
@@ -266,6 +363,7 @@
     <video id="input_video" style="display:none;"></video>
     <canvas id="output_canvas"></canvas>
     <div id="coaching-tip">START POSITIE...</div>
+    <button id="voice-btn" onclick="toggleVoice()" title="Stem commando's">🎤</button>
     <div id="rest-overlay" class="hidden">
         <div id="rest-title" class="subtitle">RUST</div>
         <div id="rest-exe" style="font-size:28px;font-weight:900;margin-bottom:5px;"></div>
@@ -274,7 +372,11 @@
             <button class="btn-small" onclick="adjustTime(10)">+10s</button>
             <button class="btn-small" style="background:var(--blue);border-color:var(--blue);" onclick="skipRest()">Start nu</button>
         </div>
-        <div id="rest-instr" style="color:#ccc;font-size:13px;max-width:300px;margin-top:25px;line-height:1.6;font-weight:400;"></div>
+        <div id="rest-instr" style="color:#ccc;font-size:13px;max-width:300px;margin-top:20px;line-height:1.6;font-weight:400;"></div>
+        <!-- Video tutorial knop -->
+        <button id="tutorial-btn" onclick="openTutorial()" style="margin-top:15px;background:rgba(255,59,48,0.8);border:none;color:#fff;padding:10px 20px;border-radius:10px;font-weight:700;font-size:12px;cursor:pointer;">
+            ▶ YouTube tutorial
+        </button>
         <div style="position:absolute;bottom:40px;font-size:10px;color:var(--sub);">💡 Zorg dat je volledig in beeld staat.</div>
     </div>
     <div class="hud">
@@ -295,7 +397,7 @@
     </div>
 </div>
 
-<div id="report-overlay" style="position:fixed;inset:0;background:rgba(5,5,5,0.98);z-index:5000;display:none;flex-direction:column;align-items:center;justify-content:center;padding:20px;">
+<div id="report-overlay" style="position:fixed;inset:0;background:rgba(5,5,5,0.98);z-index:5000;display:none;flex-direction:column;align-items:center;justify-content:center;padding:20px;overflow-y:auto;">
     <div class="card" style="width:85%;max-width:400px;text-align:center;border:1px solid var(--blue);">
         <h1 style="color:var(--blue);font-size:20px;">TRAININGS RAPPORT</h1>
         <div class="subtitle">NET VOLTOOID</div>
@@ -309,7 +411,10 @@
             <div class="stat-header"><span>PRECISIE</span><span id="precision-val">0%</span></div>
             <div class="bar-bg"><div id="precision-bar" class="bar-fill" style="width:0%"></div></div>
         </div>
-        <button class="btn" onclick="closeReport()" style="margin-top:25px;background:var(--blue);color:white;">DOORGAAN</button>
+        <div style="display:flex;gap:8px;margin-top:20px;">
+            <button class="btn" onclick="closeReport()" style="flex:1;background:var(--blue);color:white;">DOORGAAN</button>
+            <button class="btn" onclick="printReport()" style="flex:1;background:var(--surface-2);color:var(--accent);border:1px solid var(--card-border);font-size:11px;">📄 PDF</button>
+        </div>
     </div>
 </div>
 
@@ -330,6 +435,7 @@ const DEFAULT_USER = {
     name:'', age:'', gender:'', height:'', weight:'', goal:'', reps:10, availability:'',
     streak:0, lastDate:null, totalWorkouts:0, lastAnalysisScore:0,
     badges:[], history:[], friends:[], currentGroupId:null,
+    caloriesGoal:2000, caloriesToday:0, caloriesDate:'',
     stats:{
         Borst:{xp:0,lvl:1}, Schouders:{xp:0,lvl:1}, Triceps:{xp:0,lvl:1},
         Abs:{xp:0,lvl:1}, Rug:{xp:0,lvl:1}, Benen:{xp:0,lvl:1},
@@ -346,7 +452,6 @@ function save() {
     localStorage.setItem('smartfitness_v1', JSON.stringify(user));
     const u = auth.currentUser;
     if (u) {
-        // nameSearch = lowercase naam voor zoekfunctie
         const dataToSave = { ...user, nameSearch: (user.name || '').toLowerCase() };
         db.collection('users').doc(u.uid).set(dataToSave).catch(e => console.error('Save fout:', e));
     }
@@ -361,29 +466,44 @@ function load() {
 function resetData() {
     if (!confirm('Alle data wissen?')) return;
     localStorage.removeItem('smartfitness_v1');
+    localStorage.removeItem('smartfitness_photos');
     auth.signOut().then(() => location.reload());
 }
 
 // ============================================================
-// FIREBASE AUTH
+// FIREBASE AUTH — met betere foutmeldingen
 // ============================================================
+let authMode = 'login'; // 'login' of 'signup'
+
+function switchAuthMode(mode) {
+    authMode = mode;
+    document.getElementById('auth-error').innerHTML = '';
+    document.getElementById('tab-login').classList.toggle('active', mode === 'login');
+    document.getElementById('tab-signup').classList.toggle('active', mode === 'signup');
+    document.getElementById('auth-main-btn').innerText = mode === 'login' ? 'INLOGGEN' : 'ACCOUNT AANMAKEN';
+    document.getElementById('auth-main-btn').onclick = mode === 'login' ? authLogin : authSignup;
+}
+
 async function authLogin() {
     const email = document.getElementById('auth-email').value.trim();
     const pass  = document.getElementById('auth-pass').value;
     const errEl = document.getElementById('auth-error');
-    errEl.innerText = '';
-    if (!email || !pass) { errEl.innerText = 'Vul e-mail en wachtwoord in!'; return; }
+    errEl.innerHTML = '';
+    if (!email || !pass) { errEl.innerHTML = '<span style="color:var(--red);">Vul e-mail en wachtwoord in!</span>'; return; }
     try {
         await auth.signInWithEmailAndPassword(email, pass);
-        // onAuthStateChanged handelt de rest af
     } catch(e) {
-        const msgs = {
-            'auth/user-not-found':    'Geen account gevonden met dit e-mail.',
-            'auth/wrong-password':    'Wachtwoord is onjuist.',
-            'auth/invalid-email':     'Ongeldig e-mailadres.',
-            'auth/invalid-credential':'E-mail of wachtwoord is onjuist.'
-        };
-        errEl.innerText = msgs[e.code] || e.message;
+        const noAccount = e.code === 'auth/user-not-found' || e.code === 'auth/invalid-credential';
+        if (noAccount) {
+            errEl.innerHTML = `<span style="color:var(--red);">Geen account gevonden met dit e-mail.</span><br>
+                <span style="color:var(--sub);">Nog geen account? Druk op "<strong style="color:var(--blue);cursor:pointer;" onclick="switchAuthMode('signup')">Account aanmaken</strong>" hierboven!</span>`;
+        } else {
+            const msgs = {
+                'auth/wrong-password': '<span style="color:var(--red);">Wachtwoord is onjuist.</span>',
+                'auth/invalid-email':  '<span style="color:var(--red);">Ongeldig e-mailadres.</span>',
+            };
+            errEl.innerHTML = msgs[e.code] || `<span style="color:var(--red);">${e.message}</span>`;
+        }
     }
 }
 
@@ -391,25 +511,24 @@ async function authSignup() {
     const email = document.getElementById('auth-email').value.trim();
     const pass  = document.getElementById('auth-pass').value;
     const errEl = document.getElementById('auth-error');
-    errEl.innerText = '';
-    if (!email || !pass) { errEl.innerText = 'Vul e-mail en wachtwoord in!'; return; }
-    if (pass.length < 6) { errEl.innerText = 'Wachtwoord moet minstens 6 tekens zijn.'; return; }
+    errEl.innerHTML = '';
+    if (!email || !pass) { errEl.innerHTML = '<span style="color:var(--red);">Vul e-mail en wachtwoord in!</span>'; return; }
+    if (pass.length < 6) { errEl.innerHTML = '<span style="color:var(--red);">Wachtwoord moet minstens 6 tekens zijn.</span>'; return; }
     try {
         const res = await auth.createUserWithEmailAndPassword(email, pass);
         user.email = email;
-        await db.collection('users').doc(res.user.uid).set(user);
-        // Ga naar onboarding voor naam etc.
+        await db.collection('users').doc(res.user.uid).set({ ...user, nameSearch: '' });
         document.querySelectorAll('.screen').forEach(s => s.classList.add('hidden'));
         currentStep = 0;
         document.getElementById('scr-onboarding').classList.remove('hidden');
         renderQ();
     } catch(e) {
         const msgs = {
-            'auth/email-already-in-use': 'Dit e-mail is al in gebruik.',
-            'auth/weak-password':        'Wachtwoord te zwak (min. 6 tekens).',
-            'auth/invalid-email':        'Ongeldig e-mailadres.'
+            'auth/email-already-in-use': '<span style="color:var(--red);">Dit e-mail is al in gebruik. Probeer in te loggen!</span>',
+            'auth/weak-password':        '<span style="color:var(--red);">Wachtwoord te zwak (min. 6 tekens).</span>',
+            'auth/invalid-email':        '<span style="color:var(--red);">Ongeldig e-mailadres.</span>',
         };
-        errEl.innerText = msgs[e.code] || e.message;
+        errEl.innerHTML = msgs[e.code] || `<span style="color:var(--red);">${e.message}</span>`;
     }
 }
 
@@ -426,20 +545,20 @@ function authLogout() {
 // ============================================================
 const exercises = {
     Upper: [
-        {n:"Push-up",        i:"Houd je lichaam recht. Borst naar de grond.",              focus:["Borst","Triceps","Schouders"]},
-        {n:"Shoulder Taps",  i:"Hoge plank. Tik schouders om en om aan.",                 focus:["Schouders","Abs"]},
-        {n:"Pike Push-up",   i:"Buig je armen in een omgekeerde V-positie.",              focus:["Schouders","Triceps"]},
-        {n:"Superman",       i:"Til armen en benen van de grond terwijl je op je buik ligt.", focus:["Rug","Schouders"]},
-        {n:"Diamond Push-up",i:"Push-up met handen dicht bij elkaar.",                    focus:["Triceps","Borst"]},
-        {n:"Plank",          i:"Houd je lichaam recht op je onderarmen.",                  focus:["Abs","Schouders"]}
+        {n:"Push-up",         i:"Houd je lichaam recht. Borst naar de grond.",              focus:["Borst","Triceps","Schouders"]},
+        {n:"Shoulder Taps",   i:"Hoge plank. Tik schouders om en om aan.",                 focus:["Schouders","Abs"]},
+        {n:"Pike Push-up",    i:"Buig je armen in een omgekeerde V-positie.",              focus:["Schouders","Triceps"]},
+        {n:"Superman",        i:"Til armen en benen van de grond terwijl je op je buik ligt.", focus:["Rug","Schouders"]},
+        {n:"Diamond Push-up", i:"Push-up met handen dicht bij elkaar.",                    focus:["Triceps","Borst"]},
+        {n:"Plank",           i:"Houd je lichaam recht op je onderarmen.",                 focus:["Abs","Schouders"]}
     ],
     Lower: [
-        {n:"Squat",               i:"Billen naar achteren, knieën niet voorbij tenen.",        focus:["Benen","Billen"]},
-        {n:"Lunge",               i:"Stap naar voren en zak door je knieën.",                  focus:["Benen","Billen"]},
-        {n:"Bulgarian Split Squat",i:"Achterste voet op een stoel, zak door je knie.",         focus:["Billen","Rug"]},
-        {n:"Side Lunges",         i:"Stap opzij, één been buigen, ander recht.",               focus:["Benen","Billen"]},
-        {n:"Calf Raise",          i:"Op tenen staan en rustig zakken.",                        focus:["Kuiten"]},
-        {n:"High Knees",          i:"Rennen op de plaats, knieën hoog.",                       focus:["Benen","Abs"]}
+        {n:"Squat",                i:"Billen naar achteren, knieën niet voorbij tenen.",        focus:["Benen","Billen"]},
+        {n:"Lunge",                i:"Stap naar voren en zak door je knieën.",                  focus:["Benen","Billen"]},
+        {n:"Bulgarian Split Squat",i:"Achterste voet op een stoel, zak door je knie.",          focus:["Billen","Rug"]},
+        {n:"Side Lunges",          i:"Stap opzij, één been buigen, ander recht.",               focus:["Benen","Billen"]},
+        {n:"Calf Raise",           i:"Op tenen staan en rustig zakken.",                        focus:["Kuiten"]},
+        {n:"High Knees",           i:"Rennen op de plaats, knieën hoog.",                       focus:["Benen","Abs"]}
     ],
     Conditie: [
         {n:"Jumping Jacks",    i:"Spring wijd, armen omhoog.",                    focus:["Benen","Schouders"]},
@@ -461,14 +580,14 @@ const badgeList = [
 ];
 
 const questions = [
-    {k:'name',  q:'Wat is je voornaam?',  t:'text'},
-    {k:'age',   q:'Hoe oud ben je?',      t:'number'},
-    {k:'gender',q:'Geslacht',             t:'select', o:['Man','Vrouw','X']},
-    {k:'height',q:'Lengte (cm)',          t:'number'},
-    {k:'weight',q:'Gewicht (kg)',         t:'number'},
-    {k:'goal',  q:'Wat is je doel?',      t:'select', o:['Afvallen','Spiermassa','Conditie']},
-    {k:'reps',  q:'Trainingsniveau',      t:'select', o:['8','12','15'], labels:['Beginner (8 reps)','Sportief (12 reps)','Gevorderd (15 reps)']},
-    {k:'availability',q:'Dagen per week', t:'select', o:['1-2','3-4','5+']}
+    {k:'name',        q:'Wat is je voornaam?',   t:'text'},
+    {k:'age',         q:'Hoe oud ben je?',       t:'number'},
+    {k:'gender',      q:'Geslacht',              t:'select', o:['Man','Vrouw','X']},
+    {k:'height',      q:'Lengte (cm)',           t:'number'},
+    {k:'weight',      q:'Gewicht (kg)',          t:'number'},
+    {k:'goal',        q:'Wat is je doel?',       t:'select', o:['Afvallen','Spiermassa','Conditie']},
+    {k:'reps',        q:'Trainingsniveau',       t:'select', o:['8','12','15'], labels:['Beginner (8 reps)','Sportief (12 reps)','Gevorderd (15 reps)']},
+    {k:'availability',q:'Hoeveel dagen per week kun je trainen?', t:'select', o:['1-2','3-4','5+']}
 ];
 
 // ============================================================
@@ -554,27 +673,83 @@ function renderDash() {
     document.getElementById('streak-val').innerText = user.streak || 0;
     document.getElementById('rank-display').innerText = getRank() + ' · LVL ' + getDisplayLevel();
     updatePersonalWorkoutCard();
+    renderCalorieCard();
+}
+
+// ============================================================
+// CALORIEËN TRACKER
+// ============================================================
+function calcCalorieGoal() {
+    // Mifflin-St Jeor BMR
+    const w = parseFloat(user.weight) || 70;
+    const h = parseFloat(user.height) || 170;
+    const a = parseInt(user.age)      || 20;
+    const isMale = (user.gender || 'Man') !== 'Vrouw';
+    const bmr = isMale
+        ? 10*w + 6.25*h - 5*a + 5
+        : 10*w + 6.25*h - 5*a - 161;
+    const avail = user.availability || '3-4';
+    const activity = avail === '1-2' ? 1.375 : avail === '3-4' ? 1.55 : 1.725;
+    const tdee = Math.round(bmr * activity);
+    const goal = user.goal;
+    if (goal === 'Afvallen')   return Math.round(tdee * 0.85);
+    if (goal === 'Spiermassa') return Math.round(tdee * 1.1);
+    return tdee;
+}
+
+function renderCalorieCard() {
+    const today = new Date().toDateString();
+    if (user.caloriesDate !== today) {
+        user.caloriesToday = 0;
+        user.caloriesDate = today;
+        save();
+    }
+    const goal = calcCalorieGoal();
+    const eaten = user.caloriesToday || 0;
+    const pct = Math.min(100, Math.round((eaten / goal) * 100));
+    document.getElementById('cal-pct').innerText = `${eaten} / ${goal} kcal`;
+    document.getElementById('cal-bar').style.width = pct + '%';
+    const bar = document.getElementById('cal-bar');
+    bar.style.background = pct > 110 ? 'var(--red)' : pct > 90 ? 'var(--green)' : 'var(--orange)';
+}
+
+function addCalories() {
+    const val = parseInt(document.getElementById('cal-input').value);
+    if (isNaN(val) || val <= 0) return;
+    const today = new Date().toDateString();
+    if (user.caloriesDate !== today) { user.caloriesToday = 0; user.caloriesDate = today; }
+    user.caloriesToday = (user.caloriesToday || 0) + val;
+    document.getElementById('cal-input').value = '';
+    save();
+    renderCalorieCard();
+    showFloat(`+${val} kcal`);
+}
+
+function resetCalories() {
+    user.caloriesToday = 0;
+    user.caloriesDate = new Date().toDateString();
+    save();
+    renderCalorieCard();
 }
 
 // ============================================================
 // GEPERSONALISEERDE WORKOUT
 // ============================================================
 const personalWorkoutPlans = {
-    // goal → availability → array van circuit-types per trainingsdag
     Afvallen: {
-        '1-2': ['Conditie', 'Conditie'],
-        '3-4': ['Conditie', 'Conditie', 'Lower', 'Conditie'],
-        '5+':  ['Conditie', 'Upper', 'Conditie', 'Lower', 'Conditie']
+        '1-2': ['Conditie','Conditie'],
+        '3-4': ['Conditie','Conditie','Lower','Conditie'],
+        '5+':  ['Conditie','Upper','Conditie','Lower','Conditie']
     },
     Spiermassa: {
-        '1-2': ['Upper', 'Lower'],
-        '3-4': ['Upper', 'Lower', 'Upper', 'Conditie'],
-        '5+':  ['Upper', 'Lower', 'Upper', 'Lower', 'Conditie']
+        '1-2': ['Upper','Lower'],
+        '3-4': ['Upper','Lower','Upper','Conditie'],
+        '5+':  ['Upper','Lower','Upper','Lower','Conditie']
     },
     Conditie: {
-        '1-2': ['Conditie', 'Conditie'],
-        '3-4': ['Conditie', 'Upper', 'Conditie', 'Lower'],
-        '5+':  ['Conditie', 'Upper', 'Conditie', 'Lower', 'Conditie']
+        '1-2': ['Conditie','Conditie'],
+        '3-4': ['Conditie','Upper','Conditie','Lower'],
+        '5+':  ['Conditie','Upper','Conditie','Lower','Conditie']
     }
 };
 
@@ -589,26 +764,187 @@ function updatePersonalWorkoutCard() {
     const plan = getPersonalPlan();
     const goal = user.goal || 'Conditie';
     const avail = user.availability || '3-4';
-    const today = new Date().getDay(); // 0=zon, 1=ma...
+    const today = new Date().getDay();
     const workdays = plan.length;
     const dayIdx = (today - 1 + 7) % 7 % workdays;
     const todayType = plan[dayIdx];
-    const typeLabels = { Upper: 'Boven Lichaam 💪', Lower: 'Benen 🦵', Conditie: 'Conditie & Core 🏃' };
+    const typeLabels = { Upper:'Boven Lichaam 💪', Lower:'Benen 🦵', Conditie:'Conditie & Core 🏃' };
     const descEl = document.getElementById('personal-workout-desc');
-    if (descEl) {
-        descEl.innerText = `Doel: ${goal} · ${avail} dagen/week → Vandaag: ${typeLabels[todayType]}`;
-    }
+    if (descEl) descEl.innerText = `Doel: ${goal} · ${avail} dagen/week → Vandaag: ${typeLabels[todayType]}`;
 }
 
 function startPersonalWorkout() {
     const plan = getPersonalPlan();
     const today = new Date().getDay();
-    const workdays = plan.length;
-    const dayIdx = (today - 1 + 7) % 7 % workdays;
-    const todayType = plan[dayIdx];
-    startCircuit(todayType);
+    const dayIdx = (today - 1 + 7) % 7 % plan.length;
+    startCircuit(plan[dayIdx]);
 }
 
+// ============================================================
+// DARK / LIGHT MODE
+// ============================================================
+function toggleTheme() {
+    document.body.classList.toggle('light-mode');
+    const isLight = document.body.classList.contains('light-mode');
+    document.getElementById('theme-label').innerText = isLight ? '☀️ Licht thema' : '🌙 Donker thema';
+    document.getElementById('theme-knob').style.left = isLight ? '23px' : '3px';
+    document.getElementById('theme-toggle').style.background = isLight ? 'var(--blue)' : '#333';
+    localStorage.setItem('sf_theme', isLight ? 'light' : 'dark');
+}
+
+function loadTheme() {
+    if (localStorage.getItem('sf_theme') === 'light') {
+        document.body.classList.add('light-mode');
+        const label = document.getElementById('theme-label');
+        const knob  = document.getElementById('theme-knob');
+        const tog   = document.getElementById('theme-toggle');
+        if (label) label.innerText = '☀️ Licht thema';
+        if (knob)  knob.style.left = '23px';
+        if (tog)   tog.style.background = 'var(--blue)';
+    }
+}
+
+// ============================================================
+// VOORTGANGSFOTO'S
+// ============================================================
+function savePhoto(input) {
+    const file = input.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (e) => {
+        const photos = JSON.parse(localStorage.getItem('smartfitness_photos') || '[]');
+        photos.unshift({ src: e.target.result, date: new Date().toLocaleDateString('nl-NL') });
+        if (photos.length > 12) photos.pop(); // max 12 foto's
+        localStorage.setItem('smartfitness_photos', JSON.stringify(photos));
+        renderPhotos();
+        showFloat('📸 Foto opgeslagen!');
+    };
+    reader.readAsDataURL(file);
+    input.value = '';
+}
+
+function renderPhotos() {
+    const photos = JSON.parse(localStorage.getItem('smartfitness_photos') || '[]');
+    const grid = document.getElementById('photo-grid');
+    if (!grid) return;
+    if (photos.length === 0) {
+        grid.innerHTML = '<div style="color:var(--sub);font-size:11px;grid-column:span 3;">Nog geen foto\'s.</div>';
+        return;
+    }
+    grid.innerHTML = photos.map((p, i) => `
+        <div style="position:relative;">
+            <img src="${p.src}" class="photo-thumb" onclick="viewPhoto(${i})">
+            <div style="font-size:8px;color:var(--sub);text-align:center;margin-top:3px;">${p.date}</div>
+        </div>`).join('');
+}
+
+function viewPhoto(i) {
+    const photos = JSON.parse(localStorage.getItem('smartfitness_photos') || '[]');
+    const p = photos[i];
+    if (!p) return;
+    const overlay = document.createElement('div');
+    overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.95);z-index:9999;display:flex;flex-direction:column;align-items:center;justify-content:center;';
+    overlay.innerHTML = `<img src="${p.src}" style="max-width:90%;max-height:80vh;border-radius:12px;">
+        <div style="color:#fff;margin-top:12px;font-size:12px;">${p.date}</div>
+        <button onclick="this.parentElement.remove()" style="margin-top:16px;background:var(--red);border:none;color:#fff;padding:10px 24px;border-radius:10px;font-weight:700;cursor:pointer;">Sluiten</button>
+        <button onclick="deletePhoto(${i},this.parentElement)" style="margin-top:8px;background:transparent;border:1px solid #555;color:#888;padding:8px 20px;border-radius:10px;font-size:11px;cursor:pointer;">Verwijderen</button>`;
+    document.body.appendChild(overlay);
+}
+
+function deletePhoto(i, overlay) {
+    const photos = JSON.parse(localStorage.getItem('smartfitness_photos') || '[]');
+    photos.splice(i, 1);
+    localStorage.setItem('smartfitness_photos', JSON.stringify(photos));
+    overlay.remove();
+    renderPhotos();
+}
+
+// ============================================================
+// PDF EXPORT
+// ============================================================
+function printReport() {
+    const score = user.lastAnalysisScore || 0;
+    const date  = new Date().toLocaleDateString('nl-NL');
+    const fb = score >= 85 ? 'Perfecte houding! Zeer gecontroleerd.' :
+               score >= 60 ? 'Goed gedaan! Probeer de bewegingen vollediger.' :
+               score === 0 ? 'Nog geen data. Doe eerst een workout!' :
+               'Focus op je techniek. Ga iets langzamer.';
+    const printEl = document.getElementById('print-area');
+    printEl.style.display = 'block';
+    printEl.innerHTML = `
+        <h1 style="font-family:Arial;font-size:24px;margin-bottom:4px;">Smart Fitness — Trainingsrapport</h1>
+        <p style="color:#888;font-size:12px;margin-bottom:20px;">${date} · ${user.name || 'Atleet'}</p>
+        <div style="font-size:64px;font-weight:900;color:#007aff;margin:10px 0;">${score}%</div>
+        <p style="font-size:14px;margin-bottom:12px;color:#555;">Houding Score</p>
+        <div style="background:#f0f0f0;padding:15px;border-radius:8px;margin-bottom:20px;">
+            <strong>Coach Feedback:</strong><br>${fb}
+        </div>
+        <table style="width:100%;border-collapse:collapse;font-size:12px;">
+            <tr style="background:#f5f5f5;"><th style="padding:8px;text-align:left;">Spiergroep</th><th style="padding:8px;">Level</th><th style="padding:8px;">XP</th></tr>
+            ${Object.entries(user.stats || {}).map(([k,v]) => `
+                <tr style="border-bottom:1px solid #eee;"><td style="padding:8px;">${k}</td><td style="padding:8px;text-align:center;">${v.lvl}</td><td style="padding:8px;text-align:center;">${Math.round(v.xp)}</td></tr>
+            `).join('')}
+        </table>
+        <p style="font-size:10px;color:#aaa;margin-top:20px;">Smart Fitness · Gegenereerd op ${date}</p>
+    `;
+    window.print();
+    setTimeout(() => { printEl.style.display = 'none'; }, 1000);
+}
+
+// ============================================================
+// VOICE COMMANDS
+// ============================================================
+let voiceActive = false;
+let voiceRecognition = null;
+
+function toggleVoice() {
+    const btn = document.getElementById('voice-btn');
+    if (voiceActive) {
+        voiceActive = false;
+        if (voiceRecognition) voiceRecognition.stop();
+        btn.classList.remove('active');
+        btn.innerText = '🎤';
+    } else {
+        startVoice();
+    }
+}
+
+function startVoice() {
+    const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!SR) { alert('Spraakherkenning niet beschikbaar op dit apparaat.'); return; }
+    voiceRecognition = new SR();
+    voiceRecognition.lang = 'nl-NL';
+    voiceRecognition.continuous = true;
+    voiceRecognition.interimResults = false;
+    voiceRecognition.onresult = (e) => {
+        const last = e.results[e.results.length - 1];
+        const cmd  = last[0].transcript.trim().toLowerCase();
+        console.log('Stem commando:', cmd);
+        if (cmd.includes('stop') || cmd.includes('stoppen')) { stopWorkout(); }
+        else if (cmd.includes('sla') || cmd.includes('skip')) { skipRest(); }
+        else if (cmd.includes('rep') || cmd.includes('klaar')) { if (!isRest) registerRep(); }
+    };
+    voiceRecognition.onerror = () => { voiceActive = false; document.getElementById('voice-btn').classList.remove('active'); };
+    voiceRecognition.onend   = () => { if (voiceActive) voiceRecognition.start(); };
+    voiceRecognition.start();
+    voiceActive = true;
+    document.getElementById('voice-btn').classList.add('active');
+    document.getElementById('voice-btn').innerText = '🎙️';
+}
+
+// ============================================================
+// VIDEO TUTORIALS
+// ============================================================
+function openTutorial() {
+    const exe = circuit[cIdx] ? circuit[cIdx].n : '';
+    if (!exe) return;
+    const query = encodeURIComponent(exe + ' oefening uitleg Nederlands');
+    window.open(`https://www.youtube.com/results?search_query=${query}`, '_blank');
+}
+
+// ============================================================
+// HELPERS / RANKINGS
+// ============================================================
 function getAvgLevel() {
     const vals = Object.values(user.stats);
     return vals.reduce((a,b) => a + b.lvl, 0) / vals.length;
@@ -624,14 +960,8 @@ function getRank() {
     return "ELITE";
 }
 
-function getDisplayLevel() {
-    return Math.floor(getAvgLevel());
-}
-
-function getRepTarget() {
-    const r = parseInt(user.reps);
-    return isNaN(r) ? 10 : r;
-}
+function getDisplayLevel() { return Math.floor(getAvgLevel()); }
+function getRepTarget() { const r = parseInt(user.reps); return isNaN(r) ? 10 : r; }
 
 // ============================================================
 // ONBOARDING
@@ -651,15 +981,15 @@ function renderQ() {
     document.getElementById('q-container').innerHTML = html;
     setTimeout(() => { const el = document.getElementById('q-val'); if(el) el.focus(); }, 100);
 
-    // Voortgangsbalk bijwerken
+    // Voortgangsbalk
     const total = questions.length;
     const pct = Math.round((currentStep / total) * 100);
-    const bar = document.getElementById('q-progress-bar');
-    const lbl = document.getElementById('q-progress-label');
+    const bar   = document.getElementById('q-progress-bar');
+    const lbl   = document.getElementById('q-progress-label');
     const pctEl = document.getElementById('q-progress-pct');
-    const dotsEl = document.getElementById('q-dots');
-    if (bar) bar.style.width = pct + '%';
-    if (lbl) lbl.innerText = `Vraag ${currentStep + 1} van ${total}`;
+    const dotsEl= document.getElementById('q-dots');
+    if (bar)   bar.style.width = pct + '%';
+    if (lbl)   lbl.innerText = `Vraag ${currentStep + 1} van ${total}`;
     if (pctEl) pctEl.innerText = pct + '%';
     if (dotsEl) {
         dotsEl.innerHTML = questions.map((_, i) =>
@@ -683,6 +1013,7 @@ function saveQ() {
 
 function showApp() {
     document.getElementById('nav').classList.remove('hidden');
+    loadTheme();
     tab('dash');
 }
 
@@ -701,6 +1032,8 @@ function renderProfile() {
         }
         return label + `<input type="${q.t}" value="${user[q.k]||''}" onchange="user['${q.k}']=this.value;save()">`;
     }).join('');
+    renderPhotos();
+    loadTheme();
 }
 
 // ============================================================
@@ -728,7 +1061,7 @@ function renderProgress() {
     const hist = user.history || [];
     if (hist.length > 0) {
         document.getElementById('history-render').innerHTML = hist.slice().reverse().slice(0,5).map(h =>
-            `<div style="display:flex;justify-content:space-between;padding:10px 0;border-bottom:1px solid #222;">
+            `<div style="display:flex;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--card-border);">
                 <span>${h.date}</span><span>${h.cat} — ${h.reps} reps</span>
             </div>`
         ).join('');
@@ -736,24 +1069,41 @@ function renderProgress() {
 }
 
 // ============================================================
-// SOCIAL — VRIENDSCHAPSVERZOEKEN
+// SOCIAL — VRIENDSCHAPSVERZOEKEN STUREN
 // ============================================================
 async function sendFriendRequest(toUid, toName) {
     const myUid = auth.currentUser?.uid;
-    if (!myUid) return;
+    if (!myUid) { alert('Je moet ingelogd zijn om vrienden toe te voegen!'); return; }
     try {
+        // Check of er al een verzoek bestaat
+        const existing = await db.collection('friendRequests')
+            .where('from', '==', myUid)
+            .where('to',   '==', toUid)
+            .where('status','==','pending')
+            .get();
+        if (!existing.empty) {
+            document.getElementById('search-results').innerHTML =
+                `<div style="color:var(--orange);font-size:12px;font-weight:700;">⏳ Verzoek al verstuurd aan ${toName}!</div>`;
+            return;
+        }
         await db.collection('friendRequests').add({
-            from: myUid,
-            fromName: user.name || 'Onbekend',
-            to: toUid,
-            status: 'pending',
+            from:      myUid,
+            fromName:  user.name || 'Onbekend',
+            to:        toUid,
+            status:    'pending',
             timestamp: firebase.firestore.FieldValue.serverTimestamp()
         });
         document.getElementById('search-results').innerHTML =
             `<div style="color:var(--green);font-size:12px;font-weight:700;">✓ Vriendschapsverzoek verstuurd naar ${toName}!</div>`;
-    } catch(e) { alert('Fout: ' + e.message); }
+    } catch(e) {
+        console.error('sendFriendRequest fout:', e);
+        alert('Fout bij versturen: ' + e.message);
+    }
 }
 
+// ============================================================
+// SOCIAL — VRIENDSCHAPSVERZOEKEN LADEN
+// ============================================================
 async function loadFriendRequests() {
     const myUid = auth.currentUser?.uid;
     if (!myUid) return;
@@ -785,33 +1135,50 @@ async function loadFriendRequests() {
             });
         }
 
-        // Ook groepsuitnodigingen laden
-        await loadGroupInvites();
+        // Uitdagingen laden
+        await loadChallenges(list, card);
+        // Groepsuitnodigingen laden
+        await loadGroupInvites(list, card);
     } catch(e) { console.error(e); }
 }
 
+// ============================================================
+// SOCIAL — ACCEPTEER VERZOEK (WEDERZIJDS via apart pad)
+// ============================================================
 async function acceptRequest(reqId, fromUid, fromName) {
     const myUid = auth.currentUser?.uid;
     if (!myUid) return;
     try {
-        // Voeg de ander toe aan MIJN vriendenlijst
+        // 1. Voeg de ander toe aan MIJN lijst (eigen document — altijd toegestaan)
         if (!user.friends) user.friends = [];
         if (!user.friends.includes(fromUid)) user.friends.push(fromUid);
         save();
 
-        // Voeg MIJN uid toe aan de vriendenlijst van de ander via een transactie
-        const senderRef = db.collection('users').doc(fromUid);
-        await db.runTransaction(async (transaction) => {
-            const senderDoc = await transaction.get(senderRef);
+        // 2. Probeer wederzijds de andere user's friends te updaten
+        //    (vereist de bijgewerkte Firebase rule in het commentaar bovenaan)
+        try {
+            const senderDoc = await db.collection('users').doc(fromUid).get();
             if (senderDoc.exists) {
                 const sf = senderDoc.data().friends || [];
                 if (!sf.includes(myUid)) {
                     sf.push(myUid);
-                    transaction.update(senderRef, { friends: sf });
+                    await db.collection('users').doc(fromUid).update({ friends: sf });
                 }
             }
-        });
+        } catch (permErr) {
+            // Als Firebase rules het niet toestaan, stuur een "pending accept" notificatie
+            // zodat de andere partij de volgende keer dat ze inloggen ook bijgewerkt worden
+            console.warn('Wederzijdse vriendschap kon niet direct worden opgeslagen (Firebase rule). Wordt opgelost bij volgende login van de ander.', permErr);
+            await db.collection('friendRequests').add({
+                from: myUid,
+                fromName: user.name || 'Onbekend',
+                to: fromUid,
+                status: 'pending',
+                timestamp: firebase.firestore.FieldValue.serverTimestamp()
+            });
+        }
 
+        // 3. Verwijder het originele verzoek
         await db.collection('friendRequests').doc(reqId).delete();
         showFloat('✅ ' + fromName + ' is nu je vriend!');
         loadFriendRequests();
@@ -827,7 +1194,7 @@ async function declineRequest(reqId) {
 }
 
 // ============================================================
-// SOCIAL — VRIENDEN ZOEKEN & TONEN
+// SOCIAL — VRIENDEN ZOEKEN (case-insensitive, iedereen vinden)
 // ============================================================
 async function searchFriend() {
     const term = document.getElementById('search-input').value.trim().toLowerCase();
@@ -835,19 +1202,20 @@ async function searchFriend() {
     if (!term) { div.innerHTML = '<div style="color:var(--sub);font-size:12px;">Typ een naam om te zoeken.</div>'; return; }
     div.innerHTML = '<div class="spinner"></div>';
     try {
-        // Zoek op nameSearch (lowercase) met een prefix-range query
+        const myUid = auth.currentUser?.uid;
+        let results = [];
+
+        // Probeer prefix-zoekactie op nameSearch veld
         const snap = await db.collection('users')
             .where('nameSearch', '>=', term)
             .where('nameSearch', '<=', term + '\uf8ff')
             .limit(20)
             .get();
 
-        // Als er geen nameSearch veld is, fallback: haal alle users op en filter client-side
-        let results = [];
         if (!snap.empty) {
             snap.forEach(doc => results.push({ id: doc.id, data: doc.data() }));
         } else {
-            // Fallback: zoek alle gebruikers (max 200) en filter lokaal op naam
+            // Fallback: haal alle users op en filter lokaal
             const allSnap = await db.collection('users').limit(200).get();
             allSnap.forEach(doc => {
                 const d = doc.data();
@@ -856,34 +1224,40 @@ async function searchFriend() {
             });
         }
 
-        const myUid = auth.currentUser?.uid;
         results = results.filter(r => r.id !== myUid);
 
-        if (results.length === 0) { div.innerHTML = '<div style="color:var(--sub);font-size:12px;">Niemand gevonden met die naam.</div>'; return; }
+        if (results.length === 0) {
+            div.innerHTML = '<div style="color:var(--sub);font-size:12px;">Niemand gevonden. Controleer de naam of vraag de persoon om in te loggen.</div>';
+            return;
+        }
         div.innerHTML = '';
         results.forEach(({ id, data: d }) => {
             const isFriend = (user.friends || []).includes(id);
             const avgLvl = d.stats
                 ? (Object.values(d.stats).reduce((a,b) => a + b.lvl, 0) / Object.values(d.stats).length).toFixed(1)
                 : '1.0';
+            const safeName = (d.name || '').replace(/\\/g,'\\\\').replace(/'/g,"\\'");
             div.innerHTML += `
                 <div class="friend-card">
                     <div>
-                        <div style="font-weight:700;font-size:13px;">${d.name}</div>
+                        <div style="font-weight:700;font-size:13px;">${d.name || 'Onbekend'}</div>
                         <div style="font-size:10px;color:var(--sub);">Gem. Level ${avgLvl} · ${d.goal || 'Atleet'}</div>
                     </div>
                     ${isFriend
                         ? '<span style="font-size:11px;color:var(--green);font-weight:700;">✓ Vriend</span>'
-                        : `<button class="btn-small" onclick="sendFriendRequest('${id}','${d.name.replace(/'/g,"\\'")}'" style="background:var(--blue);border:none;color:#fff;">+ Verzoek</button>`
+                        : `<button class="btn-small" onclick="sendFriendRequest('${id}','${safeName}')" style="background:var(--blue);border:none;color:#fff;">+ Verzoek</button>`
                     }
                 </div>`;
         });
     } catch(e) {
-        div.innerHTML = '<div style="color:var(--red);font-size:12px;">Fout — zorg dat je ingelogd bent.</div>';
+        div.innerHTML = '<div style="color:var(--red);font-size:12px;">Fout bij zoeken. Zorg dat je ingelogd bent.</div>';
         console.error(e);
     }
 }
 
+// ============================================================
+// SOCIAL — VRIENDEN LADEN
+// ============================================================
 async function loadFriends() {
     const div = document.getElementById('friends-list');
     if (!user.friends || !user.friends.length) {
@@ -900,17 +1274,19 @@ async function loadFriends() {
             const avgLvl = d.stats
                 ? (Object.values(d.stats).reduce((a,b) => a + b.lvl, 0) / Object.values(d.stats).length).toFixed(1)
                 : '1.0';
+            const safeName = (d.name || '').replace(/\\/g,'\\\\').replace(/'/g,"\\'");
             html += `
                 <div class="friend-card" style="margin-bottom:8px;">
                     <div>
-                        <div style="font-weight:700;font-size:13px;">${d.name}</div>
+                        <div style="font-weight:700;font-size:13px;">${d.name || 'Onbekend'}</div>
                         <div style="font-size:10px;color:var(--sub);">Gem. Level ${avgLvl} · ${d.totalWorkouts||0} workouts</div>
                     </div>
                     <div style="display:flex;gap:6px;align-items:center;">
                         <div style="font-weight:900;font-size:16px;color:var(--blue);margin-right:4px;">LVL ${Math.floor(parseFloat(avgLvl))}</div>
                         ${user.currentGroupId
-                            ? `<button class="btn-small" onclick="inviteFriendToGroup('${uid}','${d.name}')" style="background:var(--orange);border:none;color:#fff;">Uitnodigen</button>`
+                            ? `<button class="btn-small" onclick="inviteFriendToGroup('${uid}','${safeName}')" style="background:var(--orange);border:none;color:#fff;font-size:10px;">📨 Uitnodigen</button>`
                             : ''}
+                        <button class="btn-small" onclick="sendChallenge('${uid}','${safeName}')" style="background:var(--red);border:none;color:#fff;font-size:10px;">⚔️ Uitdagen</button>
                     </div>
                 </div>`;
         } catch(e) {}
@@ -919,22 +1295,84 @@ async function loadFriends() {
 }
 
 // ============================================================
+// SOCIAL — UITDAGINGEN
+// ============================================================
+async function sendChallenge(toUid, toName) {
+    const myUid = auth.currentUser?.uid;
+    if (!myUid) return;
+    const types = ['Meeste Push-ups vandaag','Meeste Squats vandaag','Langste plank deze week','Meeste workouts deze week'];
+    const type  = types[Math.floor(Math.random() * types.length)];
+    try {
+        await db.collection('challenges').add({
+            from:      myUid,
+            fromName:  user.name || 'Atleet',
+            to:        toUid,
+            type:      type,
+            status:    'pending',
+            timestamp: firebase.firestore.FieldValue.serverTimestamp()
+        });
+        showFloat('⚔️ Uitdaging verstuurd!');
+        alert(`Uitdaging verstuurd aan ${toName}: "${type}"`);
+    } catch(e) { alert('Fout: ' + e.message); }
+}
+
+async function loadChallenges(list, card) {
+    const myUid = auth.currentUser?.uid;
+    if (!myUid) return;
+    try {
+        const snap = await db.collection('challenges')
+            .where('to', '==', myUid)
+            .where('status','==','pending')
+            .get();
+        if (snap.empty) return;
+        card.style.display = 'block';
+        snap.forEach(doc => {
+            const d = doc.data();
+            list.innerHTML += `
+                <div class="friend-card" style="margin-bottom:8px;border-left:3px solid var(--red);">
+                    <div>
+                        <div style="font-weight:700;font-size:13px;">⚔️ Uitdaging van ${d.fromName}</div>
+                        <div style="font-size:10px;color:var(--sub);">${d.type}</div>
+                    </div>
+                    <div style="display:flex;gap:6px;">
+                        <button class="btn-small" onclick="acceptChallenge('${doc.id}')" style="background:var(--green);border:none;color:#fff;">Accepteer</button>
+                        <button class="btn-small" onclick="declineChallenge('${doc.id}')" style="background:var(--red);border:none;color:#fff;">✕</button>
+                    </div>
+                </div>`;
+        });
+    } catch(e) { console.error(e); }
+}
+
+async function acceptChallenge(id) {
+    try {
+        await db.collection('challenges').doc(id).update({ status: 'accepted' });
+        showFloat('⚔️ Uitdaging geaccepteerd!');
+        loadFriendRequests();
+    } catch(e) {}
+}
+
+async function declineChallenge(id) {
+    try {
+        await db.collection('challenges').doc(id).delete();
+        loadFriendRequests();
+    } catch(e) {}
+}
+
+// ============================================================
 // SOCIAL — GROEPEN, UITNODIGEN & LEADERBOARD
 // ============================================================
-function calcScore() {
-    return Math.round(getAvgLevel() * 10);
-}
+function calcScore() { return Math.round(getAvgLevel() * 10); }
 
 async function inviteFriendToGroup(friendUid, friendName) {
     if (!user.currentGroupId) { alert('Maak eerst een groep aan!'); return; }
     if (!auth.currentUser) return;
     try {
         await db.collection('groupInvites').add({
-            from: auth.currentUser.uid,
-            fromName: user.name || 'Iemand',
-            to: friendUid,
-            groupId: user.currentGroupId,
-            status: 'pending',
+            from:      auth.currentUser.uid,
+            fromName:  user.name || 'Iemand',
+            to:        friendUid,
+            groupId:   user.currentGroupId,
+            status:    'pending',
             timestamp: firebase.firestore.FieldValue.serverTimestamp()
         });
         showFloat('📨 Uitnodiging verstuurd!');
@@ -942,7 +1380,7 @@ async function inviteFriendToGroup(friendUid, friendName) {
     } catch(e) { alert('Fout: ' + e.message); }
 }
 
-async function loadGroupInvites() {
+async function loadGroupInvites(list, card) {
     const myUid = auth.currentUser?.uid;
     if (!myUid) return;
     try {
@@ -951,8 +1389,6 @@ async function loadGroupInvites() {
             .where('status', '==', 'pending')
             .get();
         if (snap.empty) return;
-        const card = document.getElementById('requests-card');
-        const list = document.getElementById('requests-list');
         card.style.display = 'block';
         snap.forEach(doc => {
             const d = doc.data();
@@ -1087,6 +1523,9 @@ function startCircuit(cat) {
 
 function stopWorkout() {
     if (camera) { try { camera.stop(); } catch(e) {} camera = null; }
+    if (voiceActive) { toggleVoice(); }
+    if (window._plankTimer)    { clearInterval(window._plankTimer);    window._plankTimer    = null; }
+    if (window._fallbackTimer) { clearInterval(window._fallbackTimer); window._fallbackTimer = null; }
     if (sessionScores.length > 0) {
         user.lastAnalysisScore = Math.round(sessionScores.reduce((a,b) => a+b, 0) / sessionScores.length);
     }
@@ -1100,7 +1539,7 @@ function startRest(time, title) {
     const overlay = document.getElementById('rest-overlay');
     overlay.classList.remove('hidden');
     document.getElementById('rest-title').innerText = title;
-    document.getElementById('rest-exe').innerText = circuit[cIdx] ? circuit[cIdx].n.toUpperCase() : '';
+    document.getElementById('rest-exe').innerText   = circuit[cIdx] ? circuit[cIdx].n.toUpperCase() : '';
     document.getElementById('rest-instr').innerText = circuit[cIdx] ? circuit[cIdx].i : '';
     runTimer();
 }
@@ -1127,8 +1566,8 @@ function skipRest() {
 }
 
 function updateHUD(feedback) {
-    document.getElementById('hud-idx').innerText = `${cIdx+1}/6`;
-    document.getElementById('hud-set').innerText = `${sets}/3`;
+    document.getElementById('hud-idx').innerText  = `${cIdx+1}/6`;
+    document.getElementById('hud-set').innerText  = `${sets}/3`;
     document.getElementById('hud-reps').innerText = `${reps}/${getRepTarget()}`;
     const tip = document.getElementById('coaching-tip');
     if (feedback) {
@@ -1191,7 +1630,7 @@ function finishWorkout() {
     if (!user.history) user.history = [];
     user.history.push({ date: new Date().toLocaleDateString('nl-NL'), cat: currentCat, reps: getRepTarget() * 3 * 6 });
     save();
-    updateGroupScore(); // Score bijwerken in groep
+    updateGroupScore();
     speak("Training voltooid. Goed gedaan!");
     stopWorkout();
 }
@@ -1228,7 +1667,7 @@ function showFloat(txt) {
     el.className = 'float-txt';
     el.innerText = txt;
     el.style.left = (20 + Math.random()*60) + '%';
-    el.style.top = '50%';
+    el.style.top  = '50%';
     document.body.appendChild(el);
     setTimeout(() => el.remove(), 1500);
 }
@@ -1249,8 +1688,8 @@ function showAnalysisReport() {
     const score = user.lastAnalysisScore || 0;
     const overlay = document.getElementById('report-overlay');
     overlay.style.display = 'flex';
-    document.getElementById('report-score').innerText = score + "%";
-    document.getElementById('precision-val').innerText = score + "%";
+    document.getElementById('report-score').innerText   = score + "%";
+    document.getElementById('precision-val').innerText  = score + "%";
     document.getElementById('precision-bar').style.width = score + "%";
     let fb = score >= 85 ? "Perfecte houding! Zeer gecontroleerd." :
              score >= 60 ? "Goed gedaan! Probeer de bewegingen vollediger af te maken." :
@@ -1264,11 +1703,11 @@ function closeReport() {
 }
 
 // ============================================================
-// AI / MEDIAPIPE
+// AI / MEDIAPIPE — DETECTIE VOOR ALLE OEFENINGEN
 // ============================================================
-const videoElement = document.getElementById('input_video');
+const videoElement  = document.getElementById('input_video');
 const canvasElement = document.getElementById('output_canvas');
-const canvasCtx = canvasElement.getContext('2d');
+const canvasCtx     = canvasElement.getContext('2d');
 
 function onResults(results) {
     if (!results.poseLandmarks || isRest) return;
@@ -1277,20 +1716,17 @@ function onResults(results) {
     canvasCtx.clearRect(0, 0, canvasElement.width, canvasElement.height);
     canvasCtx.drawImage(results.image, 0, 0, canvasElement.width, canvasElement.height);
 
-    const m = results.poseLandmarks;
+    const m   = results.poseLandmarks;
     const exe = circuit[cIdx] ? circuit[cIdx].n.toLowerCase() : '';
 
-    // ── Kwaliteitscore + rep-detectie voor ALLE oefeningen ──
-    let quality = 50;
-
-    // Hulpfuncties
-    const hip   = { L: m[23], R: m[24] };
-    const knee  = { L: m[25], R: m[26] };
-    const ankle = { L: m[27], R: m[28] };
+    const hip      = { L: m[23], R: m[24] };
+    const knee     = { L: m[25], R: m[26] };
+    const ankle    = { L: m[27], R: m[28] };
     const shoulder = { L: m[11], R: m[12] };
-    const elbow = { L: m[13], R: m[14] };
-    const wrist = { L: m[15], R: m[16] };
-    const nose  = m[0];
+    const elbow    = { L: m[13], R: m[14] };
+    const wrist    = { L: m[15], R: m[16] };
+
+    let quality = 50;
 
     // ── SQUAT & BULGARIAN SPLIT SQUAT ──
     if (exe.includes('squat')) {
@@ -1303,7 +1739,7 @@ function onResults(results) {
         }
     }
     // ── PUSH-UP, DIAMOND PUSH-UP, PIKE PUSH-UP ──
-    else if (exe.includes('push-up') || exe.includes('push up')) {
+    else if (exe.includes('push')) {
         const angle = calcAngle(shoulder.R, elbow.R, wrist.R);
         quality = stage === 'up' ? Math.max(0, 100 - Math.abs(90 - angle)) : 80;
         if (angle > 155) { stage = 'up'; }
@@ -1318,35 +1754,35 @@ function onResults(results) {
         quality = Math.max(0, 100 - Math.abs(90 - angle));
         if (angle > 155) { stage = 'up'; }
         if (angle < 100 && stage === 'up') {
-            sessionScores.push(quality);
-            stage = 'down'; registerRep();
+            sessionScores.push(quality); stage = 'down'; registerRep();
         }
     }
     // ── CALF RAISE ──
     else if (exe.includes('calf')) {
-        const angle = calcAngle(knee.R, ankle.R, m[32]); // ankle → heel
+        const angle = calcAngle(knee.R, ankle.R, m[32]);
         quality = angle > 100 ? Math.min(100, angle - 90) : 20;
-        if (angle > 120) { stage = 'up'; sessionScores.push(quality); registerRep(); stage = 'down'; }
+        if (angle > 120 && stage === 'up') {
+            sessionScores.push(quality); registerRep(); stage = 'down';
+        }
+        if (angle < 100) { stage = 'up'; }
     }
     // ── HIGH KNEES ──
     else if (exe.includes('high knees') || exe.includes('high knee')) {
-        const kneeHeightL = 1 - knee.L.y; // 0=bottom, 1=top
-        const kneeHeightR = 1 - knee.R.y;
-        const hipHeight   = 1 - ((hip.L.y + hip.R.y) / 2);
-        quality = Math.min(100, Math.max(0, ((kneeHeightL + kneeHeightR) / 2 - hipHeight) * 400));
-        if (kneeHeightL > hipHeight + 0.1 && stage === 'up') {
+        const kneeH  = 1 - knee.L.y;
+        const hipH   = 1 - ((hip.L.y + hip.R.y) / 2);
+        quality = Math.min(100, Math.max(0, (kneeH - hipH) * 400));
+        if (kneeH > hipH + 0.1 && stage === 'up') {
             sessionScores.push(quality); stage = 'down'; registerRep();
         }
-        if (kneeHeightL < hipHeight - 0.05) { stage = 'up'; }
+        if (kneeH < hipH - 0.05) { stage = 'up'; }
     }
     // ── PLANK ──
-    else if (exe.includes('plank')) {
+    else if (exe.includes('plank') && !exe.includes('mountain')) {
         const hipAngle = calcAngle(shoulder.R, hip.R, knee.R);
         quality = Math.max(0, 100 - Math.abs(175 - hipAngle));
-        // Plank = tijdgebaseerd, registreer elke 3s automatisch een rep
         if (!window._plankTimer) {
             window._plankTimer = setInterval(() => {
-                if (!isRest && exe.includes('plank') && quality > 50) {
+                if (!isRest && circuit[cIdx] && circuit[cIdx].n.toLowerCase().includes('plank') && quality > 50) {
                     sessionScores.push(quality); registerRep();
                 }
             }, 3000);
@@ -1364,16 +1800,16 @@ function onResults(results) {
     }
     // ── SUPERMAN ──
     else if (exe.includes('superman')) {
-        const armHeight = 1 - ((wrist.L.y + wrist.R.y) / 2);
-        const hipHeight = 1 - ((hip.L.y + hip.R.y) / 2);
-        quality = Math.min(100, Math.max(0, (armHeight - hipHeight) * 300 + 50));
-        if (armHeight > hipHeight + 0.05 && stage === 'up') {
+        const armH = 1 - ((wrist.L.y + wrist.R.y) / 2);
+        const hipH = 1 - ((hip.L.y + hip.R.y) / 2);
+        quality = Math.min(100, Math.max(0, (armH - hipH) * 300 + 50));
+        if (armH > hipH + 0.05 && stage === 'up') {
             sessionScores.push(quality); stage = 'down'; registerRep();
         }
-        if (armHeight < hipHeight - 0.02) { stage = 'up'; }
+        if (armH < hipH - 0.02) { stage = 'up'; }
     }
     // ── JUMPING JACKS ──
-    else if (exe.includes('jumping jack')) {
+    else if (exe.includes('jumping')) {
         const armSpread = Math.abs(wrist.L.x - wrist.R.x);
         quality = Math.min(100, armSpread * 200);
         if (armSpread > 0.6 && stage === 'up') {
@@ -1392,33 +1828,33 @@ function onResults(results) {
     }
     // ── MOUNTAIN CLIMBERS ──
     else if (exe.includes('mountain')) {
-        const kneeToChest = Math.abs(knee.L.y - shoulder.L.y);
-        quality = Math.max(0, Math.min(100, 100 - kneeToChest * 200));
-        if (kneeToChest < 0.2 && stage === 'up') {
+        const ktc = Math.abs(knee.L.y - shoulder.L.y);
+        quality = Math.max(0, Math.min(100, 100 - ktc * 200));
+        if (ktc < 0.2 && stage === 'up') {
             sessionScores.push(quality); stage = 'down'; registerRep();
         }
-        if (kneeToChest > 0.35) { stage = 'up'; }
+        if (ktc > 0.35) { stage = 'up'; }
     }
     // ── SKATER JUMPS ──
     else if (exe.includes('skater')) {
-        const lateralDist = Math.abs(ankle.L.x - ankle.R.x);
-        quality = Math.min(100, lateralDist * 200);
-        if (lateralDist > 0.45 && stage === 'up') {
+        const lat = Math.abs(ankle.L.x - ankle.R.x);
+        quality = Math.min(100, lat * 200);
+        if (lat > 0.45 && stage === 'up') {
             sessionScores.push(quality); stage = 'down'; registerRep();
         }
-        if (lateralDist < 0.15) { stage = 'up'; }
+        if (lat < 0.15) { stage = 'up'; }
     }
     // ── CRUNCHES ──
     else if (exe.includes('crunch')) {
-        const distShoulderKnee = Math.abs(shoulder.R.y - knee.R.y);
-        quality = Math.max(0, Math.min(100, 100 - distShoulderKnee * 200));
-        if (distShoulderKnee < 0.25 && stage === 'up') {
+        const dist = Math.abs(shoulder.R.y - knee.R.y);
+        quality = Math.max(0, Math.min(100, 100 - dist * 200));
+        if (dist < 0.25 && stage === 'up') {
             sessionScores.push(quality); stage = 'down'; registerRep();
         }
-        if (distShoulderKnee > 0.4) { stage = 'up'; }
+        if (dist > 0.4) { stage = 'up'; }
     }
     else {
-        // Fallback voor onbekende oefeningen: detecteer algemene beweging
+        // Fallback
         quality = 60;
         if (!window._fallbackTimer) {
             window._fallbackTimer = setInterval(() => {
@@ -1427,9 +1863,9 @@ function onResults(results) {
         }
     }
 
-    // Reset plank/fallback timer als oefening wisselt
-    if (!exe.includes('plank') && window._plankTimer) { clearInterval(window._plankTimer); window._plankTimer = null; }
-    if (exe !== window._lastExe && window._fallbackTimer) { clearInterval(window._fallbackTimer); window._fallbackTimer = null; }
+    // Reset timers als oefening wisselt
+    if (!exe.includes('plank') && window._plankTimer)         { clearInterval(window._plankTimer);    window._plankTimer    = null; }
+    if (exe !== window._lastExe && window._fallbackTimer)      { clearInterval(window._fallbackTimer); window._fallbackTimer = null; }
     window._lastExe = exe;
 
     // Kleur: rood → geel → groen
@@ -1437,7 +1873,6 @@ function onResults(results) {
     const g = quality < 50 ? Math.round(quality * 5.1) : 255;
     const lineColor = `rgb(${r},${g},0)`;
 
-    // Skelet verbindingen
     const connections = [
         [11,12],[11,13],[13,15],[12,14],[14,16],
         [11,23],[12,24],[23,24],
@@ -1445,11 +1880,8 @@ function onResults(results) {
         [27,29],[29,31],[28,30],[30,32]
     ];
 
-    canvasCtx.lineWidth = 3;
-    canvasCtx.lineCap = 'round';
-    canvasCtx.strokeStyle = lineColor;
-    canvasCtx.shadowColor = lineColor;
-    canvasCtx.shadowBlur = 8;
+    canvasCtx.lineWidth = 3; canvasCtx.lineCap = 'round';
+    canvasCtx.strokeStyle = lineColor; canvasCtx.shadowColor = lineColor; canvasCtx.shadowBlur = 8;
 
     connections.forEach(([a, b]) => {
         const pA = m[a], pB = m[b];
@@ -1460,7 +1892,6 @@ function onResults(results) {
         canvasCtx.stroke();
     });
 
-    // Gewrichtspunten
     canvasCtx.fillStyle = `rgba(${r},${g},0,0.9)`;
     canvasCtx.shadowBlur = 12;
     m.forEach((point, i) => {
@@ -1487,7 +1918,7 @@ function startAI() {
         pose.onResults(onResults);
         camera = new Camera(videoElement, {
             onFrame: async () => {
-                canvasElement.width = videoElement.videoWidth || 640;
+                canvasElement.width  = videoElement.videoWidth  || 640;
                 canvasElement.height = videoElement.videoHeight || 480;
                 await pose.send({ image: videoElement });
             }
@@ -1522,14 +1953,13 @@ document.addEventListener('touchend', e => {
 // START APP
 // ============================================================
 window.addEventListener('load', () => {
+    loadTheme();
     auth.onAuthStateChanged(async (fbUser) => {
         if (fbUser) {
-            // Ingelogd — haal data op uit Firestore
             try {
                 const doc = await db.collection('users').doc(fbUser.uid).get();
                 if (doc.exists) {
                     user = doc.data();
-                    // Zorg dat alle velden bestaan
                     if (!user.stats)   user.stats   = JSON.parse(JSON.stringify(DEFAULT_USER.stats));
                     if (!user.badges)  user.badges  = [];
                     if (!user.history) user.history = [];
@@ -1537,7 +1967,6 @@ window.addEventListener('load', () => {
                     save();
                     showApp();
                 } else {
-                    // Account bestaat maar nog geen profiel → onboarding
                     currentStep = 0;
                     document.querySelectorAll('.screen').forEach(s => s.classList.add('hidden'));
                     document.getElementById('scr-onboarding').classList.remove('hidden');
@@ -1545,19 +1974,20 @@ window.addEventListener('load', () => {
                 }
             } catch(e) {
                 console.error('Firebase fout:', e);
-                // Fallback op localStorage
                 const hasLocal = load();
                 if (hasLocal && user.name) showApp();
-                else { currentStep = 0; document.querySelectorAll('.screen').forEach(s => s.classList.add('hidden')); document.getElementById('scr-onboarding').classList.remove('hidden'); renderQ(); }
+                else {
+                    currentStep = 0;
+                    document.querySelectorAll('.screen').forEach(s => s.classList.add('hidden'));
+                    document.getElementById('scr-onboarding').classList.remove('hidden');
+                    renderQ();
+                }
             }
         } else {
-            // Niet ingelogd
             const hasLocal = load();
             if (hasLocal && user.name) {
-                // Heeft lokale data → gewoon doorgaan, kan later inloggen via Sociaal
                 showApp();
             } else {
-                // Nieuw → toon login
                 document.querySelectorAll('.screen').forEach(s => s.classList.add('hidden'));
                 document.getElementById('scr-auth').classList.remove('hidden');
             }
