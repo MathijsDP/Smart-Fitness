@@ -136,6 +136,17 @@
 <!-- ── ONBOARDING ── -->
 <div id="scr-onboarding" class="screen hidden">
     <div class="q-box" id="q-container"></div>
+    <!-- Voortgangsbalk onderaan -->
+    <div style="position:fixed;bottom:0;left:0;width:100%;padding:20px 20px calc(20px + env(safe-area-inset-bottom));background:rgba(18,18,18,0.95);backdrop-filter:blur(10px);border-top:1px solid #222;z-index:999;">
+        <div style="display:flex;justify-content:space-between;font-size:10px;font-weight:700;color:var(--sub);margin-bottom:8px;text-transform:uppercase;letter-spacing:1px;">
+            <span id="q-progress-label">Vraag 1 van 8</span>
+            <span id="q-progress-pct">0%</span>
+        </div>
+        <div style="background:#222;height:6px;border-radius:3px;overflow:hidden;">
+            <div id="q-progress-bar" style="height:100%;background:var(--blue);border-radius:3px;transition:width 0.4s cubic-bezier(0.4,0,0.2,1);box-shadow:0 0 10px rgba(0,122,255,0.5);width:0%;"></div>
+        </div>
+        <div style="display:flex;justify-content:center;gap:6px;margin-top:10px;" id="q-dots"></div>
+    </div>
 </div>
 
 <!-- ── DASHBOARD ── -->
@@ -160,6 +171,12 @@
         <strong>Conditie & Abs</strong>
         <div style="color:var(--sub);font-size:11px;margin-top:5px;">Vetverbranding & Core</div>
         <div style="margin-top:10px;font-size:10px;font-weight:700;color:var(--blue);">Vetverbranding + core</div>
+    </div>
+    <!-- Gepersonaliseerde workout -->
+    <div id="personal-workout-card" class="card" style="border-left:4px solid var(--gold);cursor:pointer;" onclick="startPersonalWorkout()">
+        <strong style="color:var(--gold);">⭐ Jouw Persoonlijke Workout</strong>
+        <div id="personal-workout-desc" style="color:var(--sub);font-size:11px;margin-top:5px;">Op basis van jouw profiel</div>
+        <div style="margin-top:10px;font-size:10px;font-weight:700;color:var(--gold);">AANBEVOLEN VOOR JOU</div>
     </div>
 </div>
 
@@ -329,7 +346,9 @@ function save() {
     localStorage.setItem('smartfitness_v1', JSON.stringify(user));
     const u = auth.currentUser;
     if (u) {
-        db.collection('users').doc(u.uid).set(user).catch(e => console.error('Save fout:', e));
+        // nameSearch = lowercase naam voor zoekfunctie
+        const dataToSave = { ...user, nameSearch: (user.name || '').toLowerCase() };
+        db.collection('users').doc(u.uid).set(dataToSave).catch(e => console.error('Save fout:', e));
     }
 }
 
@@ -534,6 +553,60 @@ function renderDash() {
     document.getElementById('dash-greet').innerText = "HEY " + (user.name || "CHAMP").toUpperCase() + "!";
     document.getElementById('streak-val').innerText = user.streak || 0;
     document.getElementById('rank-display').innerText = getRank() + ' · LVL ' + getDisplayLevel();
+    updatePersonalWorkoutCard();
+}
+
+// ============================================================
+// GEPERSONALISEERDE WORKOUT
+// ============================================================
+const personalWorkoutPlans = {
+    // goal → availability → array van circuit-types per trainingsdag
+    Afvallen: {
+        '1-2': ['Conditie', 'Conditie'],
+        '3-4': ['Conditie', 'Conditie', 'Lower', 'Conditie'],
+        '5+':  ['Conditie', 'Upper', 'Conditie', 'Lower', 'Conditie']
+    },
+    Spiermassa: {
+        '1-2': ['Upper', 'Lower'],
+        '3-4': ['Upper', 'Lower', 'Upper', 'Conditie'],
+        '5+':  ['Upper', 'Lower', 'Upper', 'Lower', 'Conditie']
+    },
+    Conditie: {
+        '1-2': ['Conditie', 'Conditie'],
+        '3-4': ['Conditie', 'Upper', 'Conditie', 'Lower'],
+        '5+':  ['Conditie', 'Upper', 'Conditie', 'Lower', 'Conditie']
+    }
+};
+
+function getPersonalPlan() {
+    const goal  = user.goal  || 'Conditie';
+    const avail = user.availability || '3-4';
+    const plans = personalWorkoutPlans[goal] || personalWorkoutPlans['Conditie'];
+    return plans[avail] || plans['3-4'];
+}
+
+function updatePersonalWorkoutCard() {
+    const plan = getPersonalPlan();
+    const goal = user.goal || 'Conditie';
+    const avail = user.availability || '3-4';
+    const today = new Date().getDay(); // 0=zon, 1=ma...
+    const workdays = plan.length;
+    const dayIdx = (today - 1 + 7) % 7 % workdays;
+    const todayType = plan[dayIdx];
+    const typeLabels = { Upper: 'Boven Lichaam 💪', Lower: 'Benen 🦵', Conditie: 'Conditie & Core 🏃' };
+    const descEl = document.getElementById('personal-workout-desc');
+    if (descEl) {
+        descEl.innerText = `Doel: ${goal} · ${avail} dagen/week → Vandaag: ${typeLabels[todayType]}`;
+    }
+}
+
+function startPersonalWorkout() {
+    const plan = getPersonalPlan();
+    const today = new Date().getDay();
+    const workdays = plan.length;
+    const dayIdx = (today - 1 + 7) % 7 % workdays;
+    const todayType = plan[dayIdx];
+    startCircuit(todayType);
 }
 
 function getAvgLevel() {
@@ -567,8 +640,7 @@ let currentStep = 0;
 
 function renderQ() {
     const q = questions[currentStep];
-    let html = `<h1 style="font-size:20px;">${q.q}</h1>
-                <div class="subtitle">Stap ${currentStep+1} van ${questions.length}</div>`;
+    let html = `<h1 style="font-size:20px;">${q.q}</h1>`;
     if (q.t === 'select') {
         const opts = q.labels || q.o;
         html += `<select id="q-val">` + q.o.map((o,i) => `<option value="${o}">${opts[i]}</option>`).join('') + `</select>`;
@@ -578,6 +650,22 @@ function renderQ() {
     html += `<button class="btn" onclick="saveQ()" style="margin-top:10px;">VERDER →</button>`;
     document.getElementById('q-container').innerHTML = html;
     setTimeout(() => { const el = document.getElementById('q-val'); if(el) el.focus(); }, 100);
+
+    // Voortgangsbalk bijwerken
+    const total = questions.length;
+    const pct = Math.round((currentStep / total) * 100);
+    const bar = document.getElementById('q-progress-bar');
+    const lbl = document.getElementById('q-progress-label');
+    const pctEl = document.getElementById('q-progress-pct');
+    const dotsEl = document.getElementById('q-dots');
+    if (bar) bar.style.width = pct + '%';
+    if (lbl) lbl.innerText = `Vraag ${currentStep + 1} van ${total}`;
+    if (pctEl) pctEl.innerText = pct + '%';
+    if (dotsEl) {
+        dotsEl.innerHTML = questions.map((_, i) =>
+            `<div style="width:${i === currentStep ? 16 : 6}px;height:6px;border-radius:3px;background:${i <= currentStep ? 'var(--blue)' : '#333'};transition:all 0.3s;"></div>`
+        ).join('');
+    }
 }
 
 function saveQ() {
@@ -706,16 +794,24 @@ async function acceptRequest(reqId, fromUid, fromName) {
     const myUid = auth.currentUser?.uid;
     if (!myUid) return;
     try {
+        // Voeg de ander toe aan MIJN vriendenlijst
         if (!user.friends) user.friends = [];
         if (!user.friends.includes(fromUid)) user.friends.push(fromUid);
         save();
-        // Voeg ook jezelf toe bij de ander
-        const senderDoc = await db.collection('users').doc(fromUid).get();
-        if (senderDoc.exists) {
-            const sf = senderDoc.data().friends || [];
-            if (!sf.includes(myUid)) sf.push(myUid);
-            await db.collection('users').doc(fromUid).update({ friends: sf });
-        }
+
+        // Voeg MIJN uid toe aan de vriendenlijst van de ander via een transactie
+        const senderRef = db.collection('users').doc(fromUid);
+        await db.runTransaction(async (transaction) => {
+            const senderDoc = await transaction.get(senderRef);
+            if (senderDoc.exists) {
+                const sf = senderDoc.data().friends || [];
+                if (!sf.includes(myUid)) {
+                    sf.push(myUid);
+                    transaction.update(senderRef, { friends: sf });
+                }
+            }
+        });
+
         await db.collection('friendRequests').doc(reqId).delete();
         showFloat('✅ ' + fromName + ' is nu je vriend!');
         loadFriendRequests();
@@ -739,14 +835,34 @@ async function searchFriend() {
     if (!term) { div.innerHTML = '<div style="color:var(--sub);font-size:12px;">Typ een naam om te zoeken.</div>'; return; }
     div.innerHTML = '<div class="spinner"></div>';
     try {
-        const snap = await db.collection('users').where('name', '==', term).get();
-        if (snap.empty) { div.innerHTML = '<div style="color:var(--sub);font-size:12px;">Niemand gevonden.</div>'; return; }
+        // Zoek op nameSearch (lowercase) met een prefix-range query
+        const snap = await db.collection('users')
+            .where('nameSearch', '>=', term)
+            .where('nameSearch', '<=', term + '\uf8ff')
+            .limit(20)
+            .get();
+
+        // Als er geen nameSearch veld is, fallback: haal alle users op en filter client-side
+        let results = [];
+        if (!snap.empty) {
+            snap.forEach(doc => results.push({ id: doc.id, data: doc.data() }));
+        } else {
+            // Fallback: zoek alle gebruikers (max 200) en filter lokaal op naam
+            const allSnap = await db.collection('users').limit(200).get();
+            allSnap.forEach(doc => {
+                const d = doc.data();
+                const n = (d.nameSearch || (d.name || '').toLowerCase());
+                if (n.includes(term)) results.push({ id: doc.id, data: d });
+            });
+        }
+
+        const myUid = auth.currentUser?.uid;
+        results = results.filter(r => r.id !== myUid);
+
+        if (results.length === 0) { div.innerHTML = '<div style="color:var(--sub);font-size:12px;">Niemand gevonden met die naam.</div>'; return; }
         div.innerHTML = '';
-        snap.forEach(doc => {
-            const d = doc.data();
-            const isFriend = (user.friends || []).includes(doc.id);
-            const isMe = auth.currentUser && doc.id === auth.currentUser.uid;
-            if (isMe) return;
+        results.forEach(({ id, data: d }) => {
+            const isFriend = (user.friends || []).includes(id);
             const avgLvl = d.stats
                 ? (Object.values(d.stats).reduce((a,b) => a + b.lvl, 0) / Object.values(d.stats).length).toFixed(1)
                 : '1.0';
@@ -758,12 +874,13 @@ async function searchFriend() {
                     </div>
                     ${isFriend
                         ? '<span style="font-size:11px;color:var(--green);font-weight:700;">✓ Vriend</span>'
-                        : `<button class="btn-small" onclick="sendFriendRequest('${doc.id}','${d.name}')" style="background:var(--blue);border:none;color:#fff;">+ Verzoek</button>`
+                        : `<button class="btn-small" onclick="sendFriendRequest('${id}','${d.name.replace(/'/g,"\\'")}'" style="background:var(--blue);border:none;color:#fff;">+ Verzoek</button>`
                     }
                 </div>`;
         });
     } catch(e) {
         div.innerHTML = '<div style="color:var(--red);font-size:12px;">Fout — zorg dat je ingelogd bent.</div>';
+        console.error(e);
     }
 }
 
@@ -1163,18 +1280,157 @@ function onResults(results) {
     const m = results.poseLandmarks;
     const exe = circuit[cIdx] ? circuit[cIdx].n.toLowerCase() : '';
 
-    // Kwaliteit berekenen voor kleur (0=rood, 50=geel, 100=groen)
+    // ── Kwaliteitscore + rep-detectie voor ALLE oefeningen ──
     let quality = 50;
+
+    // Hulpfuncties
+    const hip   = { L: m[23], R: m[24] };
+    const knee  = { L: m[25], R: m[26] };
+    const ankle = { L: m[27], R: m[28] };
+    const shoulder = { L: m[11], R: m[12] };
+    const elbow = { L: m[13], R: m[14] };
+    const wrist = { L: m[15], R: m[16] };
+    const nose  = m[0];
+
+    // ── SQUAT & BULGARIAN SPLIT SQUAT ──
     if (exe.includes('squat')) {
-        const angle = calcAngle(m[24], m[26], m[28]);
-        if (stage === 'up') quality = Math.max(0, 100 - Math.abs(90 - angle));
+        const angle = calcAngle(hip.R, knee.R, ankle.R);
+        quality = stage === 'up' ? Math.max(0, 100 - Math.abs(90 - angle)) : quality;
         if (angle > 160) { stage = 'up'; quality = 20; }
         if (angle < 100 && stage === 'up') {
             sessionScores.push(Math.max(0, 100 - Math.abs(90 - angle)));
-            stage = 'down';
-            registerRep();
+            stage = 'down'; registerRep();
         }
     }
+    // ── PUSH-UP, DIAMOND PUSH-UP, PIKE PUSH-UP ──
+    else if (exe.includes('push-up') || exe.includes('push up')) {
+        const angle = calcAngle(shoulder.R, elbow.R, wrist.R);
+        quality = stage === 'up' ? Math.max(0, 100 - Math.abs(90 - angle)) : 80;
+        if (angle > 155) { stage = 'up'; }
+        if (angle < 90 && stage === 'up') {
+            sessionScores.push(Math.max(0, 100 - Math.abs(90 - angle)));
+            stage = 'down'; registerRep();
+        }
+    }
+    // ── LUNGE & SIDE LUNGES ──
+    else if (exe.includes('lunge')) {
+        const angle = calcAngle(hip.R, knee.R, ankle.R);
+        quality = Math.max(0, 100 - Math.abs(90 - angle));
+        if (angle > 155) { stage = 'up'; }
+        if (angle < 100 && stage === 'up') {
+            sessionScores.push(quality);
+            stage = 'down'; registerRep();
+        }
+    }
+    // ── CALF RAISE ──
+    else if (exe.includes('calf')) {
+        const angle = calcAngle(knee.R, ankle.R, m[32]); // ankle → heel
+        quality = angle > 100 ? Math.min(100, angle - 90) : 20;
+        if (angle > 120) { stage = 'up'; sessionScores.push(quality); registerRep(); stage = 'down'; }
+    }
+    // ── HIGH KNEES ──
+    else if (exe.includes('high knees') || exe.includes('high knee')) {
+        const kneeHeightL = 1 - knee.L.y; // 0=bottom, 1=top
+        const kneeHeightR = 1 - knee.R.y;
+        const hipHeight   = 1 - ((hip.L.y + hip.R.y) / 2);
+        quality = Math.min(100, Math.max(0, ((kneeHeightL + kneeHeightR) / 2 - hipHeight) * 400));
+        if (kneeHeightL > hipHeight + 0.1 && stage === 'up') {
+            sessionScores.push(quality); stage = 'down'; registerRep();
+        }
+        if (kneeHeightL < hipHeight - 0.05) { stage = 'up'; }
+    }
+    // ── PLANK ──
+    else if (exe.includes('plank')) {
+        const hipAngle = calcAngle(shoulder.R, hip.R, knee.R);
+        quality = Math.max(0, 100 - Math.abs(175 - hipAngle));
+        // Plank = tijdgebaseerd, registreer elke 3s automatisch een rep
+        if (!window._plankTimer) {
+            window._plankTimer = setInterval(() => {
+                if (!isRest && exe.includes('plank') && quality > 50) {
+                    sessionScores.push(quality); registerRep();
+                }
+            }, 3000);
+        }
+    }
+    // ── SHOULDER TAPS ──
+    else if (exe.includes('shoulder tap')) {
+        const hipAngle = calcAngle(shoulder.R, hip.R, ankle.R);
+        quality = Math.max(0, 100 - Math.abs(175 - hipAngle));
+        const tapDist = Math.abs(wrist.L.x - shoulder.L.x) + Math.abs(wrist.L.y - shoulder.L.y);
+        if (tapDist < 0.1 && stage === 'up') {
+            sessionScores.push(quality); stage = 'down'; registerRep();
+        }
+        if (tapDist > 0.2) { stage = 'up'; }
+    }
+    // ── SUPERMAN ──
+    else if (exe.includes('superman')) {
+        const armHeight = 1 - ((wrist.L.y + wrist.R.y) / 2);
+        const hipHeight = 1 - ((hip.L.y + hip.R.y) / 2);
+        quality = Math.min(100, Math.max(0, (armHeight - hipHeight) * 300 + 50));
+        if (armHeight > hipHeight + 0.05 && stage === 'up') {
+            sessionScores.push(quality); stage = 'down'; registerRep();
+        }
+        if (armHeight < hipHeight - 0.02) { stage = 'up'; }
+    }
+    // ── JUMPING JACKS ──
+    else if (exe.includes('jumping jack')) {
+        const armSpread = Math.abs(wrist.L.x - wrist.R.x);
+        quality = Math.min(100, armSpread * 200);
+        if (armSpread > 0.6 && stage === 'up') {
+            sessionScores.push(quality); stage = 'down'; registerRep();
+        }
+        if (armSpread < 0.2) { stage = 'up'; }
+    }
+    // ── BURPEES ──
+    else if (exe.includes('burpee')) {
+        const hipH = 1 - ((hip.L.y + hip.R.y) / 2);
+        quality = hipH > 0.5 ? 100 : Math.min(100, hipH * 200);
+        if (hipH > 0.55 && stage === 'up') {
+            sessionScores.push(quality); stage = 'down'; registerRep();
+        }
+        if (hipH < 0.3) { stage = 'up'; }
+    }
+    // ── MOUNTAIN CLIMBERS ──
+    else if (exe.includes('mountain')) {
+        const kneeToChest = Math.abs(knee.L.y - shoulder.L.y);
+        quality = Math.max(0, Math.min(100, 100 - kneeToChest * 200));
+        if (kneeToChest < 0.2 && stage === 'up') {
+            sessionScores.push(quality); stage = 'down'; registerRep();
+        }
+        if (kneeToChest > 0.35) { stage = 'up'; }
+    }
+    // ── SKATER JUMPS ──
+    else if (exe.includes('skater')) {
+        const lateralDist = Math.abs(ankle.L.x - ankle.R.x);
+        quality = Math.min(100, lateralDist * 200);
+        if (lateralDist > 0.45 && stage === 'up') {
+            sessionScores.push(quality); stage = 'down'; registerRep();
+        }
+        if (lateralDist < 0.15) { stage = 'up'; }
+    }
+    // ── CRUNCHES ──
+    else if (exe.includes('crunch')) {
+        const distShoulderKnee = Math.abs(shoulder.R.y - knee.R.y);
+        quality = Math.max(0, Math.min(100, 100 - distShoulderKnee * 200));
+        if (distShoulderKnee < 0.25 && stage === 'up') {
+            sessionScores.push(quality); stage = 'down'; registerRep();
+        }
+        if (distShoulderKnee > 0.4) { stage = 'up'; }
+    }
+    else {
+        // Fallback voor onbekende oefeningen: detecteer algemene beweging
+        quality = 60;
+        if (!window._fallbackTimer) {
+            window._fallbackTimer = setInterval(() => {
+                if (!isRest && quality > 40) { sessionScores.push(quality); registerRep(); }
+            }, 2500);
+        }
+    }
+
+    // Reset plank/fallback timer als oefening wisselt
+    if (!exe.includes('plank') && window._plankTimer) { clearInterval(window._plankTimer); window._plankTimer = null; }
+    if (exe !== window._lastExe && window._fallbackTimer) { clearInterval(window._fallbackTimer); window._fallbackTimer = null; }
+    window._lastExe = exe;
 
     // Kleur: rood → geel → groen
     const r = quality < 50 ? 255 : Math.round(255 - (quality - 50) * 5.1);
