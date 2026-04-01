@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Smart-Fitness-Mathijs</title>
 
-
     <script src="https://cdn.jsdelivr.net/npm/@mediapipe/pose"></script>
     <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils"></script>
     <script src="https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils"></script>
@@ -49,10 +48,22 @@
         .screen { min-height: 100vh; padding: 30px 20px 120px; display: flex; flex-direction: column; overflow-y: auto; -webkit-overflow-scrolling: touch; touch-action: pan-y; }
         .hidden { display: none !important; }
 
+        /* ── TAB WISSEL ANIMATIE ── */
+        @keyframes slideInTab { from { opacity: 0; transform: translateX(18px); } to { opacity: 1; transform: translateX(0); } }
+        .screen-enter { animation: slideInTab 0.28s cubic-bezier(0.4,0,0.2,1) both; }
+
         h1 { font-family: 'Montserrat', sans-serif; font-size: 26px; font-weight: 900; text-transform: uppercase; margin: 0 0 5px; letter-spacing: -0.5px; }
         .subtitle { color: var(--sub); font-size: 11px; letter-spacing: 1.5px; text-transform: uppercase; margin-bottom: 25px; font-weight: 700; }
 
+        /* ── MOOIERE ONBOARDING ── */
         .q-box { flex: 1; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; padding-bottom: 100px; }
+        .q-card { background: var(--surface); border-radius: 28px; padding: 32px 24px 28px; max-width: 340px; width: 100%; border: 1px solid var(--card-border); box-shadow: 0 8px 40px rgba(0,0,0,0.4); }
+        .q-icon { font-size: 56px; margin-bottom: 16px; display: block; }
+        .q-title { font-family: 'Montserrat', sans-serif; font-size: 20px; font-weight: 900; margin-bottom: 8px; line-height: 1.2; }
+        .q-hint { color: var(--sub); font-size: 12px; margin-bottom: 22px; line-height: 1.6; min-height: 36px; }
+        @keyframes qSlideIn { from { opacity: 0; transform: translateY(16px) scale(0.97); } to { opacity: 1; transform: translateY(0) scale(1); } }
+        .q-card { animation: qSlideIn 0.3s cubic-bezier(0.4,0,0.2,1) both; }
+
         input, select { width: 100%; max-width: 320px; padding: 16px; border-radius: 12px; border: 1px solid var(--card-border); background: var(--surface-2); color: var(--accent); font-size: 16px; margin-bottom: 12px; outline: none; transition: 0.2s; }
         input:focus { border-color: var(--blue); box-shadow: 0 0 15px rgba(0,122,255,0.3); }
 
@@ -130,6 +141,34 @@
             #print-area, #print-area * { visibility: visible; }
             #print-area { position: fixed; inset: 0; padding: 30px; background: white; color: black; font-family: Arial, sans-serif; }
         }
+
+        /* ── TOAST NOTIFICATIE ── */
+        @keyframes toastIn { from { opacity: 0; transform: translate(-50%, -12px); } to { opacity: 1; transform: translate(-50%, 0); } }
+        @keyframes toastOut { from { opacity: 1; transform: translate(-50%, 0); } to { opacity: 0; transform: translate(-50%, -12px); } }
+
+        /* ── WATER GLASSES ── */
+        .water-glass { font-size: 22px; cursor: pointer; transition: transform 0.15s; display: inline-block; line-height: 1.3; }
+        .water-glass:active { transform: scale(1.3); }
+
+        /* ── BADGE OVERLAY ── */
+        #badge-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.93); z-index: 6000; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 30px; pointer-events: none; opacity: 0; transition: opacity 0.35s; }
+        #badge-overlay.active { opacity: 1; pointer-events: auto; }
+        @keyframes badgePop { 0% { transform: scale(0.3) rotate(-15deg); opacity: 0; } 65% { transform: scale(1.25) rotate(5deg); } 100% { transform: scale(1) rotate(0deg); opacity: 1; } }
+        #badge-overlay-icon { display: block; animation: badgePop 0.65s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; }
+        @keyframes shimmer { 0%,100% { opacity: 0.6; } 50% { opacity: 1; } }
+        .badge-stars { animation: shimmer 1.5s ease infinite; }
+
+        /* ── WORKOUT SAMENVATTING ── */
+        #summary-overlay { position: fixed; inset: 0; background: rgba(5,5,5,0.98); z-index: 5500; display: none; flex-direction: column; align-items: center; justify-content: flex-start; padding: 30px 20px 120px; overflow-y: auto; }
+        .summary-stat { text-align: center; }
+        .summary-stat .val { font-size: 32px; font-weight: 900; font-family: 'Montserrat', sans-serif; line-height: 1; }
+        .summary-stat .lbl { font-size: 9px; color: var(--sub); font-weight: 700; text-transform: uppercase; letter-spacing: 1px; margin-top: 4px; }
+
+        /* ── GEWICHTS GRAFIEK ── */
+        #weight-chart { display: none; width: 100%; height: 170px; border-radius: 10px; }
+
+        /* ── ONBOARDING PROGRESS DOTS ── */
+        .dot-step { height: 6px; border-radius: 3px; transition: all 0.35s cubic-bezier(0.4,0,0.2,1); }
     </style>
 </head>
 <body>
@@ -139,13 +178,10 @@
     <div class="q-box">
         <div style="font-size:52px;margin-bottom:12px;">💪</div>
         <h1 style="margin-bottom:16px;">Smart Fitness</h1>
-
-        <!-- Toggle tabs -->
         <div style="display:flex;gap:4px;background:var(--surface-2);padding:4px;border-radius:14px;margin-bottom:20px;">
             <button class="auth-tab active" id="tab-login"  onclick="switchAuthMode('login')">Inloggen</button>
             <button class="auth-tab"        id="tab-signup" onclick="switchAuthMode('signup')">Account aanmaken</button>
         </div>
-
         <input type="email"    id="auth-email" placeholder="E-mailadres"  autocomplete="email">
         <input type="password" id="auth-pass"  placeholder="Wachtwoord"   autocomplete="current-password">
         <button class="btn" id="auth-main-btn" onclick="authLogin()" style="margin-bottom:10px;">INLOGGEN</button>
@@ -156,15 +192,16 @@
 <!-- ── ONBOARDING ── -->
 <div id="scr-onboarding" class="screen hidden">
     <div class="q-box" id="q-container"></div>
-    <div style="position:fixed;bottom:0;left:0;width:100%;padding:20px 20px calc(20px + env(safe-area-inset-bottom));background:rgba(18,18,18,0.95);backdrop-filter:blur(10px);border-top:1px solid #222;z-index:999;">
+    <div style="position:fixed;bottom:0;left:0;width:100%;padding:20px 20px calc(20px + env(safe-area-inset-bottom));background:rgba(18,18,18,0.97);backdrop-filter:blur(12px);border-top:1px solid #222;z-index:999;">
         <div style="display:flex;justify-content:space-between;font-size:10px;font-weight:700;color:var(--sub);margin-bottom:8px;text-transform:uppercase;letter-spacing:1px;">
-            <span id="q-progress-label">Vraag 1 van 8</span>
-            <span id="q-progress-pct">0%</span>
+            <span id="q-progress-label">Vraag 1 van 10</span>
+            <span id="q-progress-pct" style="color:var(--blue);">0%</span>
         </div>
-        <div style="background:#222;height:6px;border-radius:3px;overflow:hidden;">
-            <div id="q-progress-bar" style="height:100%;background:var(--blue);border-radius:3px;transition:width 0.4s cubic-bezier(0.4,0,0.2,1);box-shadow:0 0 10px rgba(0,122,255,0.5);width:0%;"></div>
+        <!-- Mooiere progress bar -->
+        <div style="background:#2a2a2a;height:8px;border-radius:4px;overflow:hidden;box-shadow:inset 0 1px 3px rgba(0,0,0,0.4);">
+            <div id="q-progress-bar" style="height:100%;background:linear-gradient(90deg,var(--blue),#5ac8fa);border-radius:4px;transition:width 0.45s cubic-bezier(0.4,0,0.2,1);box-shadow:0 0 12px rgba(0,122,255,0.6);width:0%;"></div>
         </div>
-        <div style="display:flex;justify-content:center;gap:6px;margin-top:10px;" id="q-dots"></div>
+        <div style="display:flex;justify-content:center;gap:5px;margin-top:10px;" id="q-dots"></div>
     </div>
 </div>
 
@@ -189,6 +226,11 @@
             <button class="btn-small" onclick="addCalories()" style="background:var(--orange);border:none;color:#fff;">+</button>
             <button class="btn-small" onclick="resetCalories()" style="font-size:10px;">Reset</button>
         </div>
+    </div>
+
+    <!-- Water Tracker -->
+    <div class="card" style="border-left:4px solid var(--blue);">
+        <div id="water-card-content"></div>
     </div>
 
     <!-- Gepersonaliseerde workout -->
@@ -227,7 +269,6 @@
     <button class="btn" onclick="printReport()" style="background:var(--surface-2);color:var(--accent);border:1px solid var(--card-border);margin-top:4px;">
         📄 Download rapport als PDF
     </button>
-    <!-- Verborgen print area -->
     <div id="print-area" style="display:none;"></div>
 </div>
 
@@ -239,6 +280,19 @@
         <h3 style="font-size:14px;margin:0 0 15px;">SPIER LEVELS</h3>
         <div id="stats-render"></div>
     </div>
+
+    <!-- Gewichtsverloop grafiek -->
+    <div class="card" style="border-left:4px solid var(--green);">
+        <h3 style="font-size:14px;margin:0 0 12px;">⚖️ GEWICHTSVERLOOP</h3>
+        <div style="display:flex;gap:8px;margin-bottom:12px;align-items:center;">
+            <input type="number" id="weight-log-input" placeholder="Gewicht (kg)" step="0.1" style="flex:1;margin:0;padding:10px;font-size:13px;">
+            <button class="btn-small" onclick="logWeight()" style="background:var(--green);border:none;color:#fff;white-space:nowrap;padding:10px 14px;">LOG KG</button>
+        </div>
+        <canvas id="weight-chart"></canvas>
+        <div id="weight-chart-empty" style="color:var(--sub);font-size:12px;text-align:center;padding:16px 0;">Log minstens 2 metingen om de grafiek te zien.</div>
+        <div id="weight-goal-display" style="display:none;margin-top:10px;font-size:11px;text-align:center;color:var(--green);font-weight:700;"></div>
+    </div>
+
     <div class="card">
         <h3 style="font-size:14px;margin:0 0 10px;">BADGE COLLECTIE</h3>
         <div class="badges-grid" id="badges-render"></div>
@@ -253,14 +307,10 @@
 <div id="scr-social" class="screen hidden">
     <h1>COMMUNITY</h1>
     <div class="subtitle">Vrienden & Groepen</div>
-
-    <!-- Inkomende verzoeken & uitdagingen -->
     <div class="card" id="requests-card" style="display:none;">
         <strong style="font-size:12px;display:block;margin-bottom:10px;color:var(--orange);">🔔 Meldingen</strong>
         <div id="requests-list"></div>
     </div>
-
-    <!-- Vriend zoeken -->
     <div class="card">
         <strong style="font-size:12px;display:block;margin-bottom:10px;color:var(--blue);">🔍 Vriend zoeken</strong>
         <div style="display:flex;gap:8px;">
@@ -269,14 +319,10 @@
         </div>
         <div id="search-results" style="margin-top:12px;"></div>
     </div>
-
-    <!-- Mijn vrienden -->
     <div class="card">
         <strong style="font-size:12px;display:block;margin-bottom:10px;">👥 Mijn vrienden</strong>
         <div id="friends-list"><div style="color:var(--sub);font-size:12px;">Nog geen vrienden toegevoegd.</div></div>
     </div>
-
-    <!-- Groep aanmaken / joinen -->
     <div class="card">
         <strong style="font-size:12px;display:block;margin-bottom:10px;">🏆 Groep</strong>
         <input type="text" id="group-name-input" placeholder="Groepsnaam (bijv: Klas6iict)..." style="margin-bottom:8px;">
@@ -285,11 +331,7 @@
             <button class="btn" onclick="joinGroup()"   style="flex:1;height:44px;padding:0;background:var(--surface-2);color:var(--accent);border:1px solid var(--card-border);">Join groep</button>
         </div>
     </div>
-
-    <!-- Leaderboard -->
     <div id="leaderboard-container"></div>
-
-    <!-- Uitloggen -->
     <button class="btn-small" onclick="authLogout()" style="width:100%;padding:14px;margin-top:4px;background:#220000;border-color:#500;color:#f55;">Uitloggen</button>
 </div>
 
@@ -307,6 +349,15 @@
         <div id="theme-toggle" onclick="toggleTheme()" style="width:48px;height:28px;background:#333;border-radius:14px;cursor:pointer;position:relative;transition:0.3s;">
             <div id="theme-knob" style="width:22px;height:22px;background:#fff;border-radius:50%;position:absolute;top:3px;left:3px;transition:0.3s;"></div>
         </div>
+    </div>
+
+    <!-- Meldingen -->
+    <div class="card" style="display:flex;justify-content:space-between;align-items:center;">
+        <div>
+            <strong style="font-size:13px;">🔔 Push Meldingen</strong>
+            <div style="color:var(--sub);font-size:11px;margin-top:3px;">Streak alerts & trainingsherinneringen</div>
+        </div>
+        <button class="btn-small" id="notif-btn" onclick="requestNotifications()" style="background:var(--blue);border:none;color:#fff;white-space:nowrap;">Inschakelen</button>
     </div>
 
     <!-- Profielgegevens -->
@@ -342,7 +393,6 @@
             <button class="btn-small" style="background:var(--blue);border-color:var(--blue);" onclick="skipRest()">Start nu</button>
         </div>
         <div id="rest-instr" style="color:#ccc;font-size:13px;max-width:300px;margin-top:20px;line-height:1.6;font-weight:400;"></div>
-        <!-- Video tutorial knop -->
         <button id="tutorial-btn" onclick="openTutorial()" style="margin-top:15px;background:rgba(255,59,48,0.8);border:none;color:#fff;padding:10px 20px;border-radius:10px;font-weight:700;font-size:12px;cursor:pointer;">
             ▶ YouTube tutorial
         </button>
@@ -387,6 +437,29 @@
     </div>
 </div>
 
+<!-- ── WORKOUT SAMENVATTING ── -->
+<div id="summary-overlay">
+    <div style="text-align:center;margin-bottom:25px;">
+        <div style="font-size:64px;margin-bottom:12px;">🎉</div>
+        <h1 style="font-family:'Montserrat',sans-serif;color:var(--gold);font-size:28px;">WORKOUT KLAAR!</h1>
+        <div class="subtitle" style="margin-bottom:0;">Bekijk je resultaten</div>
+    </div>
+    <div id="summary-content" style="width:100%;max-width:420px;"></div>
+    <button class="btn" onclick="closeSummary()" style="margin-top:20px;width:100%;max-width:420px;background:var(--blue);color:#fff;">DOORGAAN →</button>
+</div>
+
+<!-- ── BADGE OVERLAY ── -->
+<div id="badge-overlay">
+    <div style="text-align:center;">
+        <div class="badge-stars" style="font-size:18px;letter-spacing:4px;margin-bottom:10px;color:var(--gold);">★ ★ ★</div>
+        <div id="badge-overlay-icon" style="font-size:88px;display:block;margin-bottom:16px;"></div>
+        <div style="color:var(--gold);font-size:11px;font-weight:800;letter-spacing:3px;text-transform:uppercase;margin-bottom:8px;">Badge Unlocked!</div>
+        <h2 id="badge-overlay-name" style="font-size:28px;font-family:'Montserrat',sans-serif;color:var(--accent);margin-bottom:6px;"></h2>
+        <div id="badge-overlay-desc" style="color:var(--sub);font-size:12px;margin-bottom:28px;"></div>
+        <button class="btn" onclick="closeBadgeOverlay()" style="background:var(--gold);color:#000;max-width:240px;">GEWELDIG! 🙌</button>
+    </div>
+</div>
+
 <!-- ── NAVBAR ── -->
 <nav class="navbar hidden" id="nav">
     <div class="nav-item active" onclick="tab('dash',this)"><i>🏠</i>Training</div>
@@ -402,9 +475,12 @@
 // ============================================================
 const DEFAULT_USER = {
     name:'', age:'', gender:'', height:'', weight:'', goal:'', reps:10, availability:'',
+    targetWeight:'', targetWeeks:'',
     streak:0, lastDate:null, totalWorkouts:0, lastAnalysisScore:0,
     badges:[], history:[], friends:[], currentGroupId:null,
     caloriesGoal:2000, caloriesToday:0, caloriesDate:'',
+    waterToday:0, waterDate:'',
+    weightHistory:[],
     stats:{
         Borst:{xp:0,lvl:1}, Schouders:{xp:0,lvl:1}, Triceps:{xp:0,lvl:1},
         Abs:{xp:0,lvl:1}, Rug:{xp:0,lvl:1}, Benen:{xp:0,lvl:1},
@@ -440,9 +516,105 @@ function resetData() {
 }
 
 // ============================================================
-// FIREBASE AUTH — met betere foutmeldingen
+// TOAST MELDINGEN
 // ============================================================
-let authMode = 'login'; // 'login' of 'signup'
+function showToast(msg, type = 'info') {
+    const colors = { info: 'var(--blue)', success: 'var(--green)', warning: 'var(--orange)', error: 'var(--red)' };
+    const existing = document.querySelector('.sf-toast');
+    if (existing) existing.remove();
+    const toast = document.createElement('div');
+    toast.className = 'sf-toast';
+    toast.style.cssText = `
+        position:fixed;top:20px;left:50%;transform:translate(-50%,0);
+        background:${colors[type]};color:#fff;padding:13px 22px;
+        border-radius:14px;font-weight:700;font-size:13px;z-index:9000;
+        box-shadow:0 6px 24px rgba(0,0,0,0.5);max-width:85%;text-align:center;
+        animation:toastIn 0.3s ease both;
+    `;
+    toast.innerText = msg;
+    document.body.appendChild(toast);
+    setTimeout(() => {
+        toast.style.animation = 'toastOut 0.3s ease both';
+        setTimeout(() => toast.remove(), 300);
+    }, 3000);
+}
+
+// ============================================================
+// PUSH MELDINGEN
+// ============================================================
+async function requestNotifications() {
+    if (!('Notification' in window)) {
+        showToast('Push meldingen worden niet ondersteund op dit apparaat.', 'warning');
+        return;
+    }
+    if (Notification.permission === 'granted') {
+        showToast('✅ Meldingen zijn al ingeschakeld!', 'success');
+        updateNotifBtn();
+        return;
+    }
+    const permission = await Notification.requestPermission();
+    if (permission === 'granted') {
+        showToast('✅ Meldingen ingeschakeld!', 'success');
+        updateNotifBtn();
+        scheduleWorkoutReminder();
+        scheduleStreakNotification();
+        sendNotification('💪 Smart Fitness', 'Meldingen actief! Je krijgt dagelijkse trainingsherinneringen.');
+    } else {
+        showToast('Meldingen geweigerd. Pas de instellingen van je browser aan.', 'warning');
+    }
+}
+
+function sendNotification(title, body) {
+    if (Notification.permission !== 'granted') return;
+    try {
+        new Notification(title, { body, icon: 'https://mathijsdp.github.io/Smart-Fitness/favicon.ico' });
+    } catch(e) { console.warn('Notificatie fout:', e); }
+}
+
+function scheduleWorkoutReminder() {
+    if (Notification.permission !== 'granted') return;
+    const now = new Date();
+    const target = new Date();
+    target.setHours(18, 0, 0, 0);
+    if (now >= target) target.setDate(target.getDate() + 1);
+    const ms = target - now;
+    setTimeout(() => {
+        const today = new Date().toDateString();
+        if (user.lastDate !== today) {
+            sendNotification('⏰ Tijd om te trainen!', `Hey ${user.name || 'atleet'}! Je dagelijkse workout wacht. 💪`);
+        }
+        scheduleWorkoutReminder();
+    }, ms);
+}
+
+function scheduleStreakNotification() {
+    if (Notification.permission !== 'granted') return;
+    const now = new Date();
+    const target = new Date();
+    target.setHours(20, 30, 0, 0);
+    if (now >= target) target.setDate(target.getDate() + 1);
+    const ms = target - now;
+    setTimeout(() => {
+        const today = new Date().toDateString();
+        if (user.lastDate !== today && (user.streak || 0) > 0) {
+            sendNotification('🔥 Streak in gevaar!', `${user.name || 'Atleet'}, je ${user.streak}-daagse streak staat op het spel! Train vandaag nog.`);
+        }
+        scheduleStreakNotification();
+    }, ms);
+}
+
+function updateNotifBtn() {
+    const btn = document.getElementById('notif-btn');
+    if (!btn) return;
+    const granted = 'Notification' in window && Notification.permission === 'granted';
+    btn.innerText = granted ? '✓ Actief' : 'Inschakelen';
+    btn.style.background = granted ? 'var(--green)' : 'var(--blue)';
+}
+
+// ============================================================
+// FIREBASE AUTH
+// ============================================================
+let authMode = 'login';
 
 function switchAuthMode(mode) {
     authMode = mode;
@@ -540,23 +712,25 @@ const exercises = {
 };
 
 const badgeList = [
-    {id:'b_start', icon:'🐣', name:'Rookie'},
-    {id:'b_wk1',   icon:'🔥', name:'Week 1'},
-    {id:'b_push',  icon:'💪', name:'Push Master'},
-    {id:'b_legs',  icon:'🦵', name:'Leg Day'},
-    {id:'b_elite', icon:'🏆', name:'Elite'},
-    {id:'b_early', icon:'🌅', name:'Vroege Vogel'}
+    {id:'b_start', icon:'🐣', name:'Rookie',        desc:'Voltooi je eerste workout.'},
+    {id:'b_wk1',   icon:'🔥', name:'Week 1',        desc:'Bereik een 7-daagse streak.'},
+    {id:'b_push',  icon:'💪', name:'Push Master',   desc:'Borst bereikt Level 5.'},
+    {id:'b_legs',  icon:'🦵', name:'Leg Day',       desc:'Benen bereikt Level 5.'},
+    {id:'b_elite', icon:'🏆', name:'Elite',         desc:'Totaal 50 levels verdiend.'},
+    {id:'b_early', icon:'🌅', name:'Vroege Vogel',  desc:'Train voor 9 uur \'s ochtends.'}
 ];
 
 const questions = [
-    {k:'name',        q:'Wat is je voornaam?',   t:'text'},
-    {k:'age',         q:'Hoe oud ben je?',       t:'number'},
-    {k:'gender',      q:'Geslacht',              t:'select', o:['Man','Vrouw','X']},
-    {k:'height',      q:'Lengte (cm)',           t:'number'},
-    {k:'weight',      q:'Gewicht (kg)',          t:'number'},
-    {k:'goal',        q:'Wat is je doel?',       t:'select', o:['Afvallen','Spiermassa','Conditie']},
-    {k:'reps',        q:'Trainingsniveau',       t:'select', o:['8','12','15'], labels:['Beginner (8 reps)','Sportief (12 reps)','Gevorderd (15 reps)']},
-    {k:'availability',q:'Hoeveel dagen per week kun je trainen?', t:'select', o:['1-2','3-4','5+']}
+    {k:'name',         q:'Wat is je voornaam?',                       t:'text',   icon:'👤', hint:'Zo kunnen we je persoonlijk aanspreken.'},
+    {k:'age',          q:'Hoe oud ben je?',                           t:'number', icon:'🎂', hint:'Je leeftijd helpt ons je trainingsplan te optimaliseren.'},
+    {k:'gender',       q:'Wat is je geslacht?',                       t:'select', o:['Man','Vrouw','X'],                            icon:'⚧',  hint:'Voor een nauwkeurigere calorieberekening.'},
+    {k:'height',       q:'Hoe lang ben je? (cm)',                     t:'number', icon:'📏', hint:'Jouw lengte in centimeters. Sta rechtop!'},
+    {k:'weight',       q:'Wat is je huidig gewicht? (kg)',            t:'number', icon:'⚖️', hint:'Je huidige gewicht in kilogram.'},
+    {k:'goal',         q:'Wat is jouw hoofddoel?',                    t:'select', o:['Afvallen','Spiermassa','Conditie'],           icon:'🎯', hint:'Kies het doel dat het beste bij jou past.'},
+    {k:'reps',         q:'Wat is jouw trainingsniveau?',              t:'select', o:['8','12','15'], labels:['Beginner (8 reps)','Sportief (12 reps)','Gevorderd (15 reps)'], icon:'💪', hint:'Kies het intensiteitsniveau dat bij jou past.'},
+    {k:'availability', q:'Hoeveel dagen per week kun je trainen?',    t:'select', o:['1-2','3-4','5+'],                            icon:'📅', hint:'Hoe meer dagen, hoe sneller je resultaat boekt.'},
+    {k:'targetWeight', q:'Wat is jouw streefgewicht? (kg)',           t:'number', icon:'🏹', hint:'Het gewicht dat je wilt bereiken. Stel een realistisch doel in!'},
+    {k:'targetWeeks',  q:'In hoeveel weken wil je dit bereiken?',    t:'select', o:['4','8','12','24'], labels:['4 weken (intensief)','8 weken (aanbevolen)','12 weken (rustig)','24 weken (langzaam)'], icon:'⏱️', hint:'Een realistische tijdslijn zorgt voor duurzame resultaten.'}
 ];
 
 // ============================================================
@@ -595,6 +769,17 @@ function playSound(type) {
             gain.gain.setValueAtTime(0.2, ctx.currentTime);
             gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.3);
             osc.start(); osc.stop(ctx.currentTime + 0.3);
+        } else if (type === 'badge') {
+            [523,659,784,1047].forEach((f,i) => {
+                const o = ctx.createOscillator(), g = ctx.createGain();
+                o.connect(g); g.connect(ctx.destination);
+                o.type = 'sine'; o.frequency.value = f;
+                g.gain.setValueAtTime(0, ctx.currentTime + i*0.12);
+                g.gain.linearRampToValueAtTime(0.25, ctx.currentTime + i*0.12 + 0.05);
+                g.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + i*0.12 + 0.5);
+                o.start(ctx.currentTime + i*0.12);
+                o.stop(ctx.currentTime + i*0.12 + 0.5);
+            });
         }
     } catch(e) {}
 }
@@ -608,12 +793,17 @@ function speak(t) {
 }
 
 // ============================================================
-// NAVIGATIE
+// NAVIGATIE MET ANIMATIE
 // ============================================================
 function tab(t, el) {
     document.querySelectorAll('.screen').forEach(s => s.classList.add('hidden'));
     const scr = document.getElementById('scr-' + t);
-    if (scr) scr.classList.remove('hidden');
+    if (scr) {
+        scr.classList.remove('hidden');
+        scr.classList.remove('screen-enter');
+        void scr.offsetWidth; // reflow to restart animation
+        scr.classList.add('screen-enter');
+    }
     if (el) {
         document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active'));
         el.classList.add('active');
@@ -643,13 +833,13 @@ function renderDash() {
     document.getElementById('rank-display').innerText = getRank() + ' · LVL ' + getDisplayLevel();
     updatePersonalWorkoutCard();
     renderCalorieCard();
+    renderWaterCard();
 }
 
 // ============================================================
 // CALORIEËN TRACKER
 // ============================================================
 function calcCalorieGoal() {
-    // Mifflin-St Jeor BMR
     const w = parseFloat(user.weight) || 70;
     const h = parseFloat(user.height) || 170;
     const a = parseInt(user.age)      || 20;
@@ -702,24 +892,225 @@ function resetCalories() {
 }
 
 // ============================================================
+// WATER TRACKER
+// ============================================================
+const WATER_GOAL = 8;
+
+function renderWaterCard() {
+    const today = new Date().toDateString();
+    if (user.waterDate !== today) {
+        user.waterToday = 0;
+        user.waterDate = today;
+        save();
+    }
+    const drunk = user.waterToday || 0;
+    const pct = Math.min(100, Math.round((drunk / WATER_GOAL) * 100));
+
+    let glasses = '';
+    for (let i = 0; i < WATER_GOAL; i++) {
+        glasses += `<span class="water-glass" onclick="addWater()" title="Klik voor +1 glas">${i < drunk ? '💧' : '🫙'}</span>`;
+    }
+
+    const statusColor = pct >= 100 ? 'var(--green)' : pct >= 50 ? 'var(--blue)' : 'var(--sub)';
+    const el = document.getElementById('water-card-content');
+    if (!el) return;
+    el.innerHTML = `
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+            <strong style="font-size:13px;">💧 Water vandaag</strong>
+            <span style="font-size:11px;color:${statusColor};font-weight:700;">${drunk} / ${WATER_GOAL} glazen</span>
+        </div>
+        <div style="font-size:24px;letter-spacing:3px;margin-bottom:10px;line-height:1.4;">${glasses}</div>
+        <div class="bar-bg"><div style="height:100%;width:${pct}%;background:var(--blue);border-radius:5px;transition:width 0.4s ease;box-shadow:0 0 10px rgba(0,122,255,0.4);"></div></div>
+        <div style="display:flex;gap:8px;margin-top:10px;align-items:center;">
+            <button class="btn-small" onclick="addWater()" style="background:var(--blue);border:none;color:#fff;flex:1;">+ Glas water</button>
+            <button class="btn-small" onclick="resetWater()">Reset</button>
+        </div>
+    `;
+}
+
+function addWater() {
+    if ((user.waterToday || 0) >= WATER_GOAL) {
+        showToast('🎉 Dagtarget water behaald!', 'success');
+        return;
+    }
+    user.waterToday = (user.waterToday || 0) + 1;
+    user.waterDate = new Date().toDateString();
+    save();
+    renderWaterCard();
+    showFloat('💧 +1 glas');
+    if (user.waterToday === WATER_GOAL) {
+        showToast('🏆 Dagtarget water behaald! 2 liter gedronken 💧', 'success');
+    }
+}
+
+function resetWater() {
+    user.waterToday = 0;
+    user.waterDate = new Date().toDateString();
+    save();
+    renderWaterCard();
+}
+
+// ============================================================
+// GEWICHTSVERLOOP
+// ============================================================
+function logWeight() {
+    const val = parseFloat(document.getElementById('weight-log-input').value);
+    if (isNaN(val) || val < 20 || val > 400) {
+        showToast('Vul een geldig gewicht in (20-400 kg)', 'error');
+        return;
+    }
+    if (!user.weightHistory) user.weightHistory = [];
+    const today = new Date().toLocaleDateString('nl-NL');
+    const last = user.weightHistory[user.weightHistory.length - 1];
+    if (last && last.date === today) {
+        last.weight = val;
+    } else {
+        user.weightHistory.push({ date: today, weight: val });
+    }
+    if (user.weightHistory.length > 30) user.weightHistory.shift();
+    user.weight = String(val);
+    document.getElementById('weight-log-input').value = '';
+    save();
+    drawWeightChart();
+    showToast(`⚖️ Gewicht opgeslagen: ${val} kg`, 'success');
+}
+
+function drawWeightChart() {
+    const history = user.weightHistory || [];
+    const canvas = document.getElementById('weight-chart');
+    const emptyMsg = document.getElementById('weight-chart-empty');
+    const goalDisp = document.getElementById('weight-goal-display');
+    if (!canvas) return;
+
+    if (history.length < 2) {
+        canvas.style.display = 'none';
+        if (emptyMsg) emptyMsg.style.display = 'block';
+        if (goalDisp) goalDisp.style.display = 'none';
+        return;
+    }
+    canvas.style.display = 'block';
+    if (emptyMsg) emptyMsg.style.display = 'none';
+
+    const W = canvas.parentElement.clientWidth - 40 || 300;
+    const H = 170;
+    canvas.width  = W;
+    canvas.height = H;
+    const ctx = canvas.getContext('2d');
+
+    const weights = history.map(h => h.weight);
+    const tw = parseFloat(user.targetWeight) || null;
+    const allVals = tw ? [...weights, tw] : weights;
+    const minW = Math.min(...allVals) - 3;
+    const maxW = Math.max(...allVals) + 3;
+    const pad = { top: 22, right: 18, bottom: 32, left: 42 };
+    const cW = W - pad.left - pad.right;
+    const cH = H - pad.top - pad.bottom;
+
+    const toX = i => pad.left + (i / (history.length - 1)) * cW;
+    const toY = v => pad.top + cH - ((v - minW) / (maxW - minW)) * cH;
+
+    // Background
+    ctx.fillStyle = '#161616';
+    ctx.fillRect(0, 0, W, H);
+
+    // Grid & Y labels
+    ctx.strokeStyle = '#2c2c2c';
+    ctx.lineWidth = 1;
+    ctx.fillStyle = '#555';
+    ctx.font = '9px Inter';
+    ctx.textAlign = 'right';
+    for (let i = 0; i <= 4; i++) {
+        const yVal = minW + ((maxW - minW) / 4) * i;
+        const yPx  = toY(yVal);
+        ctx.beginPath(); ctx.moveTo(pad.left, yPx); ctx.lineTo(W - pad.right, yPx); ctx.stroke();
+        ctx.fillText(yVal.toFixed(1), pad.left - 5, yPx + 3);
+    }
+
+    // Target weight dashed line
+    if (tw && tw > minW && tw < maxW) {
+        const ty = toY(tw);
+        ctx.save();
+        ctx.strokeStyle = '#34c759';
+        ctx.setLineDash([5, 4]);
+        ctx.lineWidth = 1.5;
+        ctx.beginPath(); ctx.moveTo(pad.left, ty); ctx.lineTo(W - pad.right, ty); ctx.stroke();
+        ctx.setLineDash([]);
+        ctx.fillStyle = '#34c759';
+        ctx.font = 'bold 9px Inter';
+        ctx.textAlign = 'left';
+        ctx.fillText('🎯 doel: ' + tw + ' kg', pad.left + 4, ty - 4);
+        ctx.restore();
+    }
+
+    // Gradient fill
+    const grad = ctx.createLinearGradient(0, pad.top, 0, H - pad.bottom);
+    grad.addColorStop(0, 'rgba(0,122,255,0.35)');
+    grad.addColorStop(1, 'rgba(0,122,255,0.02)');
+    ctx.beginPath();
+    ctx.moveTo(toX(0), H - pad.bottom);
+    ctx.lineTo(toX(0), toY(history[0].weight));
+    history.forEach((h, i) => ctx.lineTo(toX(i), toY(h.weight)));
+    ctx.lineTo(toX(history.length - 1), H - pad.bottom);
+    ctx.closePath();
+    ctx.fillStyle = grad;
+    ctx.fill();
+
+    // Line
+    ctx.beginPath();
+    ctx.strokeStyle = '#007aff';
+    ctx.lineWidth = 2.5;
+    ctx.lineCap = 'round';
+    ctx.lineJoin = 'round';
+    history.forEach((h, i) => i === 0 ? ctx.moveTo(toX(i), toY(h.weight)) : ctx.lineTo(toX(i), toY(h.weight)));
+    ctx.stroke();
+
+    // Points
+    history.forEach((h, i) => {
+        ctx.beginPath();
+        ctx.arc(toX(i), toY(h.weight), 4, 0, 2 * Math.PI);
+        ctx.fillStyle = '#007aff';
+        ctx.shadowColor = '#007aff';
+        ctx.shadowBlur = 8;
+        ctx.fill();
+        ctx.shadowBlur = 0;
+        if (i === 0 || i === history.length - 1) {
+            ctx.fillStyle = '#fff';
+            ctx.font = 'bold 10px Inter';
+            ctx.textAlign = 'center';
+            ctx.fillText(h.weight + ' kg', toX(i), toY(h.weight) - 10);
+        }
+    });
+
+    // X-axis labels
+    ctx.fillStyle = '#555';
+    ctx.font = '8px Inter';
+    ctx.textAlign = 'center';
+    const step = Math.max(1, Math.ceil(history.length / 5));
+    history.forEach((h, i) => {
+        if (i % step === 0 || i === history.length - 1) {
+            ctx.fillText(h.date.slice(0, 5), toX(i), H - 6);
+        }
+    });
+
+    // Goal progress display
+    if (goalDisp && tw) {
+        const current = history[history.length - 1].weight;
+        const start   = history[0].weight;
+        const totalChange = start - tw;
+        const achieved    = start - current;
+        const pct = totalChange !== 0 ? Math.round((achieved / totalChange) * 100) : 0;
+        goalDisp.style.display = 'block';
+        goalDisp.innerHTML = `🎯 Doel: ${tw} kg in ${user.targetWeeks || '?'} weken — Voortgang: <strong>${Math.max(0, pct)}%</strong>`;
+    }
+}
+
+// ============================================================
 // GEPERSONALISEERDE WORKOUT
 // ============================================================
 const personalWorkoutPlans = {
-    Afvallen: {
-        '1-2': ['Conditie','Conditie'],
-        '3-4': ['Conditie','Conditie','Lower','Conditie'],
-        '5+':  ['Conditie','Upper','Conditie','Lower','Conditie']
-    },
-    Spiermassa: {
-        '1-2': ['Upper','Lower'],
-        '3-4': ['Upper','Lower','Upper','Conditie'],
-        '5+':  ['Upper','Lower','Upper','Lower','Conditie']
-    },
-    Conditie: {
-        '1-2': ['Conditie','Conditie'],
-        '3-4': ['Conditie','Upper','Conditie','Lower'],
-        '5+':  ['Conditie','Upper','Conditie','Lower','Conditie']
-    }
+    Afvallen:   { '1-2':['Conditie','Conditie'], '3-4':['Conditie','Conditie','Lower','Conditie'], '5+':['Conditie','Upper','Conditie','Lower','Conditie'] },
+    Spiermassa: { '1-2':['Upper','Lower'],        '3-4':['Upper','Lower','Upper','Conditie'],      '5+':['Upper','Lower','Upper','Lower','Conditie'] },
+    Conditie:   { '1-2':['Conditie','Conditie'], '3-4':['Conditie','Upper','Conditie','Lower'],    '5+':['Conditie','Upper','Conditie','Lower','Conditie'] }
 };
 
 function getPersonalPlan() {
@@ -734,8 +1125,7 @@ function updatePersonalWorkoutCard() {
     const goal = user.goal || 'Conditie';
     const avail = user.availability || '3-4';
     const today = new Date().getDay();
-    const workdays = plan.length;
-    const dayIdx = (today - 1 + 7) % 7 % workdays;
+    const dayIdx = (today - 1 + 7) % 7 % plan.length;
     const todayType = plan[dayIdx];
     const typeLabels = { Upper:'Boven Lichaam 💪', Lower:'Benen 🦵', Conditie:'Conditie & Core 🏃' };
     const descEl = document.getElementById('personal-workout-desc');
@@ -783,7 +1173,7 @@ function savePhoto(input) {
     reader.onload = (e) => {
         const photos = JSON.parse(localStorage.getItem('smartfitness_photos') || '[]');
         photos.unshift({ src: e.target.result, date: new Date().toLocaleDateString('nl-NL') });
-        if (photos.length > 12) photos.pop(); // max 12 foto's
+        if (photos.length > 12) photos.pop();
         localStorage.setItem('smartfitness_photos', JSON.stringify(photos));
         renderPhotos();
         showFloat('📸 Foto opgeslagen!');
@@ -888,7 +1278,6 @@ function startVoice() {
     voiceRecognition.onresult = (e) => {
         const last = e.results[e.results.length - 1];
         const cmd  = last[0].transcript.trim().toLowerCase();
-        console.log('Stem commando:', cmd);
         if (cmd.includes('stop') || cmd.includes('stoppen')) { stopWorkout(); }
         else if (cmd.includes('sla') || cmd.includes('skip')) { skipRest(); }
         else if (cmd.includes('rep') || cmd.includes('klaar')) { if (!isRest) registerRep(); }
@@ -939,20 +1328,36 @@ let currentStep = 0;
 
 function renderQ() {
     const q = questions[currentStep];
-    let html = `<h1 style="font-size:20px;">${q.q}</h1>`;
-    if (q.t === 'select') {
-        const opts = q.labels || q.o;
-        html += `<select id="q-val">` + q.o.map((o,i) => `<option value="${o}">${opts[i]}</option>`).join('') + `</select>`;
-    } else {
-        html += `<input type="${q.t}" id="q-val" placeholder="..." autocomplete="off">`;
-    }
-    html += `<button class="btn" onclick="saveQ()" style="margin-top:10px;">VERDER →</button>`;
-    document.getElementById('q-container').innerHTML = html;
-    setTimeout(() => { const el = document.getElementById('q-val'); if(el) el.focus(); }, 100);
-
-    // Voortgangsbalk
     const total = questions.length;
     const pct = Math.round((currentStep / total) * 100);
+
+    let inputHtml = '';
+    if (q.t === 'select') {
+        const opts = q.labels || q.o;
+        inputHtml = `<select id="q-val" style="text-align:center;font-weight:600;font-size:15px;width:100%;max-width:280px;">` +
+            q.o.map((o,i) => `<option value="${o}">${opts[i]}</option>`).join('') +
+            `</select>`;
+    } else {
+        inputHtml = `<input type="${q.t}" id="q-val" placeholder="Typ hier je antwoord..." autocomplete="off" style="text-align:center;font-size:18px;font-weight:700;max-width:280px;">`;
+    }
+
+    document.getElementById('q-container').innerHTML = `
+        <div class="q-card">
+            <div class="q-icon">${q.icon || '✨'}</div>
+            <div class="q-title">${q.q}</div>
+            <div class="q-hint">${q.hint || ''}</div>
+            ${inputHtml}
+            <button class="btn" onclick="saveQ()" style="margin-top:18px;max-width:280px;width:100%;">VERDER →</button>
+        </div>`;
+
+    setTimeout(() => {
+        const el = document.getElementById('q-val');
+        if (el) el.focus();
+        // Pre-fill with existing value
+        if (user[q.k] && el) el.value = user[q.k];
+    }, 100);
+
+    // Progress bar
     const bar   = document.getElementById('q-progress-bar');
     const lbl   = document.getElementById('q-progress-label');
     const pctEl = document.getElementById('q-progress-pct');
@@ -962,14 +1367,14 @@ function renderQ() {
     if (pctEl) pctEl.innerText = pct + '%';
     if (dotsEl) {
         dotsEl.innerHTML = questions.map((_, i) =>
-            `<div style="width:${i === currentStep ? 16 : 6}px;height:6px;border-radius:3px;background:${i <= currentStep ? 'var(--blue)' : '#333'};transition:all 0.3s;"></div>`
+            `<div class="dot-step" style="width:${i === currentStep ? 18 : 6}px;background:${i < currentStep ? 'var(--green)' : i === currentStep ? 'var(--blue)' : '#2a2a2a'};"></div>`
         ).join('');
     }
 }
 
 function saveQ() {
     const val = document.getElementById('q-val').value.trim();
-    if (!val) { alert("Vul dit veld in!"); return; }
+    if (!val) { showToast('Vul dit veld in!', 'warning'); return; }
     user[questions[currentStep].k] = val;
     currentStep++;
     if (currentStep < questions.length) {
@@ -984,6 +1389,11 @@ function showApp() {
     document.getElementById('nav').classList.remove('hidden');
     loadTheme();
     tab('dash');
+    // Start notifications if already granted
+    if ('Notification' in window && Notification.permission === 'granted') {
+        scheduleWorkoutReminder();
+        scheduleStreakNotification();
+    }
 }
 
 // ============================================================
@@ -992,7 +1402,7 @@ function showApp() {
 function renderProfile() {
     const c = document.getElementById('profile-fields');
     c.innerHTML = questions.map(q => {
-        const label = `<label style="font-size:10px;color:var(--sub);display:block;margin-bottom:5px;margin-top:10px;">${q.q}</label>`;
+        const label = `<label style="font-size:10px;color:var(--sub);display:block;margin-bottom:5px;margin-top:10px;">${q.icon || ''} ${q.q}</label>`;
         if (q.t === 'select') {
             const opts = q.labels || q.o;
             return label + `<select onchange="user['${q.k}']=this.value;save()">` +
@@ -1003,6 +1413,7 @@ function renderProfile() {
     }).join('');
     renderPhotos();
     loadTheme();
+    updateNotifBtn();
 }
 
 // ============================================================
@@ -1021,7 +1432,7 @@ function renderProgress() {
 
     document.getElementById('badges-render').innerHTML = badgeList.map(b => {
         const unlocked = (user.badges || []).includes(b.id);
-        return `<div class="badge-item ${unlocked?'unlocked':''}">
+        return `<div class="badge-item ${unlocked?'unlocked':''}" title="${b.desc}">
             <div class="badge-icon">${b.icon}</div>
             <div class="badge-name">${b.name}</div>
         </div>`;
@@ -1035,6 +1446,13 @@ function renderProgress() {
             </div>`
         ).join('');
     }
+
+    // Gewicht input pre-fill
+    if (user.weight) {
+        const inp = document.getElementById('weight-log-input');
+        if (inp && !inp.value) inp.placeholder = `Huidig: ${user.weight} kg`;
+    }
+    drawWeightChart();
 }
 
 // ============================================================
@@ -1044,7 +1462,6 @@ async function sendFriendRequest(toUid, toName) {
     const myUid = auth.currentUser?.uid;
     if (!myUid) { alert('Je moet ingelogd zijn om vrienden toe te voegen!'); return; }
     try {
-        // Check of er al een verzoek bestaat
         const existing = await db.collection('friendRequests')
             .where('from', '==', myUid)
             .where('to',   '==', toUid)
@@ -1084,7 +1501,6 @@ async function loadFriendRequests() {
         const card = document.getElementById('requests-card');
         const list = document.getElementById('requests-list');
         list.innerHTML = '';
-
         if (snap.empty) { card.style.display = 'none'; }
         else {
             card.style.display = 'block';
@@ -1103,28 +1519,21 @@ async function loadFriendRequests() {
                     </div>`;
             });
         }
-
-        // Uitdagingen laden
         await loadChallenges(list, card);
-        // Groepsuitnodigingen laden
         await loadGroupInvites(list, card);
     } catch(e) { console.error(e); }
 }
 
 // ============================================================
-// SOCIAL — ACCEPTEER VERZOEK (WEDERZIJDS via apart pad)
+// SOCIAL — ACCEPTEER VERZOEK
 // ============================================================
 async function acceptRequest(reqId, fromUid, fromName) {
     const myUid = auth.currentUser?.uid;
     if (!myUid) return;
     try {
-        // 1. Voeg de ander toe aan MIJN lijst (eigen document — altijd toegestaan)
         if (!user.friends) user.friends = [];
         if (!user.friends.includes(fromUid)) user.friends.push(fromUid);
         save();
-
-        // 2. Probeer wederzijds de andere user's friends te updaten
-        //    (vereist de bijgewerkte Firebase rule in het commentaar bovenaan)
         try {
             const senderDoc = await db.collection('users').doc(fromUid).get();
             if (senderDoc.exists) {
@@ -1135,9 +1544,6 @@ async function acceptRequest(reqId, fromUid, fromName) {
                 }
             }
         } catch (permErr) {
-            // Als Firebase rules het niet toestaan, stuur een "pending accept" notificatie
-            // zodat de andere partij de volgende keer dat ze inloggen ook bijgewerkt worden
-            console.warn('Wederzijdse vriendschap kon niet direct worden opgeslagen (Firebase rule). Wordt opgelost bij volgende login van de ander.', permErr);
             await db.collection('friendRequests').add({
                 from: myUid,
                 fromName: user.name || 'Onbekend',
@@ -1146,8 +1552,6 @@ async function acceptRequest(reqId, fromUid, fromName) {
                 timestamp: firebase.firestore.FieldValue.serverTimestamp()
             });
         }
-
-        // 3. Verwijder het originele verzoek
         await db.collection('friendRequests').doc(reqId).delete();
         showFloat('✅ ' + fromName + ' is nu je vriend!');
         loadFriendRequests();
@@ -1163,7 +1567,7 @@ async function declineRequest(reqId) {
 }
 
 // ============================================================
-// SOCIAL — VRIENDEN ZOEKEN (case-insensitive, iedereen vinden)
+// SOCIAL — VRIENDEN ZOEKEN
 // ============================================================
 async function searchFriend() {
     const term = document.getElementById('search-input').value.trim().toLowerCase();
@@ -1173,18 +1577,13 @@ async function searchFriend() {
     try {
         const myUid = auth.currentUser?.uid;
         let results = [];
-
-        // Probeer prefix-zoekactie op nameSearch veld
         const snap = await db.collection('users')
             .where('nameSearch', '>=', term)
             .where('nameSearch', '<=', term + '\uf8ff')
-            .limit(20)
-            .get();
-
+            .limit(20).get();
         if (!snap.empty) {
             snap.forEach(doc => results.push({ id: doc.id, data: doc.data() }));
         } else {
-            // Fallback: haal alle users op en filter lokaal
             const allSnap = await db.collection('users').limit(200).get();
             allSnap.forEach(doc => {
                 const d = doc.data();
@@ -1192,11 +1591,9 @@ async function searchFriend() {
                 if (n.includes(term)) results.push({ id: doc.id, data: d });
             });
         }
-
         results = results.filter(r => r.id !== myUid);
-
         if (results.length === 0) {
-            div.innerHTML = '<div style="color:var(--sub);font-size:12px;">Niemand gevonden. Controleer de naam of vraag de persoon om in te loggen.</div>';
+            div.innerHTML = '<div style="color:var(--sub);font-size:12px;">Niemand gevonden.</div>';
             return;
         }
         div.innerHTML = '';
@@ -1220,7 +1617,6 @@ async function searchFriend() {
         });
     } catch(e) {
         div.innerHTML = '<div style="color:var(--red);font-size:12px;">Fout bij zoeken. Zorg dat je ingelogd bent.</div>';
-        console.error(e);
     }
 }
 
@@ -1253,9 +1649,9 @@ async function loadFriends() {
                     <div style="display:flex;gap:6px;align-items:center;">
                         <div style="font-weight:900;font-size:16px;color:var(--blue);margin-right:4px;">LVL ${Math.floor(parseFloat(avgLvl))}</div>
                         ${user.currentGroupId
-                            ? `<button class="btn-small" onclick="inviteFriendToGroup('${uid}','${safeName}')" style="background:var(--orange);border:none;color:#fff;font-size:10px;">📨 Uitnodigen</button>`
+                            ? `<button class="btn-small" onclick="inviteFriendToGroup('${uid}','${safeName}')" style="background:var(--orange);border:none;color:#fff;font-size:10px;">📨</button>`
                             : ''}
-                        <button class="btn-small" onclick="sendChallenge('${uid}','${safeName}')" style="background:var(--red);border:none;color:#fff;font-size:10px;">⚔️ Uitdagen</button>
+                        <button class="btn-small" onclick="sendChallenge('${uid}','${safeName}')" style="background:var(--red);border:none;color:#fff;font-size:10px;">⚔️</button>
                     </div>
                 </div>`;
         } catch(e) {}
@@ -1273,11 +1669,8 @@ async function sendChallenge(toUid, toName) {
     const type  = types[Math.floor(Math.random() * types.length)];
     try {
         await db.collection('challenges').add({
-            from:      myUid,
-            fromName:  user.name || 'Atleet',
-            to:        toUid,
-            type:      type,
-            status:    'pending',
+            from: myUid, fromName: user.name || 'Atleet',
+            to: toUid, type, status: 'pending',
             timestamp: firebase.firestore.FieldValue.serverTimestamp()
         });
         showFloat('⚔️ Uitdaging verstuurd!');
@@ -1290,9 +1683,7 @@ async function loadChallenges(list, card) {
     if (!myUid) return;
     try {
         const snap = await db.collection('challenges')
-            .where('to', '==', myUid)
-            .where('status','==','pending')
-            .get();
+            .where('to', '==', myUid).where('status','==','pending').get();
         if (snap.empty) return;
         card.style.display = 'block';
         snap.forEach(doc => {
@@ -1309,7 +1700,7 @@ async function loadChallenges(list, card) {
                     </div>
                 </div>`;
         });
-    } catch(e) { console.error(e); }
+    } catch(e) {}
 }
 
 async function acceptChallenge(id) {
@@ -1328,7 +1719,7 @@ async function declineChallenge(id) {
 }
 
 // ============================================================
-// SOCIAL — GROEPEN, UITNODIGEN & LEADERBOARD
+// SOCIAL — GROEPEN & LEADERBOARD
 // ============================================================
 function calcScore() { return Math.round(getAvgLevel() * 10); }
 
@@ -1337,15 +1728,12 @@ async function inviteFriendToGroup(friendUid, friendName) {
     if (!auth.currentUser) return;
     try {
         await db.collection('groupInvites').add({
-            from:      auth.currentUser.uid,
-            fromName:  user.name || 'Iemand',
-            to:        friendUid,
-            groupId:   user.currentGroupId,
-            status:    'pending',
+            from: auth.currentUser.uid, fromName: user.name || 'Iemand',
+            to: friendUid, groupId: user.currentGroupId,
+            status: 'pending',
             timestamp: firebase.firestore.FieldValue.serverTimestamp()
         });
         showFloat('📨 Uitnodiging verstuurd!');
-        alert(friendName + ' is uitgenodigd voor de groep!');
     } catch(e) { alert('Fout: ' + e.message); }
 }
 
@@ -1354,9 +1742,7 @@ async function loadGroupInvites(list, card) {
     if (!myUid) return;
     try {
         const snap = await db.collection('groupInvites')
-            .where('to', '==', myUid)
-            .where('status', '==', 'pending')
-            .get();
+            .where('to', '==', myUid).where('status','==','pending').get();
         if (snap.empty) return;
         card.style.display = 'block';
         snap.forEach(doc => {
@@ -1373,7 +1759,7 @@ async function loadGroupInvites(list, card) {
                     </div>
                 </div>`;
         });
-    } catch(e) { console.error(e); }
+    } catch(e) {}
 }
 
 async function acceptGroupInvite(inviteId, groupId) {
@@ -1386,17 +1772,12 @@ async function acceptGroupInvite(inviteId, groupId) {
         save();
         await db.collection('groupInvites').doc(inviteId).delete();
         showFloat('🏆 Je bent lid van de groep!');
-        loadFriendRequests();
-        loadFriends();
-        loadLeaderboard();
+        loadFriendRequests(); loadFriends(); loadLeaderboard();
     } catch(e) { alert('Fout: ' + e.message); }
 }
 
 async function declineGroupInvite(inviteId) {
-    try {
-        await db.collection('groupInvites').doc(inviteId).delete();
-        loadFriendRequests();
-    } catch(e) {}
+    try { await db.collection('groupInvites').doc(inviteId).delete(); loadFriendRequests(); } catch(e) {}
 }
 
 async function createGroup() {
@@ -1406,15 +1787,13 @@ async function createGroup() {
     const groupId = name.toLowerCase().replace(/\s+/g, '-');
     try {
         await db.collection('groups').doc(groupId).set({
-            groupName: name,
-            createdBy: auth.currentUser.uid,
+            groupName: name, createdBy: auth.currentUser.uid,
             scores: { [auth.currentUser.uid]: { name: user.name || 'Atleet', score: calcScore() } }
         });
         user.currentGroupId = groupId;
         save();
-        alert('Groep "' + name + '" aangemaakt! Nodig vrienden uit via de vriendenlijst.');
-        loadFriends();
-        loadLeaderboard();
+        alert('Groep "' + name + '" aangemaakt!');
+        loadFriends(); loadLeaderboard();
     } catch(e) { alert('Fout: ' + e.message); }
 }
 
@@ -1429,8 +1808,7 @@ async function joinGroup() {
         });
         user.currentGroupId = groupId;
         save();
-        loadFriends();
-        loadLeaderboard();
+        loadFriends(); loadLeaderboard();
     } catch(e) { alert('Groep niet gevonden!'); }
 }
 
@@ -1446,8 +1824,7 @@ async function loadLeaderboard() {
         const players = Object.entries(data.scores)
             .map(([uid, info]) => ({ ...info, isMe: uid === myUid }))
             .sort((a, b) => b.score - a.score);
-        let html = `<div class="card">
-            <strong style="font-size:12px;display:block;margin-bottom:12px;color:var(--gold);">🏆 ${data.groupName}</strong>`;
+        let html = `<div class="card"><strong style="font-size:12px;display:block;margin-bottom:12px;color:var(--gold);">🏆 ${data.groupName}</strong>`;
         players.forEach((p, i) => {
             const medal = i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : (i+1)+'.';
             html += `<div class="leaderboard-row ${i===0?'gold-border':''}">
@@ -1597,11 +1974,78 @@ function finishWorkout() {
     checkBadges('finish');
     user.totalWorkouts = (user.totalWorkouts || 0) + 1;
     if (!user.history) user.history = [];
-    user.history.push({ date: new Date().toLocaleDateString('nl-NL'), cat: currentCat, reps: getRepTarget() * 3 * 6 });
+    const totalReps = getRepTarget() * 3 * 6;
+    user.history.push({ date: new Date().toLocaleDateString('nl-NL'), cat: currentCat, reps: totalReps });
+    if (sessionScores.length > 0) {
+        user.lastAnalysisScore = Math.round(sessionScores.reduce((a,b) => a+b, 0) / sessionScores.length);
+    }
     save();
     updateGroupScore();
     speak("Training voltooid. Goed gedaan!");
-    stopWorkout();
+
+    // Streak notificatie uitschakelen nodig (geen streak gevaar meer vandaag)
+    if ('Notification' in window && Notification.permission === 'granted') {
+        sendNotification('🎉 Workout voltooid!', `Goed gedaan ${user.name || 'atleet'}! Je hebt je dagelijkse training afgerond. 🔥 Streak: ${user.streak}`);
+    }
+
+    const score  = user.lastAnalysisScore;
+    const streak = user.streak;
+    const cat    = currentCat;
+    sessionScores = [];
+
+    // Stop camera & AI
+    if (camera) { try { camera.stop(); } catch(e) {} camera = null; }
+    if (voiceActive) { toggleVoice(); }
+    if (window._plankTimer)    { clearInterval(window._plankTimer);    window._plankTimer    = null; }
+    if (window._fallbackTimer) { clearInterval(window._fallbackTimer); window._fallbackTimer = null; }
+
+    // Ga naar dashboard en toon samenvatting
+    tab('dash');
+    setTimeout(() => showWorkoutSummary({ cat, reps: totalReps, score, streak }), 150);
+}
+
+// ============================================================
+// WORKOUT SAMENVATTING
+// ============================================================
+function showWorkoutSummary({ cat, reps, score, streak }) {
+    const typeLabels = { Upper:'Boven Lichaam 💪', Lower:'Benen 🦵', Conditie:'Conditie & Core 🏃' };
+    const fb = score >= 85 ? '🎯 Perfecte houding! Top techniek!' :
+               score >= 60 ? '👍 Goed gedaan! Techniek kan nog iets beter.' :
+               score > 0   ? '⚡ Werk aan je techniek voor betere resultaten.' :
+               '✅ Workout afgerond!';
+    const xpEarned  = reps * 15;
+    const calBurned = Math.round(reps * 0.8);
+
+    document.getElementById('summary-content').innerHTML = `
+        <div class="card" style="text-align:center;margin-bottom:12px;border:2px solid var(--gold);">
+            <div style="font-size:58px;font-weight:900;color:var(--blue);font-family:'Montserrat',sans-serif;line-height:1;">${score}%</div>
+            <div style="font-size:10px;color:var(--sub);text-transform:uppercase;letter-spacing:2px;margin-bottom:8px;">Houding Score</div>
+            <div style="font-size:13px;color:var(--accent);">${fb}</div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px;">
+            <div class="card" style="text-align:center;padding:16px 10px;">
+                <div class="summary-stat"><div class="val" style="color:var(--green);">${reps}</div><div class="lbl">Totaal Reps</div></div>
+            </div>
+            <div class="card" style="text-align:center;padding:16px 10px;">
+                <div class="summary-stat"><div class="val" style="color:var(--orange);">${calBurned}</div><div class="lbl">kcal verbrand</div></div>
+            </div>
+            <div class="card" style="text-align:center;padding:16px 10px;">
+                <div class="summary-stat"><div class="val" style="color:var(--gold);">+${xpEarned}</div><div class="lbl">XP verdiend</div></div>
+            </div>
+            <div class="card" style="text-align:center;padding:16px 10px;">
+                <div class="summary-stat"><div class="val" style="color:var(--orange);">🔥 ${streak}</div><div class="lbl">Streak dagen</div></div>
+            </div>
+        </div>
+        <div class="card" style="text-align:center;">
+            <div style="font-size:10px;font-weight:700;color:var(--sub);letter-spacing:1px;text-transform:uppercase;margin-bottom:5px;">Workout Type</div>
+            <div style="font-size:18px;font-weight:800;">${typeLabels[cat] || cat}</div>
+        </div>
+    `;
+    document.getElementById('summary-overlay').style.display = 'flex';
+}
+
+function closeSummary() {
+    document.getElementById('summary-overlay').style.display = 'none';
 }
 
 function checkStreak() {
@@ -1613,19 +2057,60 @@ function checkStreak() {
 }
 
 // ============================================================
-// BADGES
+// BADGES — met eigen popup
 // ============================================================
+let badgeQueue = [];
+
 function checkBadges(trigger) {
     if (!user.badges) user.badges = [];
-    let newBadge = false;
-    const add = (id) => { if (!user.badges.includes(id)) { user.badges.push(id); newBadge = true; } };
+    const newBadges = [];
+    const add = (id) => { if (!user.badges.includes(id)) { user.badges.push(id); newBadges.push(id); } };
     if (trigger === 'finish') add('b_start');
     if (user.streak >= 7) add('b_wk1');
     if (trigger === 'finish' && new Date().getHours() < 9) add('b_early');
     if (user.stats['Borst'] && user.stats['Borst'].lvl >= 5) add('b_push');
     if (user.stats['Benen'] && user.stats['Benen'].lvl >= 5) add('b_legs');
     if (Object.values(user.stats).reduce((a,b) => a+b.lvl,0) >= 50) add('b_elite');
-    if (newBadge) { save(); showFloat("🏆 BADGE!"); speak("Nieuwe badge!"); }
+
+    if (newBadges.length) {
+        save();
+        // Small delay so workout summary shows first
+        setTimeout(() => newBadges.forEach(id => enqueueBadge(id)), 1200);
+    }
+    return newBadges;
+}
+
+function enqueueBadge(id) {
+    badgeQueue.push(id);
+    if (badgeQueue.length === 1) displayNextBadge();
+}
+
+function displayNextBadge() {
+    if (!badgeQueue.length) return;
+    const badge = badgeList.find(b => b.id === badgeQueue[0]);
+    if (!badge) { badgeQueue.shift(); displayNextBadge(); return; }
+
+    document.getElementById('badge-overlay-icon').innerText = badge.icon;
+    document.getElementById('badge-overlay-name').innerText = badge.name;
+    document.getElementById('badge-overlay-desc').innerText = badge.desc;
+
+    // Reset animation
+    const icon = document.getElementById('badge-overlay-icon');
+    icon.style.animation = 'none';
+    void icon.offsetWidth;
+    icon.style.animation = 'badgePop 0.65s cubic-bezier(0.175,0.885,0.32,1.275) forwards';
+
+    document.getElementById('badge-overlay').classList.add('active');
+    playSound('badge');
+    speak('Nieuwe badge! ' + badge.name);
+}
+
+function closeBadgeOverlay() {
+    document.getElementById('badge-overlay').classList.remove('active');
+    badgeQueue.shift();
+    if (badgeQueue.length > 0) {
+        setTimeout(displayNextBadge, 350);
+    }
 }
 
 // ============================================================
@@ -1672,7 +2157,7 @@ function closeReport() {
 }
 
 // ============================================================
-// AI / MEDIAPIPE — DETECTIE VOOR ALLE OEFENINGEN
+// AI / MEDIAPIPE — DETECTIE
 // ============================================================
 const videoElement  = document.getElementById('input_video');
 const canvasElement = document.getElementById('output_canvas');
@@ -1697,7 +2182,6 @@ function onResults(results) {
 
     let quality = 50;
 
-    // ── SQUAT & BULGARIAN SPLIT SQUAT ──
     if (exe.includes('squat')) {
         const angle = calcAngle(hip.R, knee.R, ankle.R);
         quality = stage === 'up' ? Math.max(0, 100 - Math.abs(90 - angle)) : quality;
@@ -1707,7 +2191,6 @@ function onResults(results) {
             stage = 'down'; registerRep();
         }
     }
-    // ── PUSH-UP, DIAMOND PUSH-UP, PIKE PUSH-UP ──
     else if (exe.includes('push')) {
         const angle = calcAngle(shoulder.R, elbow.R, wrist.R);
         quality = stage === 'up' ? Math.max(0, 100 - Math.abs(90 - angle)) : 80;
@@ -1717,35 +2200,25 @@ function onResults(results) {
             stage = 'down'; registerRep();
         }
     }
-    // ── LUNGE & SIDE LUNGES ──
     else if (exe.includes('lunge')) {
         const angle = calcAngle(hip.R, knee.R, ankle.R);
         quality = Math.max(0, 100 - Math.abs(90 - angle));
         if (angle > 155) { stage = 'up'; }
-        if (angle < 100 && stage === 'up') {
-            sessionScores.push(quality); stage = 'down'; registerRep();
-        }
+        if (angle < 100 && stage === 'up') { sessionScores.push(quality); stage = 'down'; registerRep(); }
     }
-    // ── CALF RAISE ──
     else if (exe.includes('calf')) {
         const angle = calcAngle(knee.R, ankle.R, m[32]);
         quality = angle > 100 ? Math.min(100, angle - 90) : 20;
-        if (angle > 120 && stage === 'up') {
-            sessionScores.push(quality); registerRep(); stage = 'down';
-        }
+        if (angle > 120 && stage === 'up') { sessionScores.push(quality); registerRep(); stage = 'down'; }
         if (angle < 100) { stage = 'up'; }
     }
-    // ── HIGH KNEES ──
     else if (exe.includes('high knees') || exe.includes('high knee')) {
-        const kneeH  = 1 - knee.L.y;
-        const hipH   = 1 - ((hip.L.y + hip.R.y) / 2);
+        const kneeH = 1 - knee.L.y;
+        const hipH  = 1 - ((hip.L.y + hip.R.y) / 2);
         quality = Math.min(100, Math.max(0, (kneeH - hipH) * 400));
-        if (kneeH > hipH + 0.1 && stage === 'up') {
-            sessionScores.push(quality); stage = 'down'; registerRep();
-        }
+        if (kneeH > hipH + 0.1 && stage === 'up') { sessionScores.push(quality); stage = 'down'; registerRep(); }
         if (kneeH < hipH - 0.05) { stage = 'up'; }
     }
-    // ── PLANK ──
     else if (exe.includes('plank') && !exe.includes('mountain')) {
         const hipAngle = calcAngle(shoulder.R, hip.R, knee.R);
         quality = Math.max(0, 100 - Math.abs(175 - hipAngle));
@@ -1757,73 +2230,51 @@ function onResults(results) {
             }, 3000);
         }
     }
-    // ── SHOULDER TAPS ──
     else if (exe.includes('shoulder tap')) {
         const hipAngle = calcAngle(shoulder.R, hip.R, ankle.R);
         quality = Math.max(0, 100 - Math.abs(175 - hipAngle));
         const tapDist = Math.abs(wrist.L.x - shoulder.L.x) + Math.abs(wrist.L.y - shoulder.L.y);
-        if (tapDist < 0.1 && stage === 'up') {
-            sessionScores.push(quality); stage = 'down'; registerRep();
-        }
+        if (tapDist < 0.1 && stage === 'up') { sessionScores.push(quality); stage = 'down'; registerRep(); }
         if (tapDist > 0.2) { stage = 'up'; }
     }
-    // ── SUPERMAN ──
     else if (exe.includes('superman')) {
         const armH = 1 - ((wrist.L.y + wrist.R.y) / 2);
         const hipH = 1 - ((hip.L.y + hip.R.y) / 2);
         quality = Math.min(100, Math.max(0, (armH - hipH) * 300 + 50));
-        if (armH > hipH + 0.05 && stage === 'up') {
-            sessionScores.push(quality); stage = 'down'; registerRep();
-        }
+        if (armH > hipH + 0.05 && stage === 'up') { sessionScores.push(quality); stage = 'down'; registerRep(); }
         if (armH < hipH - 0.02) { stage = 'up'; }
     }
-    // ── JUMPING JACKS ──
     else if (exe.includes('jumping')) {
         const armSpread = Math.abs(wrist.L.x - wrist.R.x);
         quality = Math.min(100, armSpread * 200);
-        if (armSpread > 0.6 && stage === 'up') {
-            sessionScores.push(quality); stage = 'down'; registerRep();
-        }
+        if (armSpread > 0.6 && stage === 'up') { sessionScores.push(quality); stage = 'down'; registerRep(); }
         if (armSpread < 0.2) { stage = 'up'; }
     }
-    // ── BURPEES ──
     else if (exe.includes('burpee')) {
         const hipH = 1 - ((hip.L.y + hip.R.y) / 2);
         quality = hipH > 0.5 ? 100 : Math.min(100, hipH * 200);
-        if (hipH > 0.55 && stage === 'up') {
-            sessionScores.push(quality); stage = 'down'; registerRep();
-        }
+        if (hipH > 0.55 && stage === 'up') { sessionScores.push(quality); stage = 'down'; registerRep(); }
         if (hipH < 0.3) { stage = 'up'; }
     }
-    // ── MOUNTAIN CLIMBERS ──
     else if (exe.includes('mountain')) {
         const ktc = Math.abs(knee.L.y - shoulder.L.y);
         quality = Math.max(0, Math.min(100, 100 - ktc * 200));
-        if (ktc < 0.2 && stage === 'up') {
-            sessionScores.push(quality); stage = 'down'; registerRep();
-        }
+        if (ktc < 0.2 && stage === 'up') { sessionScores.push(quality); stage = 'down'; registerRep(); }
         if (ktc > 0.35) { stage = 'up'; }
     }
-    // ── SKATER JUMPS ──
     else if (exe.includes('skater')) {
         const lat = Math.abs(ankle.L.x - ankle.R.x);
         quality = Math.min(100, lat * 200);
-        if (lat > 0.45 && stage === 'up') {
-            sessionScores.push(quality); stage = 'down'; registerRep();
-        }
+        if (lat > 0.45 && stage === 'up') { sessionScores.push(quality); stage = 'down'; registerRep(); }
         if (lat < 0.15) { stage = 'up'; }
     }
-    // ── CRUNCHES ──
     else if (exe.includes('crunch')) {
         const dist = Math.abs(shoulder.R.y - knee.R.y);
         quality = Math.max(0, Math.min(100, 100 - dist * 200));
-        if (dist < 0.25 && stage === 'up') {
-            sessionScores.push(quality); stage = 'down'; registerRep();
-        }
+        if (dist < 0.25 && stage === 'up') { sessionScores.push(quality); stage = 'down'; registerRep(); }
         if (dist > 0.4) { stage = 'up'; }
     }
     else {
-        // Fallback
         quality = 60;
         if (!window._fallbackTimer) {
             window._fallbackTimer = setInterval(() => {
@@ -1832,12 +2283,10 @@ function onResults(results) {
         }
     }
 
-    // Reset timers als oefening wisselt
-    if (!exe.includes('plank') && window._plankTimer)         { clearInterval(window._plankTimer);    window._plankTimer    = null; }
-    if (exe !== window._lastExe && window._fallbackTimer)      { clearInterval(window._fallbackTimer); window._fallbackTimer = null; }
+    if (!exe.includes('plank') && window._plankTimer) { clearInterval(window._plankTimer); window._plankTimer = null; }
+    if (exe !== window._lastExe && window._fallbackTimer) { clearInterval(window._fallbackTimer); window._fallbackTimer = null; }
     window._lastExe = exe;
 
-    // Kleur: rood → geel → groen
     const r = quality < 50 ? 255 : Math.round(255 - (quality - 50) * 5.1);
     const g = quality < 50 ? Math.round(quality * 5.1) : 255;
     const lineColor = `rgb(${r},${g},0)`;
@@ -1869,7 +2318,6 @@ function onResults(results) {
         canvasCtx.arc(point.x * canvasElement.width, point.y * canvasElement.height, 5, 0, 2 * Math.PI);
         canvasCtx.fill();
     });
-
     canvasCtx.shadowBlur = 0;
     canvasCtx.restore();
 }
@@ -1929,10 +2377,11 @@ window.addEventListener('load', () => {
                 const doc = await db.collection('users').doc(fbUser.uid).get();
                 if (doc.exists) {
                     user = doc.data();
-                    if (!user.stats)   user.stats   = JSON.parse(JSON.stringify(DEFAULT_USER.stats));
-                    if (!user.badges)  user.badges  = [];
-                    if (!user.history) user.history = [];
-                    if (!user.friends) user.friends = [];
+                    if (!user.stats)         user.stats         = JSON.parse(JSON.stringify(DEFAULT_USER.stats));
+                    if (!user.badges)        user.badges        = [];
+                    if (!user.history)       user.history       = [];
+                    if (!user.friends)       user.friends       = [];
+                    if (!user.weightHistory) user.weightHistory = [];
                     save();
                     showApp();
                 } else {
